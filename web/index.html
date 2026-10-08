@@ -1,15 +1,89 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Không tải được trang</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a2e;
+      padding: 20px;
+    }
+
+    .box {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 40px 30px;
+      max-width: 450px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .icon {
+      font-size: 60px;
+      margin-bottom: 15px;
+    }
+
+    h1 {
+      color: #ffffff;
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #a0a0b0;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    /* Nút chuyển về trang chủ */
+    .home-btn {
+      display: inline-block;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, #e94560, #ff6b6b);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    }
+
+    .home-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(233, 69, 96, 0.6);
+    }
+
+    .home-btn:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">🚫</div>
+    <h1>Không tải được trang web</h1>
+    <p>Trang web hiện không thể truy cập. Vui lòng bấm nút bên dưới để quay về trang chủ.</p>
+
+    <!-- ⬇️ THAY LINK NÀY BẰNG TRANG CHỦ CỦA BẠN ⬇️ -->
+    <a href="https://trangchu-cua-ban.com" class="home-btn">
+      🏠 Về trang chủ
+    </a>
+  </div>
+</body>
 </html>
