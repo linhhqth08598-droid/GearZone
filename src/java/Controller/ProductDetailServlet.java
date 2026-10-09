@@ -2,6 +2,7 @@ package Controller;
 
 import DAO.BrandDAO;
 import DAO.CategoryDAO;
+import DAO.ReviewDAO; // 1. Import ReviewDAO vào đây
 import Models.Product;
 import Service.ProductService;
 import java.io.IOException;
@@ -17,6 +18,7 @@ public class ProductDetailServlet extends HttpServlet {
     private ProductService productService = new ProductService();
     private CategoryDAO catDAO = new CategoryDAO();
     private BrandDAO brandDAO = new BrandDAO();
+    private ReviewDAO reviewDAO = new ReviewDAO(); // 2. Khởi tạo đối tượng ReviewDAO
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -28,6 +30,9 @@ public class ProductDetailServlet extends HttpServlet {
             
             if (product != null) {
                 request.setAttribute("product", product);
+                
+                // 3. Lấy danh sách đánh giá của sản phẩm này truyền ra View
+                request.setAttribute("productReviews", reviewDAO.getReviewsByProduct(productId));
                 
                 // Đổ dữ liệu cho Menu Dropdown trên Header
                 request.setAttribute("categoryList", catDAO.getAllCategories());
