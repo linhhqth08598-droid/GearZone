@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -8,17 +9,57 @@
         <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/views/images/GearZone.png">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/css/style.css?v=2.0">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     </head>
     <body>
         <jsp:include page="includes/header.jsp" />
         <div class="container main-layout">
             <div class="layout-left"><jsp:include page="includes/sidebar.jsp" /></div>
             <div class="layout-right">
-                <div class="slider-placeholder">
-                    <div class="slider-content">
-                        <h2>KHUYẾN MÃI BACK TO SCHOOL</h2>
-                        <p>Giảm đến 50% cho sinh viên FPT Polytechnic</p>
+                <!-- Nút thêm Slider cho Admin -->
+                <c:if test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
+                    <div style="margin-bottom: 15px;">
+                        <button onclick="document.getElementById('sliderModal').style.display = 'flex'" class="btn-submit" style="width: auto; display: inline-block; background-color: #3b82f6;">
+                            <i class="fa-solid fa-image"></i> Thêm Ảnh Slider
+                        </button>
                     </div>
+                </c:if>
+
+                <!-- Swiper Slider -->
+                <div class="swiper mySwiper" style="width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 40px; border: 1px solid #2d3748;">
+                    <div class="swiper-wrapper">
+                        <c:forEach items="${sliderList}" var="s">
+                            <div class="swiper-slide" style="position: relative;">
+                                <img src="${s.imageBase64}" alt="${s.title}" style="width: 100%; height: 480px; object-fit: contain; background-color: #11141e;">
+
+                                <!-- Nút Xóa dành cho Admin, nổi trên ảnh -->
+                                <c:if test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
+                                    <form action="${pageContext.request.contextPath}/admin/deleteSlider" method="POST" style="position: absolute; top: 15px; right: 15px; z-index: 10;">
+                                        <input type="hidden" name="sliderId" value="${s.sliderId}">
+                                        <button type="submit" onclick="return confirm('Bạn chắc chắn muốn xóa ảnh này?')" style="background: rgba(239, 68, 68, 0.9); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">
+                                            <i class="fa-solid fa-trash"></i> Xóa ảnh
+                                        </button>
+                                    </form>
+                                </c:if>
+                            </div>
+                        </c:forEach>
+
+                        <!-- Nếu Database chưa có ảnh nào thì hiện mặc định -->
+                        <c:if test="${empty sliderList}">
+                            <div class="swiper-slide">
+                                <div class="slider-placeholder" style="margin: 0; border: none;">
+                                    <div class="slider-content">
+                                        <h2>KHUYẾN MÃI BACK TO SCHOOL</h2>
+                                        <p>Giảm đến 50% cho sinh viên FPT Polytechnic</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:if>
+                    </div>
+                    <!-- Các nút điều hướng của Swiper -->
+                    <div class="swiper-button-next" style="color: #ff4757;"></div>
+                    <div class="swiper-button-prev" style="color: #ff4757;"></div>
+                    <div class="swiper-pagination"></div>
                 </div>
 
                 <h2 class="section-title">Sản Phẩm Của Chúng Tôi</h2>
@@ -46,7 +87,10 @@
                                 </c:choose>
                             </div>
                             <h3 class="product-title">${p.productName}</h3>
-                            <div class="product-price">${p.basePrice} ₫</div>
+                            <div class="product-price">
+                                <fmt:setLocale value="vi_VN"/>
+                                <fmt:formatNumber value="${p.basePrice}" pattern="#,###"/> ₫
+                            </div>
                             <c:choose>
                                 <c:when test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
                                     <div style="display: flex; gap: 10px;">
@@ -92,7 +136,7 @@
                     <input type="hidden" name="imageBase64" id="imageBase64" value="">
 
                     <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-                        
+
                         <!-- CHỌN DANH MỤC (Lấy động 100% từ SQL) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Loại sản phẩm (Danh mục)</label>
@@ -103,7 +147,7 @@
                                 </c:forEach>
                             </select>
                         </div>
-                        
+
                         <!-- CHỌN HÃNG (Lấy động 100% từ SQL kèm data-category để Javascript lọc) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Thương hiệu (Hãng)</label>
@@ -114,7 +158,7 @@
                                 </c:forEach>
                             </select>
                         </div>
-                        
+
                     </div>
 
                     <div class="form-group">
@@ -143,6 +187,31 @@
                         </div>
                     </div>
                     <button type="submit" class="btn-submit">Lưu Thông Tin</button>
+                </form>
+            </div>
+        </div>
+        <!-- MODAL THÊM SLIDER -->
+        <div class="modal-overlay" id="sliderModal">
+            <div class="modal-content form-box" style="margin: 0; width: 400px;">
+                <div class="modal-header">
+                    <h3>Thêm Ảnh Slider Mới</h3>
+                    <i class="fa-solid fa-xmark close-btn" onclick="closeModal('sliderModal')"></i>
+                </div>
+                <form action="${pageContext.request.contextPath}/admin/saveSlider" method="POST">
+                    <input type="hidden" name="sliderBase64" id="sliderBase64" value="">
+
+                    <div class="form-group">
+                        <label>Tiêu đề / Ghi chú</label>
+                        <input type="text" name="sliderTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Chọn hình ảnh</label>
+                        <input type="file" id="sliderImageInput" accept="image/*" required>
+                        <div style="margin-top: 10px; text-align: center;">
+                            <img id="sliderPreview" src="" style="width: 100%; max-height: 150px; display: none; border-radius: 6px; object-fit: cover;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" style="background-color: #3b82f6;">Lưu Slider</button>
                 </form>
             </div>
         </div>
@@ -228,6 +297,55 @@
                     reader.readAsDataURL(file);
                 }
             });
+        </script>
+        <!-- THÔNG BÁO POPUP THÀNH CÔNG / THẤT BẠI -->
+        <c:if test="${not empty sessionScope.errorMsg}">
+            <script>alert('${sessionScope.errorMsg}');</script>
+            <c:remove var="errorMsg" scope="session" />
+        </c:if>
+
+        <c:if test="${not empty sessionScope.successMsg}">
+            <script>alert('${sessionScope.successMsg}');</script>
+            <c:remove var="successMsg" scope="session" />
+        </c:if>
+        <!-- Thư viện JS Swiper -->
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+        <script>
+                // Khởi chạy Swiper Slider
+                var swiper = new Swiper(".mySwiper", {
+                    spaceBetween: 30,
+                    centeredSlides: true,
+                    grabCursor: true, // Hiển thị icon bàn tay, cho phép vuốt/kéo thả
+                    loop: true, // THÊM DÒNG NÀY ĐỂ SLIDER CHẠY LẶP VÒNG
+                    autoplay: {
+                        delay: 3500,
+                        disableOnInteraction: false,
+                    },
+                    pagination: {
+                        el: ".swiper-pagination",
+                        clickable: true,
+                    },
+                    navigation: {
+                        nextEl: ".swiper-button-next",
+                        prevEl: ".swiper-button-prev",
+                    },
+                });
+
+                // Xử lý chuyển ảnh Slider thành Base64
+                document.getElementById('sliderImageInput').addEventListener('change', function (event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const base64 = e.target.result;
+                            document.getElementById('sliderBase64').value = base64;
+                            document.getElementById('sliderPreview').src = base64;
+                            document.getElementById('sliderPreview').style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
         </script>
     </body>
 </html>

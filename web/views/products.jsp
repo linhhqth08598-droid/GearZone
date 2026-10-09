@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -39,7 +40,10 @@
                                 </c:choose>
                             </div>
                             <h3 class="product-title">${p.productName}</h3>
-                            <div class="product-price">${p.basePrice} ₫</div>
+                            <div class="product-price">
+                                <fmt:setLocale value="vi_VN"/>
+                                <fmt:formatNumber value="${p.basePrice}" pattern="#,###"/> ₫
+                            </div>
                             <c:choose>
                                 <c:when test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
                                     <div style="display: flex; gap: 10px;">
@@ -88,7 +92,7 @@
                     <input type="hidden" name="imageBase64" id="imageBase64" value="">
 
                     <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-                        
+
                         <!-- CHỌN DANH MỤC (Lấy động 100% từ SQL) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Loại sản phẩm (Danh mục)</label>
@@ -99,7 +103,7 @@
                                 </c:forEach>
                             </select>
                         </div>
-                        
+
                         <!-- CHỌN HÃNG (Lấy động 100% từ SQL kèm data-category để Javascript lọc) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Thương hiệu (Hãng)</label>
@@ -110,7 +114,7 @@
                                 </c:forEach>
                             </select>
                         </div>
-                        
+
                     </div>
 
                     <div class="form-group">
@@ -223,5 +227,15 @@
                 }
             });
         </script>
+        <!-- THÔNG BÁO POPUP THÀNH CÔNG / THẤT BẠI -->
+        <c:if test="${not empty sessionScope.errorMsg}">
+            <script>alert('${sessionScope.errorMsg}');</script>
+            <c:remove var="errorMsg" scope="session" />
+        </c:if>
+
+        <c:if test="${not empty sessionScope.successMsg}">
+            <script>alert('${sessionScope.successMsg}');</script>
+            <c:remove var="successMsg" scope="session" />
+        </c:if>
     </body>
 </html>

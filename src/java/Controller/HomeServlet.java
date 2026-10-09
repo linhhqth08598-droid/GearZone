@@ -2,6 +2,7 @@ package Controller;
 
 import DAO.BrandDAO;
 import DAO.CategoryDAO;
+import DAO.SliderDAO;
 import Models.Product;
 import Service.ProductService;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet(name = "HomeServlet", urlPatterns = {"/home"})
 public class HomeServlet extends HttpServlet {
     
+    private SliderDAO sliderDAO = new SliderDAO();
     private ProductService productService = new ProductService();
     private CategoryDAO catDAO = new CategoryDAO();
     private BrandDAO brandDAO = new BrandDAO();
@@ -25,7 +27,8 @@ public class HomeServlet extends HttpServlet {
         
         List<Product> listP = productService.getAllProducts();
         
-        // TRUYỀN DỮ LIỆU ĐỘNG SANG JSP
+        // Nạp dữ liệu Loại và Hãng 100% từ Database
+        request.setAttribute("sliderList", sliderDAO.getAllSliders());
         request.setAttribute("categoryList", catDAO.getAllCategories());
         request.setAttribute("brandList", brandDAO.getAllBrands());
         request.setAttribute("productList", listP);

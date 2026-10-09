@@ -11,12 +11,15 @@ public class ProductService {
     public List<Product> getProductsByCategory(int categoryId) { return productDAO.getProductsByCategory(categoryId); }
     public List<Product> getProductsByBrand(int brandId) { return productDAO.getProductsByBrand(brandId); }
     public List<Product> getProductsByPriceRange(double min, double max) { return productDAO.getProductsByPriceRange(min, max); }
+    public Product getProductById(int productId) { return productDAO.getProductById(productId); }
 
     public void saveProduct(String actionType, int productId, int categoryId, int brandId, String productName, double basePrice, int stockQuantity, String description, String imageBase64) {
         if ("add".equals(actionType)) {
             productDAO.insertProduct(categoryId, brandId, productName, basePrice, stockQuantity, description, imageBase64);
         } else if ("edit".equals(actionType)) {
             productDAO.updateProduct(productId, categoryId, brandId, productName, basePrice, stockQuantity, description, imageBase64);
+        } else {
+            throw new RuntimeException("Hành động không hợp lệ: " + actionType);
         }
     }
 

@@ -9,40 +9,32 @@ import java.util.UUID;
 
 public class ProductDAO {
 
-    // Lấy toàn bộ
     public List<Product> getAllProducts() {
-        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID");
+        return fetchProducts("SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID ORDER BY p.ProductID DESC");
     }
 
-    // Lọc theo Category
     public List<Product> getProductsByCategory(int categoryId) {
-        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.CategoryID = " + categoryId);
+        return fetchProducts("SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.CategoryID = " + categoryId + " ORDER BY p.ProductID DESC");
     }
 
-    // Lọc theo Brand
     public List<Product> getProductsByBrand(int brandId) {
-        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.BrandID = " + brandId);
+        return fetchProducts("SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.BrandID = " + brandId + " ORDER BY p.ProductID DESC");
     }
 
-    // Lọc theo Giá
     public List<Product> getProductsByPriceRange(double min, double max) {
-        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.BasePrice >= " + min + " AND p.BasePrice <= " + max);
+        return fetchProducts("SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.BasePrice >= " + min + " AND p.BasePrice <= " + max + " ORDER BY p.ProductID DESC");
     }
 
-    // Hàm phụ trợ duyệt List
     private List<Product> fetchProducts(String sql) {
         List<Product> list = new ArrayList<>();
-        // SỬA CÂU LỆNH SQL: Thêm p.CategoryID và p.BrandID
-        String query = sql.replace("SELECT p.ProductID, p.ProductName", "SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName");
-        
         try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement(query);
+             PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Product p = new Product();
                 p.setProductId(rs.getInt("ProductID"));
-                p.setCategoryId(rs.getInt("CategoryID")); // Thêm dòng này
-                p.setBrandId(rs.getInt("BrandID"));       // Thêm dòng này
+                p.setCategoryId(rs.getInt("CategoryID")); 
+                p.setBrandId(rs.getInt("BrandID"));       
                 p.setProductName(rs.getString("ProductName"));
                 p.setBasePrice(rs.getDouble("BasePrice"));
                 p.setStockQuantity(rs.getInt("StockQuantity"));
@@ -50,17 +42,21 @@ public class ProductDAO {
                 p.setImageBase64(rs.getString("ImageBase64"));
                 list.add(p);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { 
+            throw new RuntimeException("Lỗi lấy danh sách sản phẩm: " + e.getMessage()); 
+        }
         return list;
     }
 
-    // Thêm Sản phẩm có chọn Category và Brand
-    public boolean insertProduct(int categoryId, int brandId, String name, double price, int stock, String desc, String base64) {
+    public void insertProduct(int categoryId, int brandId, String name, double price, int stock, String desc, String base64) {
         String sqlProduct = "INSERT INTO Products (CategoryID, BrandID, ProductName, SKU, BasePrice, StockQuantity, ShortDescription) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlImage = "INSERT INTO Product_Images (ProductID, ImageName, ImageBase64) VALUES (?, 'UploadedImage', ?)";
         try (Connection con = DBConnect.getConnection()) {
             con.setAutoCommit(false);
-            try (PreparedStatement psProduct = con.prepareStatement(sqlProduct, Statement.RETURN_GENERATED_KEYS)) {
+            
+            // ĐÃ SỬA LẠI DÒNG NÀY: Dùng new String[]{"ProductID"} thay cho Statement.RETURN_GENERATED_KEYS
+            try (PreparedStatement psProduct = con.prepareStatement(sqlProduct, new String[]{"ProductID"})) {
+                
                 String randomSKU = "SP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
                 psProduct.setInt(1, categoryId);
                 psProduct.setInt(2, brandId);
@@ -83,14 +79,14 @@ public class ProductDAO {
                     }
                 }
                 con.commit();
-                return true;
-            } catch (Exception ex) { con.rollback(); ex.printStackTrace(); }
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
+            } catch (Exception ex) { 
+                con.rollback(); 
+                throw new RuntimeException("Lỗi SQL khi lưu dữ liệu Sản phẩm: " + ex.getMessage()); 
+            }
+        } catch (Exception e) { throw new RuntimeException("Lỗi kết nối DB: " + e.getMessage()); }
     }
 
-    // Sửa Sản phẩm có cập nhật Category và Brand
-    public boolean updateProduct(int productId, int categoryId, int brandId, String name, double price, int stock, String desc, String base64) {
+    public void updateProduct(int productId, int categoryId, int brandId, String name, double price, int stock, String desc, String base64) {
         String sqlProduct = "UPDATE Products SET CategoryID = ?, BrandID = ?, ProductName = ?, BasePrice = ?, StockQuantity = ?, ShortDescription = ? WHERE ProductID = ?";
         try (Connection con = DBConnect.getConnection();
              PreparedStatement psProduct = con.prepareStatement(sqlProduct)) {
@@ -119,25 +115,50 @@ public class ProductDAO {
                     }
                 }
             }
-            return true;
-        } catch (Exception e) { e.printStackTrace(); return false; }
+        } catch (Exception e) { throw new RuntimeException("Lỗi SQL khi Cập nhật Sản phẩm: " + e.getMessage()); }
     }
 
-    // Xóa Sản phẩm
-    public boolean deleteProduct(int productId) {
+    public void deleteProduct(int productId) {
         try (Connection con = DBConnect.getConnection()) {
             con.setAutoCommit(false);
             try {
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM Product_Images WHERE ProductID = ?")) {
-                    ps.setInt(1, productId); ps.executeUpdate();
-                }
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM Products WHERE ProductID = ?")) {
-                    ps.setInt(1, productId); ps.executeUpdate();
-                }
+                con.prepareStatement("DELETE FROM Cart_Items WHERE ProductID = " + productId).executeUpdate();
+                con.prepareStatement("DELETE FROM Order_Details WHERE ProductID = " + productId).executeUpdate();
+                con.prepareStatement("DELETE FROM Product_Specifications WHERE ProductID = " + productId).executeUpdate();
+                con.prepareStatement("DELETE FROM Reviews WHERE ProductID = " + productId).executeUpdate();
+                con.prepareStatement("DELETE FROM Product_Images WHERE ProductID = " + productId).executeUpdate();
+                
+                con.prepareStatement("DELETE FROM Products WHERE ProductID = " + productId).executeUpdate();
                 con.commit();
-                return true;
-            } catch (Exception ex) { con.rollback(); ex.printStackTrace(); }
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
+            } catch (Exception ex) { 
+                con.rollback(); 
+                throw new RuntimeException("Lỗi SQL khi Xóa Sản phẩm: " + ex.getMessage()); 
+            }
+        } catch (Exception e) { throw new RuntimeException("Lỗi kết nối DB: " + e.getMessage()); }
+    }
+    
+    public Product getProductById(int productId) {
+        String sql = "SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 " +
+                     "FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID " +
+                     "WHERE p.ProductID = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Product p = new Product();
+                    p.setProductId(rs.getInt("ProductID"));
+                    p.setCategoryId(rs.getInt("CategoryID"));
+                    p.setBrandId(rs.getInt("BrandID"));
+                    p.setProductName(rs.getString("ProductName"));
+                    p.setBasePrice(rs.getDouble("BasePrice"));
+                    p.setStockQuantity(rs.getInt("StockQuantity"));
+                    p.setDescription(rs.getString("ShortDescription"));
+                    p.setImageBase64(rs.getString("ImageBase64"));
+                    return p;
+                }
+            }
+        } catch (Exception e) { throw new RuntimeException("Lỗi SQL khi lấy chi tiết: " + e.getMessage()); }
+        return null;
     }
 }
