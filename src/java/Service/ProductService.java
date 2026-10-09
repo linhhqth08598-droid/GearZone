@@ -7,24 +7,20 @@ import java.util.List;
 public class ProductService {
     private ProductDAO productDAO = new ProductDAO();
 
-    public List<Product> getAllProducts() {
-        return productDAO.getAllProducts();
-    }
+    public List<Product> getAllProducts() { return productDAO.getAllProducts(); }
+    public List<Product> getProductsByCategory(int categoryId) { return productDAO.getProductsByCategory(categoryId); }
+    public List<Product> getProductsByBrand(int brandId) { return productDAO.getProductsByBrand(brandId); }
+    public List<Product> getProductsByPriceRange(double min, double max) { return productDAO.getProductsByPriceRange(min, max); }
 
-    // Đã bổ sung thêm int stock vào tham số
-    public boolean saveProduct(String actionType, int productId, String name, double price, int stock, String desc, String base64) {
-        // Khởi tạo đối tượng Product khớp hoàn toàn với Constructor có 6 tham số
-        Product p = new Product(productId, name, price, stock, desc, base64);
-        
-        if (actionType.equals("add")) {
-            return productDAO.insertProduct(p);
-        } else if (actionType.equals("edit")) {
-            return productDAO.updateProduct(p);
+    public void saveProduct(String actionType, int productId, int categoryId, int brandId, String productName, double basePrice, int stockQuantity, String description, String imageBase64) {
+        if ("add".equals(actionType)) {
+            productDAO.insertProduct(categoryId, brandId, productName, basePrice, stockQuantity, description, imageBase64);
+        } else if ("edit".equals(actionType)) {
+            productDAO.updateProduct(productId, categoryId, brandId, productName, basePrice, stockQuantity, description, imageBase64);
         }
-        return false;
     }
 
-    public boolean deleteProduct(int productId) {
-        return productDAO.deleteProduct(productId);
+    public void deleteProduct(int productId) {
+        productDAO.deleteProduct(productId);
     }
 }

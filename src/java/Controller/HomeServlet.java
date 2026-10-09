@@ -1,5 +1,7 @@
 package Controller;
 
+import DAO.BrandDAO;
+import DAO.CategoryDAO;
 import Models.Product;
 import Service.ProductService;
 import java.io.IOException;
@@ -14,20 +16,21 @@ import jakarta.servlet.http.HttpServletResponse;
 public class HomeServlet extends HttpServlet {
     
     private ProductService productService = new ProductService();
+    private CategoryDAO catDAO = new CategoryDAO();
+    private BrandDAO brandDAO = new BrandDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Lấy danh sách sản phẩm thật từ Database
         List<Product> listP = productService.getAllProducts();
         
-        // Gán danh sách vào request để jsp dùng vòng lặp <c:forEach>
+        // TRUYỀN DỮ LIỆU ĐỘNG SANG JSP
+        request.setAttribute("categoryList", catDAO.getAllCategories());
+        request.setAttribute("brandList", brandDAO.getAllBrands());
         request.setAttribute("productList", listP);
-        
         request.setAttribute("activeMenu", "home");
         
-        // Chuyển hướng hiển thị ra giao diện
         request.getRequestDispatcher("/views/trangChu.jsp").forward(request, response);
     }
 }

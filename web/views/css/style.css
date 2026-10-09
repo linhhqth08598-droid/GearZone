@@ -541,3 +541,108 @@ footer {
 .modal-header h3 { color: #fff; margin: 0; }
 .close-btn { color: #94a3b8; font-size: 20px; cursor: pointer; }
 .close-btn:hover { color: #ff4757; }
+
+/* --- CSS CHO MEGA MENU TRÊN HEADER --- */
+nav.main-nav {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-category {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu-box {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #1e293b;
+    min-width: 260px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    z-index: 1000;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    padding: 0;
+}
+
+.dropdown-category:hover .dropdown-menu-box {
+    display: block;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.cat-item {
+    position: relative;
+    padding: 0;
+    border-bottom: 1px solid #334155;
+}
+
+.cat-item:last-child {
+    border-bottom: none;
+}
+
+/* Xóa bỏ margin thừa kế từ nav a */
+nav.main-nav .cat-item > a {
+    color: #e2e8f0;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    margin: 0; 
+}
+
+nav.main-nav .cat-item:hover > a {
+    color: #ff4757;
+    background-color: #0f172a;
+}
+
+/* --- Menu cấp 2 (Sub-menu) --- */
+.sub-menu {
+    display: none;
+    position: absolute;
+    top: -1px; /* Ngang hàng với cat-item */
+    left: 100%;
+    background-color: #1e293b;
+    min-width: 220px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border-radius: 6px;
+    border: 1px solid #334155;
+    padding: 10px 0;
+}
+
+.cat-item:hover .sub-menu {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.sub-menu h4 {
+    color: #94a3b8;
+    font-size: 13px;
+    padding: 8px 18px 4px 18px;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+/* Xóa bỏ margin thừa kế từ nav a và đưa về hiển thị khối (block) */
+nav.main-nav .sub-menu a {
+    color: #e2e8f0;
+    padding: 10px 18px;
+    text-decoration: none;
+    font-size: 14px;
+    margin: 0; 
+    display: block; 
+}
+
+nav.main-nav .sub-menu a:hover {
+    color: #ff4757;
+    background-color: #0f172a;
+    padding-left: 22px; /* Hiệu ứng lùi chữ vào khi hover */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -9,18 +9,40 @@ import java.util.UUID;
 
 public class ProductDAO {
 
+    // Lấy toàn bộ
     public List<Product> getAllProducts() {
+        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID");
+    }
+
+    // Lọc theo Category
+    public List<Product> getProductsByCategory(int categoryId) {
+        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.CategoryID = " + categoryId);
+    }
+
+    // Lọc theo Brand
+    public List<Product> getProductsByBrand(int brandId) {
+        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.BrandID = " + brandId);
+    }
+
+    // Lọc theo Giá
+    public List<Product> getProductsByPriceRange(double min, double max) {
+        return fetchProducts("SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 FROM Products p LEFT JOIN Product_Images i ON p.ProductID = i.ProductID WHERE p.BasePrice >= " + min + " AND p.BasePrice <= " + max);
+    }
+
+    // Hàm phụ trợ duyệt List
+    private List<Product> fetchProducts(String sql) {
         List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.ProductID, p.ProductName, p.BasePrice, p.StockQuantity, p.ShortDescription, i.ImageBase64 " +
-                     "FROM Products p " +
-                     "LEFT JOIN Product_Images i ON p.ProductID = i.ProductID";
+        // SỬA CÂU LỆNH SQL: Thêm p.CategoryID và p.BrandID
+        String query = sql.replace("SELECT p.ProductID, p.ProductName", "SELECT p.ProductID, p.CategoryID, p.BrandID, p.ProductName");
+        
         try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
+             PreparedStatement ps = con.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
-            
             while (rs.next()) {
                 Product p = new Product();
                 p.setProductId(rs.getInt("ProductID"));
+                p.setCategoryId(rs.getInt("CategoryID")); // Thêm dòng này
+                p.setBrandId(rs.getInt("BrandID"));       // Thêm dòng này
                 p.setProductName(rs.getString("ProductName"));
                 p.setBasePrice(rs.getDouble("BasePrice"));
                 p.setStockQuantity(rs.getInt("StockQuantity"));
@@ -28,119 +50,94 @@ public class ProductDAO {
                 p.setImageBase64(rs.getString("ImageBase64"));
                 list.add(p);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
 
-    public boolean insertProduct(Product p) {
-        String sqlProduct = "INSERT INTO Products (CategoryID, BrandID, ProductName, SKU, BasePrice, StockQuantity, ShortDescription) VALUES (1, 1, ?, ?, ?, ?, ?)";
+    // Thêm Sản phẩm có chọn Category và Brand
+    public boolean insertProduct(int categoryId, int brandId, String name, double price, int stock, String desc, String base64) {
+        String sqlProduct = "INSERT INTO Products (CategoryID, BrandID, ProductName, SKU, BasePrice, StockQuantity, ShortDescription) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlImage = "INSERT INTO Product_Images (ProductID, ImageName, ImageBase64) VALUES (?, 'UploadedImage', ?)";
-        
         try (Connection con = DBConnect.getConnection()) {
             con.setAutoCommit(false);
             try (PreparedStatement psProduct = con.prepareStatement(sqlProduct, Statement.RETURN_GENERATED_KEYS)) {
                 String randomSKU = "SP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-                
-                psProduct.setString(1, p.getProductName());
-                psProduct.setString(2, randomSKU);
-                psProduct.setDouble(3, p.getBasePrice());
-                psProduct.setInt(4, p.getStockQuantity());
-                psProduct.setString(5, p.getDescription());
+                psProduct.setInt(1, categoryId);
+                psProduct.setInt(2, brandId);
+                psProduct.setString(3, name);
+                psProduct.setString(4, randomSKU);
+                psProduct.setDouble(5, price);
+                psProduct.setInt(6, stock);
+                psProduct.setString(7, desc);
                 psProduct.executeUpdate();
 
                 ResultSet rs = psProduct.getGeneratedKeys();
                 if (rs.next()) {
-                    int newProductId = rs.getInt(1);
-                    if (p.getImageBase64() != null && !p.getImageBase64().isEmpty()) {
+                    int newId = rs.getInt(1);
+                    if (base64 != null && !base64.isEmpty()) {
                         try (PreparedStatement psImage = con.prepareStatement(sqlImage)) {
-                            psImage.setInt(1, newProductId);
-                            psImage.setString(2, p.getImageBase64());
+                            psImage.setInt(1, newId);
+                            psImage.setString(2, base64);
                             psImage.executeUpdate();
                         }
                     }
                 }
                 con.commit();
                 return true;
-            } catch (Exception ex) {
-                con.rollback();
-                ex.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            } catch (Exception ex) { con.rollback(); ex.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 
-    public boolean updateProduct(Product p) {
-        String sqlProduct = "UPDATE Products SET ProductName = ?, BasePrice = ?, StockQuantity = ?, ShortDescription = ? WHERE ProductID = ?";
-        String checkImgSql = "SELECT ImageID FROM Product_Images WHERE ProductID = ?";
-        String updateImgSql = "UPDATE Product_Images SET ImageBase64 = ? WHERE ProductID = ?";
-        String insertImgSql = "INSERT INTO Product_Images (ProductID, ImageName, ImageBase64) VALUES (?, 'UploadedImage', ?)";
-        
+    // Sửa Sản phẩm có cập nhật Category và Brand
+    public boolean updateProduct(int productId, int categoryId, int brandId, String name, double price, int stock, String desc, String base64) {
+        String sqlProduct = "UPDATE Products SET CategoryID = ?, BrandID = ?, ProductName = ?, BasePrice = ?, StockQuantity = ?, ShortDescription = ? WHERE ProductID = ?";
         try (Connection con = DBConnect.getConnection();
              PreparedStatement psProduct = con.prepareStatement(sqlProduct)) {
-            
-            psProduct.setString(1, p.getProductName());
-            psProduct.setDouble(2, p.getBasePrice());
-            psProduct.setInt(3, p.getStockQuantity());
-            psProduct.setString(4, p.getDescription());
-            psProduct.setInt(5, p.getProductId());
+            psProduct.setInt(1, categoryId);
+            psProduct.setInt(2, brandId);
+            psProduct.setString(3, name);
+            psProduct.setDouble(4, price);
+            psProduct.setInt(5, stock);
+            psProduct.setString(6, desc);
+            psProduct.setInt(7, productId);
             psProduct.executeUpdate();
 
-            if (p.getImageBase64() != null && !p.getImageBase64().trim().isEmpty()) {
-                boolean hasImage = false;
-                try (PreparedStatement psCheck = con.prepareStatement(checkImgSql)) {
-                    psCheck.setInt(1, p.getProductId());
-                    ResultSet rs = psCheck.executeQuery();
-                    if(rs.next()) hasImage = true;
+            if (base64 != null && !base64.trim().isEmpty()) {
+                String checkSql = "SELECT ImageID FROM Product_Images WHERE ProductID = " + productId;
+                boolean hasImg = false;
+                try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(checkSql)) {
+                    if (rs.next()) hasImg = true;
                 }
-                
-                if(hasImage) {
-                    try (PreparedStatement psImg = con.prepareStatement(updateImgSql)) {
-                        psImg.setString(1, p.getImageBase64());
-                        psImg.setInt(2, p.getProductId());
-                        psImg.executeUpdate();
+                if (hasImg) {
+                    try (PreparedStatement ps = con.prepareStatement("UPDATE Product_Images SET ImageBase64 = ? WHERE ProductID = ?")) {
+                        ps.setString(1, base64); ps.setInt(2, productId); ps.executeUpdate();
                     }
                 } else {
-                    try (PreparedStatement psImg = con.prepareStatement(insertImgSql)) {
-                        psImg.setInt(1, p.getProductId());
-                        psImg.setString(2, p.getImageBase64());
-                        psImg.executeUpdate();
+                    try (PreparedStatement ps = con.prepareStatement("INSERT INTO Product_Images (ProductID, ImageName, ImageBase64) VALUES (?, 'UploadedImage', ?)")) {
+                        ps.setInt(1, productId); ps.setString(2, base64); ps.executeUpdate();
                     }
                 }
             }
             return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
+    // Xóa Sản phẩm
     public boolean deleteProduct(int productId) {
-        String deleteImage = "DELETE FROM Product_Images WHERE ProductID = ?";
-        String deleteProduct = "DELETE FROM Products WHERE ProductID = ?";
         try (Connection con = DBConnect.getConnection()) {
             con.setAutoCommit(false);
             try {
-                try (PreparedStatement psImg = con.prepareStatement(deleteImage)) {
-                    psImg.setInt(1, productId);
-                    psImg.executeUpdate();
+                try (PreparedStatement ps = con.prepareStatement("DELETE FROM Product_Images WHERE ProductID = ?")) {
+                    ps.setInt(1, productId); ps.executeUpdate();
                 }
-                try (PreparedStatement psProd = con.prepareStatement(deleteProduct)) {
-                    psProd.setInt(1, productId);
-                    psProd.executeUpdate();
+                try (PreparedStatement ps = con.prepareStatement("DELETE FROM Products WHERE ProductID = ?")) {
+                    ps.setInt(1, productId); ps.executeUpdate();
                 }
                 con.commit();
                 return true;
-            } catch (Exception ex) {
-                con.rollback();
-                ex.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            } catch (Exception ex) { con.rollback(); ex.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 }
