@@ -4,28 +4,36 @@
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
-        <title>Trang Chủ - GearZone</title>
+        <title>Tất cả Sản Phẩm - GearZone</title>
         <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/views/images/GearZone.png">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/css/style.css?v=1.1">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
     <body>
 
-        <!-- NHÚNG HEADER & SIDEBAR -->
+        <!-- NHÚNG HEADER -->
         <jsp:include page="includes/header.jsp" />
+
         <div class="container main-layout">
+            <!-- NHÚNG SIDEBAR -->
             <div class="layout-left"><jsp:include page="includes/sidebar.jsp" /></div>
+
             <div class="layout-right">
 
-                <!-- Banner -->
-                <div class="slider-placeholder">
-                    <div class="slider-content">
-                        <h2>KHUYẾN MÃI BACK TO SCHOOL</h2>
-                        <p>Giảm đến 50% cho sinh viên FPT Polytechnic</p>
+                <!-- Bỏ qua Banner, tập trung vào Tiêu đề và Thanh điều hướng/sắp xếp -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                    <h2 class="section-title" style="margin: 0; border: none; padding: 0;"><i class="fa-solid fa-boxes-stacked" style="color: #ff4757;"></i> Tất cả Sản Phẩm</h2>
+
+                    <!-- Khung sắp xếp (Ví dụ giao diện tĩnh) -->
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="color: #94a3b8; font-size: 14px;">Sắp xếp:</span>
+                        <select style="background: #1e2336; color: #fff; border: 1px solid #334155; padding: 6px 12px; border-radius: 4px; outline: none; cursor: pointer;">
+                            <option>Mới nhất</option>
+                            <option>Giá tăng dần</option>
+                            <option>Giá giảm dần</option>
+                        </select>
                     </div>
                 </div>
-
-                <h2 class="section-title">Sản Phẩm Của Chúng Tôi</h2>
 
                 <!-- Nút Thêm Sản Phẩm (Dành cho Admin/Nhân viên) -->
                 <c:if test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
@@ -36,10 +44,9 @@
                     </div>
                 </c:if>
 
-                <!-- LƯỚI SẢN PHẨM ĐỘNG TỪ DATABASE -->
+                <!-- LƯỚI SẢN PHẨM -->
                 <div class="product-grid">
 
-                    <%-- Duyệt qua danh sách productList được gửi từ Servlet --%>
                     <c:forEach items="${productList}" var="p">
                         <div class="product-card">
                             <div class="product-img">
@@ -56,42 +63,54 @@
                             <h3 class="product-title">${p.productName}</h3>
                             <div class="product-price">${p.basePrice} ₫</div>
 
-                            <!-- PHÂN QUYỀN NÚT BẤM -->
                             <c:choose>
                                 <c:when test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
                                     <div style="display: flex; gap: 10px;">
-                                        <!-- Gọi Modal Sửa và truyền dữ liệu thật của sản phẩm vào -->
                                         <button onclick="openProductModal('edit', '${p.productId}', '${p.productName}', '${p.basePrice}', '${p.description}', '${p.imageBase64}')" class="btn-view" style="flex: 1; background: #3b82f6; border: none; cursor: pointer;">
                                             <i class="fa-solid fa-pen"></i> Sửa
                                         </button>
-                                        <!-- Gọi Modal Xóa -->
                                         <button onclick="openDeleteModal('${p.productId}')" class="btn-view" style="flex: 1; background: #ef4444; border: none; cursor: pointer;">
                                             <i class="fa-solid fa-trash"></i> Xóa
                                         </button>
                                     </div>
                                 </c:when>
                                 <c:otherwise>
-                                    <a href="#" class="btn-view"><i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng</a>
+                                    <div style="display: flex; gap: 10px;">
+                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.productId}" class="btn-view" style="flex: 1; background: #4a5568; border-color: #4a5568;">
+                                            <i class="fa-solid fa-eye"></i> Xem
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1;">
+                                            <i class="fa-solid fa-cart-plus"></i> Mua
+                                        </a>
+                                    </div>
                                 </c:otherwise>
                             </c:choose>
                         </div>
                     </c:forEach>
 
-                    <!-- Nếu chưa có sản phẩm nào trong DB -->
                     <c:if test="${empty productList}">
-                        <p style="color: #94a3b8; grid-column: 1 / -1; text-align: center;">Chưa có sản phẩm nào trong cửa hàng. Hãy thêm sản phẩm mới!</p>
+                        <p style="color: #94a3b8; grid-column: 1 / -1; text-align: center; padding: 40px 0;">Không tìm thấy sản phẩm nào phù hợp.</p>
                     </c:if>
 
-                </div> <!-- Đóng thẻ product-grid -->
+                </div> 
+
+                <!-- Phân trang tĩnh (Ví dụ) -->
+                <div style="margin-top: 30px; display: flex; justify-content: center; gap: 8px;">
+                    <button style="padding: 8px 12px; background: #ff4757; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">1</button>
+                    <button style="padding: 8px 12px; background: #1e2336; color: #cbd5e1; border: 1px solid #334155; border-radius: 4px; cursor: pointer;">2</button>
+                    <button style="padding: 8px 12px; background: #1e2336; color: #cbd5e1; border: 1px solid #334155; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+
             </div>
         </div>
+
+        <!-- NHÚNG FOOTER -->
         <jsp:include page="includes/footer.jsp" />
 
         <!-- =============================================================== -->
-        <!-- CÁC MODAL (POPUP GIAO DIỆN CHÌM) SẼ NẰM Ở ĐÂY -->
+        <!-- MODAL (GIỐNG TRANG CHỦ) ĐỂ THÊM/SỬA/XÓA NGAY TẠI CHỖ -->
         <!-- =============================================================== -->
 
-        <!-- 1. MODAL THÊM / SỬA SẢN PHẨM -->
         <div class="modal-overlay" id="productModal">
             <div class="modal-content form-box" style="margin: 0;">
                 <div class="modal-header">
@@ -102,8 +121,6 @@
                 <form action="${pageContext.request.contextPath}/admin/saveProduct" method="POST">
                     <input type="hidden" name="actionType" id="actionType" value="add">
                     <input type="hidden" name="productId" id="modalProductId" value="">
-
-                    <!-- Nơi chứa mã Base64 cực dài -->
                     <input type="hidden" name="imageBase64" id="imageBase64" value="">
 
                     <div class="form-group">
@@ -115,14 +132,18 @@
                         <input type="number" name="basePrice" id="modalProductPrice" required>
                     </div>
 
-                    <!-- BỔ SUNG TRƯỜNG CHI TIẾT SẢN PHẨM Ở ĐÂY -->
+                    <div class="form-group">
+                        <label>Số lượng kho</label>
+                        <input type="number" name="stockQuantity" id="modalProductStock" min="0" required>
+                    </div>
+
                     <div class="form-group">
                         <label>Chi tiết sản phẩm</label>
                         <textarea name="description" id="modalProductDesc" rows="4" placeholder="Nhập cấu hình, mô tả..." style="resize: vertical;"></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label>Hình ảnh sản phẩm (Sẽ tự mã hóa Base64)</label>
+                        <label>Hình ảnh sản phẩm</label>
                         <input type="file" id="imageInput" accept="image/*">
                         <div style="margin-top: 10px; text-align: center;">
                             <img id="imagePreview" src="" style="max-height: 100px; display: none; border-radius: 6px; border: 1px solid #334155;">
@@ -134,7 +155,6 @@
             </div>
         </div>
 
-        <!-- 2. MODAL XÁC NHẬN XÓA -->
         <div class="modal-overlay" id="deleteModal">
             <div class="modal-content form-box" style="margin: 0; width: 350px; text-align: center;">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 50px; color: #ff4757; margin-bottom: 15px;"></i>
@@ -149,18 +169,14 @@
             </div>
         </div>
 
-        <!-- ================= SCRIPT XỬ LÝ POPUP & ĐỔI ẢNH ================= -->
         <script>
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = 'none';
             }
-
             function openDeleteModal(id) {
                 document.getElementById('deleteProductId').value = id;
                 document.getElementById('deleteModal').style.display = 'flex';
             }
-
-            // Bổ sung tham số desc vào hàm
             function openProductModal(type, id = '', name = '', price = '', desc = '', base64 = '') {
                 const modal = document.getElementById('productModal');
                 const title = document.getElementById('modalTitle');
@@ -168,12 +184,10 @@
                 const preview = document.getElementById('imagePreview');
                 const inputBase64 = document.getElementById('imageBase64');
 
-                // Gán dữ liệu vào form
                 document.getElementById('modalProductId').value = id;
                 document.getElementById('modalProductName').value = name;
                 document.getElementById('modalProductPrice').value = price;
-
-                // Gán dữ liệu cho trường Mô tả mới thêm
+                document.getElementById('modalProductStock').value = stock;
                 document.getElementById('modalProductDesc').value = desc;
 
                 try {
@@ -200,7 +214,6 @@
                 modal.style.display = 'flex';
             }
 
-            // Chuyển ảnh thành Base64
             document.getElementById('imageInput').addEventListener('change', function (event) {
                 const file = event.target.files[0];
                 if (file) {

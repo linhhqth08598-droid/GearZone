@@ -60,7 +60,7 @@ public class AuthServlet extends HttpServlet {
                 session.setAttribute("userAcc", loggedInUser);
 
                 // MỌI TÀI KHOẢN (bao gồm cả Admin RoleID=1) ĐỀU CHUYỂN VỀ TRANG CHỦ
-                response.sendRedirect(request.getContextPath() + "/views/trangChu.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
             } else {
                 // Đăng nhập thất bại, trả về lại trang login kèm thông báo lỗi
                 request.setAttribute("error", "Sai tài khoản hoặc mật khẩu!");

@@ -11,8 +11,10 @@ public class ProductService {
         return productDAO.getAllProducts();
     }
 
-    public boolean saveProduct(String actionType, int productId, String name, double price, String desc, String base64) {
-        Product p = new Product(productId, name, price, desc, base64);
+    // Đã bổ sung thêm int stock vào tham số
+    public boolean saveProduct(String actionType, int productId, String name, double price, int stock, String desc, String base64) {
+        // Khởi tạo đối tượng Product khớp hoàn toàn với Constructor có 6 tham số
+        Product p = new Product(productId, name, price, stock, desc, base64);
         
         if (actionType.equals("add")) {
             return productDAO.insertProduct(p);

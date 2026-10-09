@@ -70,8 +70,19 @@
                                         </button>
                                     </div>
                                 </c:when>
+
+                                <%-- DÀNH CHO KHÁCH HÀNG HOẶC NGƯỜI CHƯA ĐĂNG NHẬP --%>
                                 <c:otherwise>
-                                    <a href="#" class="btn-view"><i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng</a>
+                                    <div style="display: flex; gap: 10px;">
+                                        <!-- Nút Xem chi tiết -->
+                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.productId}" class="btn-view" style="flex: 1; background: #4a5568; border-color: #4a5568;">
+                                            <i class="fa-solid fa-eye"></i> Xem
+                                        </a>
+                                        <!-- Nút Thêm Giỏ Hàng -->
+                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1;">
+                                            <i class="fa-solid fa-cart-plus"></i> Mua
+                                        </a>
+                                    </div>
                                 </c:otherwise>
                             </c:choose>
                         </div>
@@ -113,6 +124,11 @@
                     <div class="form-group">
                         <label>Giá bán (VND)</label>
                         <input type="number" name="basePrice" id="modalProductPrice" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Số lượng kho</label>
+                        <input type="number" name="stockQuantity" id="modalProductStock" min="0" required>
                     </div>
 
                     <!-- BỔ SUNG TRƯỜNG CHI TIẾT SẢN PHẨM Ở ĐÂY -->
@@ -172,6 +188,7 @@
                 document.getElementById('modalProductId').value = id;
                 document.getElementById('modalProductName').value = name;
                 document.getElementById('modalProductPrice').value = price;
+                document.getElementById('modalProductStock').value = stock;
 
                 // Gán dữ liệu cho trường Mô tả mới thêm
                 document.getElementById('modalProductDesc').value = desc;

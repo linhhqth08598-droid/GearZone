@@ -25,6 +25,8 @@ public class HomeServlet extends HttpServlet {
         // Gán danh sách vào request để jsp dùng vòng lặp <c:forEach>
         request.setAttribute("productList", listP);
         
+        request.setAttribute("activeMenu", "home");
+        
         // Chuyển hướng hiển thị ra giao diện
         request.getRequestDispatcher("/views/trangChu.jsp").forward(request, response);
     }
