@@ -2,61 +2,39 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Đặt Lại Mật Khẩu - GearZone</title>
-  <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/views/images/GearZone.png">
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/views/css/style.css">
-  <!-- Thêm thư viện FontAwesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <title>Quên Mật Khẩu - GearZone</title>
+    <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/views/images/GearZone.png">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/views/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <div class="container">
-    <div class="form-box">
-      <h2 style="color: #fff; margin-bottom: 20px; text-align: center;">Tạo Mật Khẩu Mới</h2>
-      
-      <% String error = (String) request.getAttribute("error"); 
-         if (error != null) { %>
-          <p style="color: #ff4757; text-align: center;"><%= error %></p>
-      <% } %>
+    <div class="container">
+        <div class="form-box">
+            <h2 style="color: #fff; margin-bottom: 20px; text-align: center;">Quên Mật Khẩu</h2>
+            <p style="color: #cbd5e1; font-size: 14px; text-align: center; margin-bottom: 20px;">
+                Vui lòng nhập địa chỉ email tài khoản của bạn để nhận mã xác thực (OTP).
+            </p>
 
-      <form action="${pageContext.request.contextPath}/reset-password" method="post">
-        <!-- Chứa Email dạng ẩn để biết đổi pass cho ai -->
-        <input type="hidden" name="email" value="${email}"> 
+            <% String error = (String) request.getAttribute("error"); 
+               if (error != null) { %>
+                <p style="color: #ff4757; text-align: center; margin-bottom: 15px;"><%= error %></p>
+            <% } %>
 
-        <div class="form-group">
-          <label>Mật khẩu mới</label>
-          <div class="password-wrapper">
-            <input type="password" name="newPassword" id="newPassword" required placeholder="Nhập mật khẩu mới...">
-            <i class="fa-regular fa-eye toggle-password" onclick="toggleVisibility('newPassword', this)"></i>
-          </div>
+            <form action="${pageContext.request.contextPath}/fgpassword" method="post">
+                <div class="form-group">
+                    <label>Địa chỉ Email</label>
+                    <input type="email" name="email" required placeholder="Nhập email của bạn...">
+                </div>
+                <button type="submit" class="btn-submit">Nhận Mã OTP</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="${pageContext.request.contextPath}/login" style="color: #94a3b8; font-size: 14px; text-decoration: none;">
+                    Quay lại đăng nhập
+                </a>
+            </div>
         </div>
-
-        <div class="form-group">
-          <label>Xác nhận mật khẩu mới</label>
-          <div class="password-wrapper">
-            <input type="password" name="confirmNewPassword" id="confirmNewPassword" required placeholder="Nhập lại mật khẩu mới...">
-            <i class="fa-regular fa-eye toggle-password" onclick="toggleVisibility('confirmNewPassword', this)"></i>
-          </div>
-        </div>
-
-        <button type="submit" class="btn-submit">Lưu Mật Khẩu</button>
-      </form>
     </div>
-  </div>
-
-  <script>
-    function toggleVisibility(inputId, iconElement) {
-        const input = document.getElementById(inputId);
-        if (input.type === "password") {
-            input.type = "text";
-            iconElement.classList.remove("fa-eye");
-            iconElement.classList.add("fa-eye-slash");
-        } else {
-            input.type = "password";
-            iconElement.classList.remove("fa-eye-slash");
-            iconElement.classList.add("fa-eye");
-        }
-    }
-  </script>
 </body>
 </html>
