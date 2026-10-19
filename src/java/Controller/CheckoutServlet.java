@@ -170,7 +170,7 @@ public class CheckoutServlet extends HttpServlet {
             if (orderCode != null) {
                 session.removeAttribute("appliedPromo"); // Xóa mã KM đã dùng
                 
-                // Nếu chọn VNPAY -> Chuyển sang trang mã QR
+                // Nếu chọn VNPAY -> Chuyển sang trang mã QR của bạn
                 if ("VNPAY".equals(paymentMethod)) {
                     response.sendRedirect(request.getContextPath() + "/payment-qr?code=" + orderCode + "&amount=" + (long)finalAmount);
                 } else {

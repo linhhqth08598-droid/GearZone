@@ -10,13 +10,22 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/css/style.css?v=2.0">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+        <style>
+            .product-card {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .product-title {
+                flex-grow: 1; 
+            }
+        </style>
     </head>
     <body>
         <jsp:include page="includes/header.jsp" />
         <div class="container main-layout">
             <div class="layout-left"><jsp:include page="includes/sidebar.jsp" /></div>
             <div class="layout-right">
-                <!-- Nút thêm Slider cho Admin -->
                 <c:if test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
                     <div style="margin-bottom: 15px;">
                         <button onclick="document.getElementById('sliderModal').style.display = 'flex'" class="btn-submit" style="width: auto; display: inline-block; background-color: #3b82f6;">
@@ -25,14 +34,11 @@
                     </div>
                 </c:if>
 
-                <!-- Swiper Slider -->
                 <div class="swiper mySwiper" style="width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 40px; border: 1px solid #2d3748;">
                     <div class="swiper-wrapper">
                         <c:forEach items="${sliderList}" var="s">
                             <div class="swiper-slide" style="position: relative;">
                                 <img src="${s.imageBase64}" alt="${s.title}" style="width: 100%; height: 480px; object-fit: contain; background-color: #11141e;">
-
-                                <!-- Nút Xóa dành cho Admin, nổi trên ảnh -->
                                 <c:if test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
                                     <form action="${pageContext.request.contextPath}/admin/deleteSlider" method="POST" style="position: absolute; top: 15px; right: 15px; z-index: 10;">
                                         <input type="hidden" name="sliderId" value="${s.sliderId}">
@@ -43,8 +49,6 @@
                                 </c:if>
                             </div>
                         </c:forEach>
-
-                        <!-- Nếu Database chưa có ảnh nào thì hiện mặc định -->
                         <c:if test="${empty sliderList}">
                             <div class="swiper-slide">
                                 <div class="slider-placeholder" style="margin: 0; border: none;">
@@ -56,7 +60,6 @@
                             </div>
                         </c:if>
                     </div>
-                    <!-- Các nút điều hướng của Swiper -->
                     <div class="swiper-button-next" style="color: #ff4757;"></div>
                     <div class="swiper-button-prev" style="color: #ff4757;"></div>
                     <div class="swiper-pagination"></div>
@@ -72,28 +75,31 @@
                     </div>
                 </c:if>
 
-                <!-- LƯỚI SẢN PHẨM ĐÃ FIX LỖI 500 -->
                 <div class="product-grid">
                     <c:forEach items="${productList}" var="p">
                         <div class="product-card">
-                            <div class="product-img">
-                                <c:choose>
-                                    <c:when test="${not empty p.imageBase64}">
-                                        <img src="${p.imageBase64}" alt="${p.productName}" style="max-height: 140px; max-width: 100%;">
-                                    </c:when>
-                                    <c:otherwise>
-                                        <i class="fa-solid fa-box-open" style="font-size: 60px;"></i>
-                                    </c:otherwise>
-                                </c:choose>
-                            </div>
-                            <h3 class="product-title">${p.productName}</h3>
+                            <!-- Bấm vào ảnh hoặc tiêu đề để XEM CHI TIẾT -->
+                            <a href="${pageContext.request.contextPath}/product-detail?id=${p.productId}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; flex-grow: 1;">
+                                <div class="product-img">
+                                    <c:choose>
+                                        <c:when test="${not empty p.imageBase64}">
+                                            <img src="${p.imageBase64}" alt="${p.productName}" style="max-height: 140px; max-width: 100%;">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <i class="fa-solid fa-box-open" style="font-size: 60px;"></i>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <h3 class="product-title">${p.productName}</h3>
+                            </a>
                             <div class="product-price">
                                 <fmt:setLocale value="vi_VN"/>
                                 <fmt:formatNumber value="${p.basePrice}" pattern="#,###"/> ₫
                             </div>
+                            
                             <c:choose>
                                 <c:when test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
-                                    <div style="display: flex; gap: 10px;">
+                                    <div style="display: flex; gap: 10px; margin-top: auto;">
                                         <button onclick="openProductModal('edit', '${p.productId}', '${p.categoryId}', '${p.brandId}', '${p.productName}', '${p.basePrice}', '${p.stockQuantity}', '${p.description}', '${p.imageBase64}')" class="btn-view" style="flex: 1; background: #3b82f6; border: none; cursor: pointer;">
                                             <i class="fa-solid fa-pen"></i> Sửa
                                         </button>
@@ -103,12 +109,14 @@
                                     </div>
                                 </c:when>
                                 <c:otherwise>
-                                    <div style="display: flex; gap: 10px;">
-                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.productId}" class="btn-view" style="flex: 1; background: #4a5568; border-color: #4a5568;">
-                                            <i class="fa-solid fa-eye"></i> Xem
+                                    <div style="display: flex; gap: 10px; margin-top: auto;">
+                                        <!-- Nút Thêm Giỏ Hàng -->
+                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1; background: #3b82f6; border-color: #3b82f6; padding: 10px 5px; font-size: 13px;">
+                                            <i class="fa-solid fa-cart-plus"></i> Thêm Giỏ
                                         </a>
-                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1;">
-                                            <i class="fa-solid fa-cart-plus"></i> Mua
+                                        <!-- Nút Mua Ngay (Vào thẳng trang mua thanh toán / COD / VNPAY) -->
+                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1; background: #ff4757; border-color: #ff4757; padding: 10px 5px; font-size: 13px;">
+                                            <i class="fa-solid fa-bolt"></i> Mua Ngay
                                         </a>
                                     </div>
                                 </c:otherwise>
@@ -123,7 +131,6 @@
         </div>
         <jsp:include page="includes/footer.jsp" />
 
-        <!-- MODAL THÊM / SỬA -->
         <div class="modal-overlay" id="productModal">
             <div class="modal-content form-box" style="margin: 0; width: 500px;">
                 <div class="modal-header">
@@ -134,10 +141,7 @@
                     <input type="hidden" name="actionType" id="actionType" value="add">
                     <input type="hidden" name="productId" id="modalProductId" value="">
                     <input type="hidden" name="imageBase64" id="imageBase64" value="">
-
                     <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-
-                        <!-- CHỌN DANH MỤC (Lấy động 100% từ SQL) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Loại sản phẩm (Danh mục)</label>
                             <select name="categoryId" id="modalProductCategory" required>
@@ -147,8 +151,6 @@
                                 </c:forEach>
                             </select>
                         </div>
-
-                        <!-- CHỌN HÃNG (Lấy động 100% từ SQL kèm data-category để Javascript lọc) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Thương hiệu (Hãng)</label>
                             <select name="brandId" id="modalProductBrand" required>
@@ -158,9 +160,7 @@
                                 </c:forEach>
                             </select>
                         </div>
-
                     </div>
-
                     <div class="form-group">
                         <label>Tên sản phẩm</label>
                         <input type="text" name="productName" id="modalProductName" required>
@@ -190,7 +190,7 @@
                 </form>
             </div>
         </div>
-        <!-- MODAL THÊM SLIDER -->
+        
         <div class="modal-overlay" id="sliderModal">
             <div class="modal-content form-box" style="margin: 0; width: 400px;">
                 <div class="modal-header">
@@ -199,7 +199,6 @@
                 </div>
                 <form action="${pageContext.request.contextPath}/admin/saveSlider" method="POST">
                     <input type="hidden" name="sliderBase64" id="sliderBase64" value="">
-
                     <div class="form-group">
                         <label>Tiêu đề / Ghi chú</label>
                         <input type="text" name="sliderTitle" required>
@@ -216,7 +215,6 @@
             </div>
         </div>
 
-        <!-- MODAL XÓA -->
         <div class="modal-overlay" id="deleteModal">
             <div class="modal-content form-box" style="margin: 0; width: 350px; text-align: center;">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 50px; color: #ff4757; margin-bottom: 15px;"></i>
@@ -238,7 +236,6 @@
                 document.getElementById('deleteProductId').value = id;
                 document.getElementById('deleteModal').style.display = 'flex';
             }
-            // Thêm catId và brandId vào tham số
             function openProductModal(type, id = '', catId = '', brandId = '', name = '', price = '', stock = '', desc = '', base64 = '') {
                 const modal = document.getElementById('productModal');
                 const title = document.getElementById('modalTitle');
@@ -267,10 +264,8 @@
                     title.innerText = 'Sửa Sản Phẩm';
                     actionType.value = 'edit';
                     inputBase64.value = base64;
-
-                    // THÊM 3 DÒNG NÀY ĐỂ TỰ ĐỘNG CHỌN LOẠI VÀ HÃNG
                     document.getElementById('modalProductCategory').value = catId;
-                    document.getElementById('modalProductCategory').dispatchEvent(new Event('change')); // Kích hoạt bộ lọc hãng
+                    document.getElementById('modalProductCategory').dispatchEvent(new Event('change')); 
                     document.getElementById('modalProductBrand').value = brandId;
 
                     if (base64 !== '') {
@@ -298,7 +293,7 @@
                 }
             });
         </script>
-        <!-- THÔNG BÁO POPUP THÀNH CÔNG / THẤT BẠI -->
+        
         <c:if test="${not empty sessionScope.errorMsg}">
             <script>alert('${sessionScope.errorMsg}');</script>
             <c:remove var="errorMsg" scope="session" />
@@ -308,16 +303,15 @@
             <script>alert('${sessionScope.successMsg}');</script>
             <c:remove var="successMsg" scope="session" />
         </c:if>
-        <!-- Thư viện JS Swiper -->
+        
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
         <script>
-                // Khởi chạy Swiper Slider
                 var swiper = new Swiper(".mySwiper", {
                     spaceBetween: 30,
                     centeredSlides: true,
-                    grabCursor: true, // Hiển thị icon bàn tay, cho phép vuốt/kéo thả
-                    loop: true, // THÊM DÒNG NÀY ĐỂ SLIDER CHẠY LẶP VÒNG
+                    grabCursor: true, 
+                    loop: true, 
                     autoplay: {
                         delay: 3500,
                         disableOnInteraction: false,
@@ -332,7 +326,6 @@
                     },
                 });
 
-                // Xử lý chuyển ảnh Slider thành Base64
                 document.getElementById('sliderImageInput').addEventListener('change', function (event) {
                     const file = event.target.files[0];
                     if (file) {

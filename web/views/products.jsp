@@ -9,6 +9,16 @@
         <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/views/images/GearZone.png">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/css/style.css?v=2.1">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            .product-card {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .product-title {
+                flex-grow: 1; 
+            }
+        </style>
     </head>
     <body>
         <jsp:include page="includes/header.jsp" />
@@ -31,23 +41,26 @@
                 <div class="product-grid">
                     <c:forEach items="${productList}" var="p">
                         <div class="product-card">
-                            <div class="product-img">
-                                <c:choose>
-                                    <c:when test="${not empty p.imageBase64}">
-                                        <img src="${p.imageBase64}" alt="${p.productName}" style="max-height: 140px; max-width: 100%;">
-                                    </c:when>
-                                    <c:otherwise><i class="fa-solid fa-box-open" style="font-size: 60px;"></i></c:otherwise>
-                                </c:choose>
-                            </div>
-                            <h3 class="product-title">${p.productName}</h3>
+                            <!-- Bấm vào ảnh hoặc tiêu đề để XEM CHI TIẾT -->
+                            <a href="${pageContext.request.contextPath}/product-detail?id=${p.productId}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; flex-grow: 1;">
+                                <div class="product-img">
+                                    <c:choose>
+                                        <c:when test="${not empty p.imageBase64}">
+                                            <img src="${p.imageBase64}" alt="${p.productName}" style="max-height: 140px; max-width: 100%;">
+                                        </c:when>
+                                        <c:otherwise><i class="fa-solid fa-box-open" style="font-size: 60px;"></i></c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <h3 class="product-title">${p.productName}</h3>
+                            </a>
                             <div class="product-price">
                                 <fmt:setLocale value="vi_VN"/>
                                 <fmt:formatNumber value="${p.basePrice}" pattern="#,###"/> ₫
                             </div>
+                            
                             <c:choose>
                                 <c:when test="${not empty sessionScope.userAcc and sessionScope.userAcc.roleId <= 3}">
-                                    <div style="display: flex; gap: 10px;">
-                                        <!-- Dữ liệu truyền vào hàm JS -->
+                                    <div style="display: flex; gap: 10px; margin-top: auto;">
                                         <button onclick="openProductModal('edit', '${p.productId}', '${p.categoryId}', '${p.brandId}', '${p.productName}', '${p.basePrice}', '${p.stockQuantity}', '${p.description}', '${p.imageBase64}')" class="btn-view" style="flex: 1; background: #3b82f6; border: none; cursor: pointer;">
                                             <i class="fa-solid fa-pen"></i> Sửa
                                         </button>
@@ -57,12 +70,14 @@
                                     </div>
                                 </c:when>
                                 <c:otherwise>
-                                    <div style="display: flex; gap: 10px;">
-                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.productId}" class="btn-view" style="flex: 1; background: #4a5568; border-color: #4a5568;">
-                                            <i class="fa-solid fa-eye"></i> Xem
+                                    <div style="display: flex; gap: 10px; margin-top: auto;">
+                                        <!-- Nút Thêm Giỏ Hàng -->
+                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1; background: #3b82f6; border-color: #3b82f6; padding: 10px 5px; font-size: 13px;">
+                                            <i class="fa-solid fa-cart-plus"></i> Thêm Giỏ
                                         </a>
-                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1;">
-                                            <i class="fa-solid fa-cart-plus"></i> Mua
+                                        <!-- Nút Mua Ngay (Vào thẳng trang mua thanh toán / COD / VNPAY) -->
+                                        <a href="${pageContext.request.contextPath}/add-to-cart?id=${p.productId}" class="btn-view" style="flex: 1; background: #ff4757; border-color: #ff4757; padding: 10px 5px; font-size: 13px;">
+                                            <i class="fa-solid fa-bolt"></i> Mua Ngay
                                         </a>
                                     </div>
                                 </c:otherwise>
@@ -92,8 +107,6 @@
                     <input type="hidden" name="imageBase64" id="imageBase64" value="">
 
                     <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-
-                        <!-- CHỌN DANH MỤC (Lấy động 100% từ SQL) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Loại sản phẩm (Danh mục)</label>
                             <select name="categoryId" id="modalProductCategory" required>
@@ -104,7 +117,6 @@
                             </select>
                         </div>
 
-                        <!-- CHỌN HÃNG (Lấy động 100% từ SQL kèm data-category để Javascript lọc) -->
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
                             <label>Thương hiệu (Hãng)</label>
                             <select name="brandId" id="modalProductBrand" required>
@@ -114,7 +126,6 @@
                                 </c:forEach>
                             </select>
                         </div>
-
                     </div>
 
                     <div class="form-group">
@@ -167,7 +178,6 @@
                 document.getElementById('deleteProductId').value = id;
                 document.getElementById('deleteModal').style.display = 'flex';
             }
-            // Thêm catId và brandId vào tham số
             function openProductModal(type, id = '', catId = '', brandId = '', name = '', price = '', stock = '', desc = '', base64 = '') {
                 const modal = document.getElementById('productModal');
                 const title = document.getElementById('modalTitle');
@@ -196,10 +206,8 @@
                     title.innerText = 'Sửa Sản Phẩm';
                     actionType.value = 'edit';
                     inputBase64.value = base64;
-
-                    // THÊM 3 DÒNG NÀY ĐỂ TỰ ĐỘNG CHỌN LOẠI VÀ HÃNG
                     document.getElementById('modalProductCategory').value = catId;
-                    document.getElementById('modalProductCategory').dispatchEvent(new Event('change')); // Kích hoạt bộ lọc hãng
+                    document.getElementById('modalProductCategory').dispatchEvent(new Event('change'));
                     document.getElementById('modalProductBrand').value = brandId;
 
                     if (base64 !== '') {
@@ -227,7 +235,7 @@
                 }
             });
         </script>
-        <!-- THÔNG BÁO POPUP THÀNH CÔNG / THẤT BẠI -->
+        
         <c:if test="${not empty sessionScope.errorMsg}">
             <script>alert('${sessionScope.errorMsg}');</script>
             <c:remove var="errorMsg" scope="session" />
