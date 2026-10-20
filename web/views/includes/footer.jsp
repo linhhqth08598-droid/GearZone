@@ -9,7 +9,7 @@
             <h4 style="color: #fff; margin-bottom: 15px;">Liên Hệ</h4>
             <p><i class="fa-solid fa-location-dot"></i> FPT Polytechnic, Hà Nội</p>
             <p><i class="fa-solid fa-phone"></i> 0333.588.329</p>
-            <p><i class="fa-solid fa-envelope"></i> hotro@gearzone.vn</p>
+            <p><i class="fa-solid fa-envelope"></i> hotro.gearzone.vn@uki.io.vn</p>
         </div>
     </div>
     <div style="border-top: 1px solid #242938; padding-top: 20px;">
