@@ -18,12 +18,12 @@ public class Coupons {
     private Double maxDiscountAmount;
     private Integer applicableCategoryId;
     private Integer applicableBrandId;
-    private Boolean isActive;
+    private String status;
 
     public Coupons() {
     }
 
-    public Coupons(Integer couponId, String code, String couponName, String discountType, Double discountValue, Double minOrderValue, Date startDate, Date endDate, Integer usageLimit, Integer perUserLimit, Integer usedCount, Double maxDiscountAmount, Integer applicableCategoryId, Integer applicableBrandId, Boolean isActive) {
+    public Coupons(Integer couponId, String code, String couponName, String discountType, Double discountValue, Double minOrderValue, Date startDate, Date endDate, Integer usageLimit, Integer perUserLimit, Integer usedCount, Double maxDiscountAmount, Integer applicableCategoryId, Integer applicableBrandId, String status) {
         this.couponId = couponId;
         this.code = code;
         this.couponName = couponName;
@@ -38,7 +38,7 @@ public class Coupons {
         this.maxDiscountAmount = maxDiscountAmount;
         this.applicableCategoryId = applicableCategoryId;
         this.applicableBrandId = applicableBrandId;
-        this.isActive = isActive;
+        this.status = status;
     }
 
     public Integer getCouponId() {
@@ -153,12 +153,12 @@ public class Coupons {
         this.applicableBrandId = applicableBrandId;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }

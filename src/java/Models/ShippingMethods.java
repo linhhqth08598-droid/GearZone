@@ -9,19 +9,19 @@ public class ShippingMethods {
     private String carrierCode;
     private Double baseFee;
     private Integer estimatedDays;
-    private Boolean isActive;
+    private String status;
 
     public ShippingMethods() {
     }
 
-    public ShippingMethods(Integer shippingMethodId, String methodCode, String methodName, String carrierCode, Double baseFee, Integer estimatedDays, Boolean isActive) {
+    public ShippingMethods(Integer shippingMethodId, String methodCode, String methodName, String carrierCode, Double baseFee, Integer estimatedDays, String status) {
         this.shippingMethodId = shippingMethodId;
         this.methodCode = methodCode;
         this.methodName = methodName;
         this.carrierCode = carrierCode;
         this.baseFee = baseFee;
         this.estimatedDays = estimatedDays;
-        this.isActive = isActive;
+        this.status = status;
     }
 
     public Integer getShippingMethodId() {
@@ -72,12 +72,12 @@ public class ShippingMethods {
         this.estimatedDays = estimatedDays;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }

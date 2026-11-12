@@ -15,14 +15,14 @@ public class Promotions {
     private Integer targetBrandId;
     private Date startDate;
     private Date endDate;
-    private Boolean isActive;
+    private String status;
     private Integer createdBy;
     private Date createdAt;
 
     public Promotions() {
     }
 
-    public Promotions(Integer promotionId, String promotionName, String promotionType, String discountType, Double discountValue, Double minOrderValue, Integer targetPartId, Integer targetCategoryId, Integer targetBrandId, Date startDate, Date endDate, Boolean isActive, Integer createdBy, Date createdAt) {
+    public Promotions(Integer promotionId, String promotionName, String promotionType, String discountType, Double discountValue, Double minOrderValue, Integer targetPartId, Integer targetCategoryId, Integer targetBrandId, Date startDate, Date endDate, String status, Integer createdBy, Date createdAt) {
         this.promotionId = promotionId;
         this.promotionName = promotionName;
         this.promotionType = promotionType;
@@ -34,7 +34,7 @@ public class Promotions {
         this.targetBrandId = targetBrandId;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.isActive = isActive;
+        this.status = status;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
     }
@@ -127,12 +127,12 @@ public class Promotions {
         this.endDate = endDate;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Integer getCreatedBy() {

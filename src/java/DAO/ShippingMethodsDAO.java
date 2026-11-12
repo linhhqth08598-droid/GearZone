@@ -24,7 +24,7 @@ public class ShippingMethodsDAO {
                     sm.setCarrierCode(rs.getString("carrier_code"));
                     sm.setBaseFee(rs.getDouble("base_fee"));
                     sm.setEstimatedDays(rs.getInt("estimated_days"));
-                    sm.setIsActive(rs.getBoolean("is_active"));
+                    sm.setStatus(rs.getString("status"));
                     list.add(sm);
                 }
             }

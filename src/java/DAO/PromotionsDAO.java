@@ -29,7 +29,7 @@ public class PromotionsDAO {
                     p.setTargetBrandId(rs.getInt("target_brand_id"));
                     p.setStartDate(rs.getDate("start_date"));
                     p.setEndDate(rs.getDate("end_date"));
-                    p.setIsActive(rs.getBoolean("is_active"));
+                    p.setStatus(rs.getString("status"));
                     p.setCreatedBy(rs.getInt("created_by"));
                     p.setCreatedAt(rs.getDate("created_at"));
                     list.add(p);

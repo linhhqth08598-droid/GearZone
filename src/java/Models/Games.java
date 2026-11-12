@@ -13,12 +13,12 @@ public class Games {
     private Integer recommendedCpuScore;
     private Integer minGpuScore;
     private Integer recommendedGpuScore;
-    private Boolean isActive;
+    private String status;
 
     public Games() {
     }
 
-    public Games(Integer gameId, String gameName, String genre, String coverUrl, Integer minRamGb, Integer recommendedRamGb, Integer minCpuScore, Integer recommendedCpuScore, Integer minGpuScore, Integer recommendedGpuScore, Boolean isActive) {
+    public Games(Integer gameId, String gameName, String genre, String coverUrl, Integer minRamGb, Integer recommendedRamGb, Integer minCpuScore, Integer recommendedCpuScore, Integer minGpuScore, Integer recommendedGpuScore, String status) {
         this.gameId = gameId;
         this.gameName = gameName;
         this.genre = genre;
@@ -29,7 +29,7 @@ public class Games {
         this.recommendedCpuScore = recommendedCpuScore;
         this.minGpuScore = minGpuScore;
         this.recommendedGpuScore = recommendedGpuScore;
-        this.isActive = isActive;
+        this.status = status;
     }
 
     public Integer getGameId() {
@@ -112,12 +112,12 @@ public class Games {
         this.recommendedGpuScore = recommendedGpuScore;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }

@@ -28,7 +28,7 @@ public class GamesDAO {
                     g.setRecommendedCpuScore(rs.getInt("recommended_cpu_score"));
                     g.setMinGpuScore(rs.getInt("min_gpu_score"));
                     g.setRecommendedGpuScore(rs.getInt("recommended_gpu_score"));
-                    g.setIsActive(rs.getBoolean("is_active"));
+                    g.setStatus(rs.getString("status"));
                     list.add(g);
                 }
             }

@@ -9,20 +9,20 @@ public class ComboPromotions {
     private Double discountPercentage;
     private Integer minPartsCount;
     private String comboType;
-    private Boolean isActive;
+    private String status;
     private Date startDate;
     private Date endDate;
 
     public ComboPromotions() {
     }
 
-    public ComboPromotions(Integer comboId, String comboName, Double discountPercentage, Integer minPartsCount, String comboType, Boolean isActive, Date startDate, Date endDate) {
+    public ComboPromotions(Integer comboId, String comboName, Double discountPercentage, Integer minPartsCount, String comboType, String status, Date startDate, Date endDate) {
         this.comboId = comboId;
         this.comboName = comboName;
         this.discountPercentage = discountPercentage;
         this.minPartsCount = minPartsCount;
         this.comboType = comboType;
-        this.isActive = isActive;
+        this.status = status;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -67,12 +67,12 @@ public class ComboPromotions {
         this.comboType = comboType;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Date getStartDate() {

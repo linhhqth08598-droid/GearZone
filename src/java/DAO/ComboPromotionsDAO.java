@@ -23,7 +23,7 @@ public class ComboPromotionsDAO {
                     cp.setDiscountPercentage(rs.getDouble("discount_percentage"));
                     cp.setMinPartsCount(rs.getInt("min_parts_count"));
                     cp.setComboType(rs.getString("combo_type"));
-                    cp.setIsActive(rs.getBoolean("is_active"));
+                    cp.setStatus(rs.getString("status"));
                     cp.setStartDate(rs.getDate("start_date"));
                     cp.setEndDate(rs.getDate("end_date"));
                     list.add(cp);

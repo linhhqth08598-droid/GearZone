@@ -32,7 +32,7 @@ public class CouponsDAO {
                     c.setMaxDiscountAmount(rs.getDouble("max_discount_amount"));
                     c.setApplicableCategoryId(rs.getInt("applicable_category_id"));
                     c.setApplicableBrandId(rs.getInt("applicable_brand_id"));
-                    c.setIsActive(rs.getBoolean("is_active"));
+                    c.setStatus(rs.getString("status"));
                     list.add(c);
                 }
             }

@@ -25,7 +25,7 @@ public class CompatibilityRulesDAO {
                     cr.setCheckType(rs.getString("check_type"));
                     cr.setErrorMessage(rs.getString("error_message"));
                     cr.setSeverity(rs.getString("severity"));
-                    cr.setIsActive(rs.getBoolean("is_active"));
+                    cr.setStatus(rs.getString("status"));
                     list.add(cr);
                 }
             }

@@ -10,12 +10,12 @@ public class CompatibilityRules {
     private String checkType;
     private String errorMessage;
     private String severity;
-    private Boolean isActive;
+    private String status;
 
     public CompatibilityRules() {
     }
 
-    public CompatibilityRules(Integer ruleId, String ruleName, Integer primaryCategoryId, Integer targetCategoryId, String checkType, String errorMessage, String severity, Boolean isActive) {
+    public CompatibilityRules(Integer ruleId, String ruleName, Integer primaryCategoryId, Integer targetCategoryId, String checkType, String errorMessage, String severity, String status) {
         this.ruleId = ruleId;
         this.ruleName = ruleName;
         this.primaryCategoryId = primaryCategoryId;
@@ -23,7 +23,7 @@ public class CompatibilityRules {
         this.checkType = checkType;
         this.errorMessage = errorMessage;
         this.severity = severity;
-        this.isActive = isActive;
+        this.status = status;
     }
 
     public Integer getRuleId() {
@@ -82,12 +82,12 @@ public class CompatibilityRules {
         this.severity = severity;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }
