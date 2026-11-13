@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 import java.util.Properties;
 import jakarta.mail.Authenticator;

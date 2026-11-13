@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 /**
  * Tính toán phân trang cho danh sách.

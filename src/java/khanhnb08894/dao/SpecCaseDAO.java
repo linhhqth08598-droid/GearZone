@@ -1,7 +1,7 @@
 package khanhnb08894.dao;
 
-import model.SpecCase;
-import url.DBConnect;
+import fourSome.model.SpecCase;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

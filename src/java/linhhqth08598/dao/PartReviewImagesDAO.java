@@ -1,7 +1,7 @@
 package linhhqth08598.dao;
 
-import model.PartReviewImages;
-import url.DBConnect;
+import fourSome.model.PartReviewImages;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

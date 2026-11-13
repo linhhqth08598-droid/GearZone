@@ -1,7 +1,7 @@
 package khanhnb08894.dao;
 
-import model.SpecPeripheral;
-import url.DBConnect;
+import fourSome.model.SpecPeripheral;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

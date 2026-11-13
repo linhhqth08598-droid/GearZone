@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;

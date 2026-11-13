@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;

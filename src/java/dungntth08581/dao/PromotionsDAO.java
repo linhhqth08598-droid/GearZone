@@ -1,7 +1,7 @@
 package dungntth08581.dao;
 
-import model.Promotions;
-import url.DBConnect;
+import fourSome.model.Promotions;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

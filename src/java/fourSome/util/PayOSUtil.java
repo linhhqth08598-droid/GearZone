@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

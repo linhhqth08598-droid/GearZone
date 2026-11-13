@@ -1,7 +1,7 @@
 package dungntth08581.dao;
 
-import model.Payments;
-import url.DBConnect;
+import fourSome.model.Payments;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

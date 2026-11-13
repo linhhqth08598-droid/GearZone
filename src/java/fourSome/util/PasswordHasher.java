@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;

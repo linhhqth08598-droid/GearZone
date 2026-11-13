@@ -1,4 +1,4 @@
-package model;
+package fourSome.model;
 
 import java.util.Date;
 

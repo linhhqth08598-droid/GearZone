@@ -1,7 +1,7 @@
 package khanhnb08894.dao;
 
-import model.SupplierReturns;
-import url.DBConnect;
+import fourSome.model.SupplierReturns;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 package linhhqth08598.dao;
 
-import model.SocketTypes;
-import url.DBConnect;
+import fourSome.model.SocketTypes;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

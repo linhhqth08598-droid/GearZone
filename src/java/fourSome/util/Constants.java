@@ -1,4 +1,4 @@
-package util;
+package fourSome.util;
 
 /**
  * Các hằng số dùng chung toàn hệ thống GearZone.

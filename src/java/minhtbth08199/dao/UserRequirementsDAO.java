@@ -1,7 +1,7 @@
 package minhtbth08199.dao;
 
-import model.UserRequirements;
-import url.DBConnect;
+import fourSome.model.UserRequirements;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

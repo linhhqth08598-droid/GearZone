@@ -1,7 +1,7 @@
 package linhhqth08598.dao;
 
-import model.ShippingAddresses;
-import url.DBConnect;
+import fourSome.model.ShippingAddresses;
+import fourSome.url.DBConnect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
