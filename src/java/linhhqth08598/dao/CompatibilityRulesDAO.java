@@ -1,4 +1,4 @@
-package khanhnb08894.dao;
+package linhhqth08598.dao;
 
 import model.CompatibilityRules;
 import url.DBConnect;

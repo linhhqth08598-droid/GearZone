@@ -1,4 +1,4 @@
-package khanhnb08894.dao;
+package linhhqth08598.dao;
 
 import model.PartReviews;
 import url.DBConnect;

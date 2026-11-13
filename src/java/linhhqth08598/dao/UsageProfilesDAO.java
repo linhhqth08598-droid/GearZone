@@ -1,4 +1,4 @@
-package minhtbth08199.dao;
+package linhhqth08598.dao;
 
 import model.UsageProfiles;
 import url.DBConnect;
