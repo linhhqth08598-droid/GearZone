@@ -11,11 +11,11 @@ public class OTPGenerator {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /** Sinh OTP số với độ dài mặc định (6 chữ số). */
-    public static String generate() {
-        return generate(Constants.OTP_LENGTH);
+    public static String generateOTP() {
+        return generateOTP(Constants.OTP_LENGTH);
     }
 
-    public static String generate(int length) {
+    public static String generateOTP(int length) {
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             sb.append(RANDOM.nextInt(10));

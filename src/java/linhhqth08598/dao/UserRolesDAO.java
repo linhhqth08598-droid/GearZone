@@ -1,29 +1,20 @@
 package linhhqth08598.dao;
 
-import fourSome.model.UserRoles;
 import fourSome.url.DBConnect;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 public class UserRolesDAO {
-
-    public List<UserRoles> getAll() {
-        List<UserRoles> list = new ArrayList<>();
-        String sql = "SELECT * FROM [user_roles]";
-
-        try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                UserRoles obj = new UserRoles();
-                obj.setUserId(rs.getInt("user_id"));
-                obj.setRoleId(rs.getInt("role_id"));
-                obj.setAssignedAt(rs.getDate("assigned_at"));
-                obj.setStatus(rs.getString("status"));
-                list.add(obj);
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return list;
+    public boolean assignRole(int userId, int roleId) {
+        String sql = "INSERT INTO user_roles (user_id, role_id, assigned_at, status) VALUES (?, ?, GETDATE(), 'ACTIVE')";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, roleId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

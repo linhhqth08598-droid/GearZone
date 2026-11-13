@@ -10,14 +10,14 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 /**
- * Tiện ích gửi email qua SMTP (Gmail) bằng thư viện jakarta.mail.
- * Phục vụ gửi mã OTP xác nhận quên mật khẩu cho hệ thống GearZone.
+ * Tiện ích gửi email qua SMTP (Gmail) bằng thư viện jakarta.mail. Phục vụ gửi
+ * mã OTP xác nhận quên mật khẩu cho hệ thống GearZone.
  */
 public class EmailUtil {
 
     // ==== CẤU HÌNH TÀI KHOẢN GỬI ====
-    private static final String SENDER_EMAIL = "";
-    private static final String SENDER_APP_PASSWORD = ""; // App Password Gmail (để trống = chế độ DEV, in nội dung email ra console)
+    private static final String SENDER_EMAIL = "smartfarmmanage@gmail.com";
+    private static final String SENDER_APP_PASSWORD = "grxhduafxftczxjm"; // App Password Gmail
     private static final String SENDER_NAME = "GearZone Support";
 
     private static final String SMTP_HOST = "smtp.gmail.com";
@@ -72,44 +72,37 @@ public class EmailUtil {
         }
     }
 
-    /** 
-     * Gửi mã OTP xác nhận quên mật khẩu (GearZone Theme). 
+    /**
+     * Gửi mã OTP xác nhận quên mật khẩu (GearZone Theme).
      */
     public static void guiMaOTP(String toEmail, String hoTen, String maXacThuc, int soPhutHieuLuc) {
         String subject = "[GearZone] Mã Xác Thực Đặt Lại Mật Khẩu";
-        
-        // CSS Style đồng bộ với giao diện Dark Mode của web GearZone
-        String body = "<div style='font-family: \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; background-color: #0f1117; padding: 40px 20px;'>"
-                + "<div style='max-width: 500px; margin: 0 auto; background-color: #1a1d29; border: 1px solid #2d3748; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden;'>"
-                
-                // Header Email (Logo GearZone)
-                + "<div style='background-color: #1a1d29; border-bottom: 2px solid #ff4757; padding: 20px; text-align: center;'>"
-                + "<h2 style='margin: 0; font-size: 26px; font-weight: 800; color: #fff; letter-spacing: 1px;'>GEAR<span style='color: #ff4757;'>ZONE</span></h2>"
+
+        String body = "<div style='font-family: \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 30px 20px;'>"
+                + "<div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;'>"
+                // Header Email (Logo GearZone) - Thu gọn padding
+                + "<div style='background-color: #ffffff; border-bottom: 2px solid #ff4757; padding: 15px; text-align: center;'>"
+                + "<h2 style='margin: 0; font-size: 24px; font-weight: 800; color: #0f1117; letter-spacing: 1px;'>GEAR<span style='color: #ff4757;'>ZONE</span></h2>"
                 + "</div>"
-                
                 // Nội dung chính
-                + "<div style='padding: 30px 35px; color: #cbd5e1;'>"
-                + "<p style='margin-bottom: 15px; font-size: 15px;'>Xin chào <b style='color: #fff;'>" + safe(hoTen) + "</b>,</p>"
-                + "<p style='margin-bottom: 20px; font-size: 14px; line-height: 1.6;'>Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này. Dưới đây là mã xác thực OTP của bạn:</p>"
-                
-                // Hộp hiển thị mã OTP
-                + "<div style='background-color: #0f1117; border: 1px solid #334155; border-radius: 6px; padding: 20px; text-align: center; margin-bottom: 25px;'>"
-                + "<span style='font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #ff4757;'>" + safe(maXacThuc) + "</span>"
+                + "<div style='padding: 25px 30px; color: #334155;'>"
+                + "<p style='margin: 0 0 15px 0; font-size: 15px;'>Xin chào <b style='color: #0f1117;'>" + safe(hoTen) + "</b>,</p>"
+                + "<p style='margin: 0 0 20px 0; font-size: 14px; line-height: 1.5;'>Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này. Dưới đây là mã xác thực OTP của bạn:</p>"
+                // Hộp hiển thị mã OTP - Căn giữa hoàn hảo
+                + "<div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 15px; text-align: center; margin-bottom: 20px;'>"
+                + "<span style='font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #ff4757; margin-left: 6px;'>" + safe(maXacThuc) + "</span>"
                 + "</div>"
-                
-                + "<p style='margin-bottom: 10px; font-size: 14px;'>Mã xác thực này sẽ hết hạn trong vòng <b style='color: #ff4757;'>" + soPhutHieuLuc + " phút</b>.</p>"
-                + "<p style='font-size: 13px; color: #94a3b8; line-height: 1.5;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này hoặc liên hệ ngay với bộ phận hỗ trợ để bảo vệ tài khoản.</p>"
+                + "<p style='margin: 0 0 10px 0; font-size: 14px;'>Mã xác thực này sẽ hết hạn trong vòng <b style='color: #ff4757;'>" + soPhutHieuLuc + " phút</b>.</p>"
+                + "<p style='margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này hoặc liên hệ ngay với bộ phận hỗ trợ để bảo vệ tài khoản.</p>"
                 + "</div>"
-                
                 // Footer
-                + "<div style='background-color: #141722; border-top: 1px solid #242938; padding: 20px; text-align: center;'>"
-                + "<p style='margin: 0; font-size: 12px; color: #64748b;'>&copy; 2026 GearZone - Chuyên linh kiện PC & Phụ kiện Gaming.</p>"
-                + "<p style='margin: 5px 0 0 0; font-size: 11px; color: #4a5568;'>Email được gửi tự động, vui lòng không trả lời.</p>"
+                + "<div style='background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 15px; text-align: center;'>"
+                + "<p style='margin: 0; font-size: 12px; color: #94a3b8;'>&copy; 2026 GearZone - Chuyên linh kiện PC & Phụ kiện Gaming.</p>"
+                + "<p style='margin: 5px 0 0 0; font-size: 11px; color: #cbd5e1;'>Email được gửi tự động, vui lòng không trả lời.</p>"
                 + "</div>"
-                
                 + "</div>"
                 + "</div>";
-                
+
         send(toEmail, subject, body);
     }
 

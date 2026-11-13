@@ -2,29 +2,28 @@ package linhhqth08598.dao;
 
 import fourSome.model.Roles;
 import fourSome.url.DBConnect;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class RolesDAO {
-
-    public List<Roles> getAll() {
-        List<Roles> list = new ArrayList<>();
-        String sql = "SELECT * FROM [roles]";
-
-        try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Roles obj = new Roles();
-                obj.setRoleId(rs.getInt("role_id"));
-                obj.setRoleCode(rs.getString("role_code"));
-                obj.setRoleName(rs.getString("role_name"));
-                obj.setDescription(rs.getString("description"));
-                obj.setStatus(rs.getString("status"));
-                list.add(obj);
+    public Roles findByCode(String roleCode) {
+        String sql = "SELECT * FROM roles WHERE role_code = ? AND status = 'ACTIVE'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, roleCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Roles role = new Roles();
+                    role.setRoleId(rs.getInt("role_id"));
+                    role.setRoleCode(rs.getString("role_code"));
+                    role.setRoleName(rs.getString("role_name"));
+                    return role;
+                }
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return list;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
