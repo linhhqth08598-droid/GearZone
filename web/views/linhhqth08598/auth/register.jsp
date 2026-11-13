@@ -3,38 +3,43 @@
 
 <jsp:include page="/views/components/header.jsp" />
 
-<div class="container auth-container my-4" style="max-width: 650px;">
+<div class="container auth-container my-4" style="max-width: 550px;">
     <div class="auth-card">
         <div class="brand-logo">GEAR<span>ZONE</span></div>
-        <h4 class="text-white text-center mb-4">TẠO TÀI KHOẢN</h4>
+        <h4 class="text-white text-center mb-3">TẠO TÀI KHOẢN</h4>
 
         <c:if test="${not empty error}">
-            <div class="alert alert-danger">${error}</div>
+            <div class="alert alert-danger py-2" style="font-size: 14px;">${error}</div> <!-- Thu nhỏ alert để đỡ chiếm chỗ -->
         </c:if>
 
         <form action="${pageContext.request.contextPath}/auth" method="POST" autocomplete="off" onsubmit="return validatePassword()">
             <input type="hidden" name="action" value="register">
 
-            <div class="row">
-                <!-- Hàng 1: Họ tên - SĐT -->
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Họ và tên</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" name="fullName" class="form-control" value="${fullName}" required placeholder="VD: Hà Quang Linh">
-                    </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Số điện thoại</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                        <input type="text" name="phone" class="form-control" value="${phone}" required placeholder="VD: 0987654321">
-                    </div>
+            <!-- Họ và tên -->
+            <div class="mb-2">
+                <label class="form-label">Họ và tên</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" name="fullName" class="form-control" value="${fullName}" required placeholder="VD: Hà Quang Linh">
                 </div>
             </div>
 
-            <!-- Hàng 2: Email -->
-            <div class="mb-3">
+            <!-- Số điện thoại (Chỉ nhận 10 số, bắt đầu bằng 0) -->
+            <div class="mb-2">
+                <label class="form-label">Số điện thoại</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                    <input type="text" name="phone" class="form-control" value="${phone}" required 
+                           placeholder="VD: 0987654321"
+                           pattern="0[0-9]{9}" 
+                           maxlength="10"
+                           title="Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-2">
                 <label class="form-label">Email</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-envelope"></i></span>
@@ -42,34 +47,32 @@
                 </div>
             </div>
 
-            <div class="row">
-                <!-- Hàng 3: Mật khẩu -->
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Mật khẩu</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" id="regPassword" name="password" class="form-control" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password">
-                        <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Hàng 4: Xác nhận mật khẩu -->
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Xác nhận mật khẩu</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" id="confirmPassword" class="form-control" required placeholder="Nhập lại mật khẩu">
-                        <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <small id="pwdError" class="text-danger mt-1" style="display: none; font-size: 13px;"><i class="fas fa-exclamation-circle"></i> Mật khẩu không khớp!</small>
+            <!-- Mật khẩu -->
+            <div class="mb-2">
+                <label class="form-label">Mật khẩu</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="regPassword" name="password" class="form-control" required minlength="8" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </div>
             </div>
+            
+            <!-- Xác nhận mật khẩu -->
+            <div class="mb-3">
+                <label class="form-label">Xác nhận mật khẩu</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="confirmPassword" class="form-control" required placeholder="Nhập lại mật khẩu">
+                    <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <small id="pwdError" class="text-danger mt-1" style="display: none; font-size: 13px;"><i class="fas fa-exclamation-circle"></i> Mật khẩu không khớp!</small>
+            </div>
 
-            <button type="submit" class="btn btn-primary w-100 mt-3 mb-4">Đăng ký</button>
+            <button type="submit" class="btn btn-primary w-100 mb-3" style="padding: 10px;">Đăng ký</button>
 
             <div class="text-center text-muted" style="font-size: 14px;">
                 Đã có tài khoản? <a href="${pageContext.request.contextPath}/auth?action=login" style="color: #ff4757; text-decoration: none; font-weight: 600;">Đăng nhập</a>

@@ -21,7 +21,7 @@ body {
     background-color: #ffffff;
     border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 20px;
-    padding: 30px 35px; /* Giảm từ 45px */
+    padding: 25px 30px; /* Giảm từ 30px 35px xuống 25px 30px */
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
     transition: transform 0.3s ease;
     animation: fadeInUp 0.5s ease-out;
@@ -175,7 +175,7 @@ body {
     border: none !important;
     background-color: transparent !important;
     box-shadow: none !important;
-    padding: 10px 14px;
+    padding: 8px 12px; /* Giảm từ 10px 14px xuống 8px 12px để form thấp lại */
 }
 
 /* Style cho ô chứa icon */

@@ -31,12 +31,12 @@
             <div class="mb-4 text-center">
                 <label class="form-label text-center w-100 mb-3">Mã Xác Thực (OTP)</label>
                 <div class="d-flex justify-content-center gap-2" id="otp-container">
-                    <input type="text" class="otp-box" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
                 </div>
                 <input type="hidden" name="otp" id="otp-hidden">
             </div>
@@ -82,7 +82,6 @@
 </div>
 
 <script>
-    // Hàm dùng chung để ẩn/hiện mật khẩu
     function togglePassword(inputId, iconElement) {
         const input = document.getElementById(inputId);
         const icon = iconElement.querySelector('i');
@@ -100,45 +99,77 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         // =======================================================
-        // 1. XỬ LÝ ĐỒNG HỒ ĐẾM NGƯỢC CỦA OTP
+        // 1. XỬ LÝ ĐỒNG HỒ ĐẾM NGƯỢC CỦA OTP & KHÓA Ô NHẬP
         // =======================================================
-        let otpExpiresAt = ${expiresAt != null ? expiresAt : (System.currentTimeMillis() + 300000)};
+        // Lấy rawExpiresAt. Nếu nó là 0 hoặc null thì gán bằng NaN để xử lý riêng
+        let rawExpiresAt = ${expiresAt != null ? expiresAt : 0};
+        let otpExpiresAt = (rawExpiresAt === 0) ? 0 : rawExpiresAt; 
+        
         const timeDisplay = document.getElementById('time-display');
         const countdownTimer = document.getElementById('countdown-timer');
         const btnSubmit = document.getElementById('btn-submit');
+        const otpInputs = document.querySelectorAll('.otp-box');
+        const hiddenInput = document.getElementById('otp-hidden');
+        const btnResend = document.getElementById('btn-resend');
 
+        // Hàm khóa tất cả mọi thứ
+        function lockAllInputs() {
+            timeDisplay.innerHTML = "Hết hạn";
+            countdownTimer.classList.replace('bg-danger', 'bg-secondary');
+            btnSubmit.disabled = true;
+            
+            document.getElementById('newPassword').disabled = true;
+            document.getElementById('confirmNewPassword').disabled = true;
+            
+            otpInputs.forEach(input => {
+                input.disabled = true;
+                input.style.backgroundColor = "#e2e8f0"; 
+                input.style.cursor = "not-allowed";
+            });
+
+            // Mở khóa nút Gửi lại mã
+            btnResend.disabled = false;
+            document.getElementById('resend-timer').innerHTML = "";
+        }
+
+        // Hàm đếm ngược
         function updateOtpTimer() {
+            // Nếu otpExpiresAt === 0 (tức là hết hạn từ trước), khóa luôn không cần đếm
+            if (otpExpiresAt === 0) {
+                lockAllInputs();
+                return;
+            }
+
             let now = new Date().getTime();
             let distance = otpExpiresAt - now;
 
             if (distance <= 0) {
                 clearInterval(intervalOtp);
-                timeDisplay.innerHTML = "Hết hạn";
-                countdownTimer.classList.replace('bg-danger', 'bg-secondary');
-                btnSubmit.disabled = true;
+                lockAllInputs();
             } else {
                 let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 let seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 timeDisplay.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
             }
         }
-        updateOtpTimer();
+        
+        updateOtpTimer(); // Chạy ngay lần đầu
         const intervalOtp = setInterval(updateOtpTimer, 1000);
 
         // =======================================================
         // 2. XỬ LÝ NÚT GỬI LẠI MÃ (Chống Spam 60s)
         // =======================================================
-        const btnResend = document.getElementById('btn-resend');
         const resendTimerSpan = document.getElementById('resend-timer');
+        let resendStartTime = sessionStorage.getItem('resendStartTime');
         
-        let resendExpiresAt = sessionStorage.getItem('resendExpiresAt');
-        
-        if (!resendExpiresAt) {
-            resendExpiresAt = new Date().getTime() + 60000;
-            sessionStorage.setItem('resendExpiresAt', resendExpiresAt);
+        if (!resendStartTime) {
+            resendStartTime = new Date().getTime();
+            sessionStorage.setItem('resendStartTime', resendStartTime);
         } else {
-            resendExpiresAt = parseInt(resendExpiresAt);
+            resendStartTime = parseInt(resendStartTime);
         }
+        
+        let resendExpiresAt = resendStartTime + 60000;
 
         function updateResendTimer() {
             let now = new Date().getTime();
@@ -148,21 +179,26 @@
                 clearInterval(intervalResend);
                 btnResend.disabled = false;
                 resendTimerSpan.innerHTML = "";
-                sessionStorage.removeItem('resendExpiresAt');
             } else {
                 let secondsLeft = Math.floor(distance / 1000);
                 resendTimerSpan.innerHTML = "(" + secondsLeft + "s)";
             }
         }
-        updateResendTimer();
-        const intervalResend = setInterval(updateResendTimer, 1000);
+        
+        // Chỉ chạy đếm ngược gửi lại nếu OTP chưa hết hạn
+        if (otpExpiresAt > new Date().getTime()) {
+            updateResendTimer();
+            var intervalResend = setInterval(updateResendTimer, 1000);
+        }
+
+        // Reset bộ đếm khi submit form gửi lại mã
+        document.getElementById('resend-form').addEventListener('submit', function() {
+            sessionStorage.setItem('resendStartTime', new Date().getTime());
+        });
 
         // =======================================================
         // 3. XỬ LÝ NHẬP 6 Ô OTP
         // =======================================================
-        const otpInputs = document.querySelectorAll('.otp-box');
-        const hiddenInput = document.getElementById('otp-hidden');
-
         function updateHiddenInput() {
             let otpValue = '';
             otpInputs.forEach(input => {
@@ -191,14 +227,16 @@
                 const pasteData = (e.clipboardData || window.clipboardData).getData('text');
                 const digits = pasteData.replace(/[^0-9]/g, '').slice(0, 6).split('');
 
+                otpInputs.forEach(inp => inp.value = ''); 
+
                 digits.forEach((digit, i) => {
-                    if (index + i < otpInputs.length) {
-                        otpInputs[index + i].value = digit;
+                    if (i < otpInputs.length) {
+                        otpInputs[i].value = digit;
                     }
                 });
 
-                const nextIndex = Math.min(index + digits.length, otpInputs.length - 1);
-                otpInputs[nextIndex].focus();
+                const focusIndex = digits.length < 6 ? digits.length : 5;
+                otpInputs[focusIndex].focus();
                 updateHiddenInput();
             });
         });

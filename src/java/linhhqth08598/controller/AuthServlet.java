@@ -37,18 +37,22 @@ public class AuthServlet extends HttpServlet {
                 break;
             case "reset":
                 String email = request.getParameter("email");
-                if (email == null) {
+                if (email == null || email.trim().isEmpty()) {
                     email = (String) request.getSession().getAttribute("reset_email");
                 }
                 request.setAttribute("email", email);
 
-                // Lấy thời gian hết hạn từ session hoặc tự tính lại nếu cần
                 Object expiry = request.getSession().getAttribute("otp_expiry");
                 if (expiry != null) {
-                    request.setAttribute("expiresAt", ((java.sql.Timestamp) expiry).getTime()); // Ép kiểu về mili-giây
+                    request.setAttribute("expiresAt", expiry);
                 } else {
-                    // Nếu mất session, tạm tính 5 phút từ hiện tại
-                    request.setAttribute("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
+                    // NẾU KHÔNG CÓ SESSION, LẤY TỪ DB
+                    java.sql.Timestamp dbExpiry = authService.getOTPExpiry(email);
+                    if (dbExpiry != null) {
+                        request.setAttribute("expiresAt", dbExpiry.getTime());
+                    } else {
+                        request.setAttribute("expiresAt", 0); // Đã hết hạn hoặc không có
+                    }
                 }
 
                 request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
@@ -139,16 +143,19 @@ public class AuthServlet extends HttpServlet {
     private void handleForgetPassword(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String email = request.getParameter("email");
 
-        // Gọi service mới
+        // Gọi service mới (đã được sửa ở bước 2 để trả về Map)
         java.util.Map<String, Object> result = authService.forgotPassword(email);
 
         if (result.get("error") == null) {
-            // Gửi OTP thành công, lưu email và thời gian hết hạn vào Session tạm để hiển thị
+            // Gửi OTP thành công, lưu email và thời gian hết hạn vào Session
             request.getSession().setAttribute("reset_email", email);
-            request.getSession().setAttribute("otp_expiry", result.get("expiresAt"));
+            request.getSession().setAttribute("otp_expiry", result.get("expiresAt")); // Đã là kiểu long (mili-giây)
 
-            // Chuyển sang trang nhập OTP
-            response.sendRedirect(request.getContextPath() + "/auth?action=reset");
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().println("<script>");
+            response.getWriter().println("sessionStorage.removeItem('resendStartTime');");
+            response.getWriter().println("window.location.href='" + request.getContextPath() + "/auth?action=reset';");
+            response.getWriter().println("</script>");
         } else {
             request.setAttribute("error", result.get("error"));
             request.getRequestDispatcher("/views/linhhqth08598/auth/forgetPW.jsp").forward(request, response);
@@ -157,17 +164,55 @@ public class AuthServlet extends HttpServlet {
 
     private void handleResetPassword(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String email = request.getParameter("email");
+        if (email == null || email.trim().isEmpty()) {
+            email = (String) request.getSession().getAttribute("reset_email");
+        }
+
+        // Lấy đúng tham số otp từ ô input hidden
         String otp = request.getParameter("otp");
         String newPassword = request.getParameter("newPassword");
+
+        // Validate cơ bản trên server để tránh báo lỗi sai của Service
+        if (otp == null || otp.trim().isEmpty() || otp.length() < 6) {
+            request.setAttribute("error", "Vui lòng nhập đầy đủ 6 số mã OTP!");
+            request.setAttribute("email", email);
+
+            Object expiry = request.getSession().getAttribute("otp_expiry");
+            if (expiry != null) {
+                request.setAttribute("expiresAt", expiry);
+            } else {
+                request.setAttribute("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
+            }
+
+            request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
+            return; // Dừng chạy tiếp
+        }
 
         String error = authService.resetPassword(email, otp, newPassword);
 
         if (error == null) {
+            request.getSession().removeAttribute("reset_email");
+            request.getSession().removeAttribute("otp_expiry");
+
             request.getSession().setAttribute("message", "Đặt lại mật khẩu thành công! Vui lòng đăng nhập.");
             response.sendRedirect(request.getContextPath() + "/auth?action=login");
         } else {
             request.setAttribute("error", error);
-            request.setAttribute("email", email); // Giữ lại email
+            request.setAttribute("email", email);
+
+            // Ưu tiên lấy từ session, nếu không có thì lấy từ DB
+            Object expiry = request.getSession().getAttribute("otp_expiry");
+            if (expiry != null) {
+                request.setAttribute("expiresAt", expiry);
+            } else {
+                java.sql.Timestamp dbExpiry = authService.getOTPExpiry(email);
+                if (dbExpiry != null) {
+                    request.setAttribute("expiresAt", dbExpiry.getTime());
+                } else {
+                    request.setAttribute("expiresAt", 0); // Đã hết hạn
+                }
+            }
+
             request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
         }
     }

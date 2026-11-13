@@ -61,12 +61,13 @@ public class UserVerificationsDAO {
         return false;
     }
 
-    // Thêm hàm này vào cuối class UserVerificationsDAO
+    // Thêm hàm này vào UserVerificationsDAO.java
     public java.sql.Timestamp getLatestOTPExpiry(int userId, String type) {
         String sql = "SELECT TOP 1 expires_at FROM user_verifications "
-                + "WHERE user_id = ? AND type = ? AND is_verified = 0 AND status = 'ACTIVE' "
-                + "ORDER BY expires_at DESC";
-        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                   + "WHERE user_id = ? AND type = ? AND is_verified = 0 AND status = 'ACTIVE' "
+                   + "ORDER BY created_at DESC"; // Giả sử bảng có cột created_at, nếu không có bạn dùng verification_id DESC
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setString(2, type);
             try (ResultSet rs = ps.executeQuery()) {

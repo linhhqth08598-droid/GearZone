@@ -24,6 +24,23 @@ public class UsersDAO {
         }
         return null;
     }
+    
+        // Thêm hàm này vào UsersDAO.java để tìm user theo Số điện thoại
+    public Users findByPhone(String phone) {
+        String sql = "SELECT * FROM users WHERE phone_number = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public Users findById(int userId) {
         String sql = "SELECT * FROM users WHERE user_id = ?";
