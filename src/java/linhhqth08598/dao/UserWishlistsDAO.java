@@ -49,26 +49,46 @@ public class UserWishlistsDAO {
         return list;
     }
 
-    // Hàm thêm vào Wishlist
+    // Thêm mới hoặc khôi phục sản phẩm trong Wishlist.
+    // Không xóa cứng để giữ lịch sử và tránh vi phạm khóa ngoại.
     public boolean addToWishlist(int userId, int partId) {
-        // Kiểm tra xem đã có trong wishlist chưa (tránh trùng lặp)
-        if (checkExist(userId, partId)) return true; 
-        
-        String sql = "INSERT INTO user_wishlists (user_id, part_id, created_at, status) VALUES (?, ?, GETDATE(), 'ACTIVE')";
+        String findSql = "SELECT status FROM user_wishlists WHERE user_id = ? AND part_id = ?";
         try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            ps.setInt(2, partId);
-            return ps.executeUpdate() > 0;
+             PreparedStatement find = conn.prepareStatement(findSql)) {
+            find.setInt(1, userId);
+            find.setInt(2, partId);
+            try (ResultSet rs = find.executeQuery()) {
+                if (rs.next()) {
+                    if ("ACTIVE".equalsIgnoreCase(rs.getString("status"))) {
+                        return true;
+                    }
+                    String restoreSql = "UPDATE user_wishlists SET status = 'ACTIVE', created_at = GETDATE() "
+                                      + "WHERE user_id = ? AND part_id = ?";
+                    try (PreparedStatement restore = conn.prepareStatement(restoreSql)) {
+                        restore.setInt(1, userId);
+                        restore.setInt(2, partId);
+                        return restore.executeUpdate() > 0;
+                    }
+                }
+            }
+
+            String insertSql = "INSERT INTO user_wishlists (user_id, part_id, created_at, status) "
+                             + "VALUES (?, ?, GETDATE(), 'ACTIVE')";
+            try (PreparedStatement insert = conn.prepareStatement(insertSql)) {
+                insert.setInt(1, userId);
+                insert.setInt(2, partId);
+                return insert.executeUpdate() > 0;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    // Hàm xóa khỏi Wishlist
+    // Xóa mềm khỏi Wishlist.
     public boolean removeFromWishlist(int userId, int partId) {
-        String sql = "DELETE FROM user_wishlists WHERE user_id = ? AND part_id = ?";
+        String sql = "UPDATE user_wishlists SET status = 'INACTIVE' "
+                   + "WHERE user_id = ? AND part_id = ? AND status = 'ACTIVE'";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
@@ -80,9 +100,9 @@ public class UserWishlistsDAO {
         return false;
     }
 
-    // Hàm phụ kiểm tra tồn tại
+    // Chỉ xem là đã tồn tại khi mục đang hoạt động.
     public boolean checkExist(int userId, int partId) {
-        String sql = "SELECT 1 FROM user_wishlists WHERE user_id = ? AND part_id = ?";
+        String sql = "SELECT 1 FROM user_wishlists WHERE user_id = ? AND part_id = ? AND status = 'ACTIVE'";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
