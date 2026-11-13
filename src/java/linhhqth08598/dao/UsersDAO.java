@@ -57,6 +57,22 @@ public class UsersDAO {
         }
         return null;
     }
+    
+    // Lấy danh sách toàn bộ người dùng
+    public java.util.List<Users> getAll() {
+        java.util.List<Users> list = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM users ORDER BY created_at DESC";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
     public boolean insert(Users user) {
         String sql = "INSERT INTO users (email, phone_number, password_hash, full_name, avatar_url, is_email_verified, is_phone_verified, status, created_at, updated_at) "
@@ -132,5 +148,44 @@ public class UsersDAO {
         user.setCreatedAt(rs.getTimestamp("created_at"));
         user.setUpdatedAt(rs.getTimestamp("updated_at"));
         return user;
+    }
+    
+    public boolean markEmailVerified(int userId) {
+        String sql = "UPDATE users SET is_email_verified = 1, updated_at = GETDATE() WHERE user_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateAvatar(int userId, String avatarUrl) {
+        String sql = "UPDATE users SET avatar_url = ?, updated_at = GETDATE() WHERE user_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, avatarUrl);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Thay đổi trạng thái tài khoản (ACTIVE / LOCKED / INACTIVE)
+    public boolean updateStatus(int userId, String status) {
+        String sql = "UPDATE users SET status = ?, updated_at = GETDATE() WHERE user_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

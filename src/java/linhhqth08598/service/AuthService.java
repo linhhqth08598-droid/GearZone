@@ -18,24 +18,17 @@ public class AuthService {
     private RolesDAO rolesDAO = new RolesDAO();
     private UserRolesDAO userRolesDAO = new UserRolesDAO();
 
-        // 1. Đăng ký tài khoản mới
     public String register(String email, String phone, String password, String fullName) {
-        // 1. Check định dạng Số điện thoại ở Backend (chống bypass)
         if (phone == null || !phone.matches("0\\d{9}")) {
             return "Số điện thoại không hợp lệ! Vui lòng nhập 10 chữ số và bắt đầu bằng số 0.";
         }
-
-        // 2. Check trùng Email
         if (usersDAO.findByEmail(email) != null) {
             return "Email đã được sử dụng, vui lòng chọn email khác!";
         }
-
-        // 3. Check trùng Số điện thoại (MỚI THÊM)
         if (usersDAO.findByPhone(phone) != null) {
             return "Số điện thoại này đã được đăng ký bởi tài khoản khác!";
         }
 
-        // 4. Tạo User và lưu vào DB (Giữ nguyên code cũ)
         Users user = new Users();
         user.setEmail(email);
         user.setPhoneNumber(phone);
@@ -51,27 +44,24 @@ public class AuthService {
             if (customerRole != null) {
                 userRolesDAO.assignRole(newUser.getUserId(), customerRole.getRoleId());
             }
-            return null; // Đăng ký thành công, không có lỗi
+            return null; 
         }
         return "Lỗi hệ thống khi đăng ký. Vui lòng thử lại sau!";
     }
 
-    // 2. Kiểm tra Đăng nhập
     public Users login(String email, String password) {
         Users user = usersDAO.findByEmail(email);
         if (user != null && user.getStatus().equals("ACTIVE")) {
             if (PasswordHasher.verify(password, user.getPasswordHash())) {
                 usersDAO.updateLastLogin(user.getUserId());
-                return user; // Đăng nhập thành công, trả về Object User để lưu vào Session
+                return user; 
             }
         }
         return null;
     }
 
-    // Sửa lại hàm forgotPassword trong AuthService.java
     public java.util.Map<String, Object> forgotPassword(String email) {
         java.util.Map<String, Object> result = new java.util.HashMap<>();
-
         Users user = usersDAO.findByEmail(email);
         if (user == null || !user.getStatus().equals("ACTIVE")) {
             result.put("error", "Email không tồn tại hoặc tài khoản đang bị khóa!");
@@ -80,8 +70,6 @@ public class AuthService {
 
         String otp = OTPGenerator.generateOTP();
         if (userVerificationsDAO.insertOTP(user.getUserId(), "RECOVERY", otp, 5)) {
-
-            // TẠO LUỒNG RIÊNG ĐỂ GỬI EMAIL NGẦM
             final String userEmail = email;
             final String userName = user.getFullName();
             final String finalOtp = otp;
@@ -94,33 +82,24 @@ public class AuthService {
                 }
             }).start();
 
-            // Lấy thời gian hết hạn từ DB (Sử dụng hàm vừa tạo ở bước 1)
             java.sql.Timestamp expiresAt = userVerificationsDAO.getLatestOTPExpiry(user.getUserId(), "RECOVERY");
-            
-            // Nếu vì lý do nào đó không lấy được từ DB, ta dùng tạm thời gian hệ thống
             if(expiresAt == null){
                  result.put("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
             } else {
                  result.put("expiresAt", expiresAt.getTime());
             }
-
             return result;
         }
         result.put("error", "Không thể tạo mã OTP lúc này!");
         return result;
     }
 
-    // 4. Xác nhận OTP và đặt lại mật khẩu mới
     public String resetPassword(String email, String otp, String newPassword) {
         Users user = usersDAO.findByEmail(email);
-        if (user == null) {
-            return "Người dùng không hợp lệ!";
-        }
+        if (user == null) return "Người dùng không hợp lệ!";
 
         UserVerifications uv = userVerificationsDAO.findValidOTP(user.getUserId(), "RECOVERY", otp);
-        if (uv == null) {
-            return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
-        }
+        if (uv == null) return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
 
         String newHash = PasswordHasher.hash(newPassword);
         if (usersDAO.updatePassword(user.getUserId(), newHash)) {
@@ -130,13 +109,52 @@ public class AuthService {
         return "Xảy ra lỗi khi cập nhật mật khẩu!";
     }
     
-        // Hàm mới: Lấy thời gian hết hạn của OTP mới nhất từ DB dựa vào email
-    public java.sql.Timestamp getOTPExpiry(String email) {
+    // Đã thêm tham số type để dùng chung cho RECOVERY và EMAIL
+    public java.sql.Timestamp getOTPExpiry(String email, String type) {
         if (email == null) return null;
         Users user = usersDAO.findByEmail(email);
         if (user != null) {
-            return userVerificationsDAO.getLatestOTPExpiry(user.getUserId(), "RECOVERY");
+            return userVerificationsDAO.getLatestOTPExpiry(user.getUserId(), type);
         }
         return null;
+    }
+
+    // --- BỔ SUNG: HÀM GỬI OTP XÁC THỰC TÀI KHOẢN ---
+    public String sendVerificationOTP(String email) {
+        Users user = usersDAO.findByEmail(email);
+        if (user == null) return "Tài khoản không tồn tại!";
+        if (user.getIsEmailVerified()) return "Tài khoản đã được xác thực!";
+
+        String otp = OTPGenerator.generateOTP();
+        if (userVerificationsDAO.insertOTP(user.getUserId(), "EMAIL", otp, 5)) {
+            final String userEmail = email;
+            final String userName = user.getFullName();
+            final String finalOtp = otp;
+
+            new Thread(() -> {
+                try {
+                    EmailUtil.guiMaOTP(userEmail, userName, finalOtp, 5);
+                } catch (Exception e) {
+                    System.err.println("Lỗi gửi email ngầm: " + e.getMessage());
+                }
+            }).start();
+            return null;
+        }
+        return "Không thể tạo mã xác thực lúc này!";
+    }
+
+    // --- BỔ SUNG: HÀM CHECK OTP XÁC THỰC ---
+    public String verifyAccount(String email, String otp) {
+        Users user = usersDAO.findByEmail(email);
+        if (user == null) return "Người dùng không hợp lệ!";
+
+        UserVerifications uv = userVerificationsDAO.findValidOTP(user.getUserId(), "EMAIL", otp);
+        if (uv == null) return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
+
+        if (usersDAO.markEmailVerified(user.getUserId())) {
+            userVerificationsDAO.markAsVerified(uv.getVerificationId());
+            return null;
+        }
+        return "Xảy ra lỗi khi cập nhật trạng thái xác thực!";
     }
 }

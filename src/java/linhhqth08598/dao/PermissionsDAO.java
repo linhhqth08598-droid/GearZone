@@ -2,29 +2,31 @@ package linhhqth08598.dao;
 
 import fourSome.model.Permissions;
 import fourSome.url.DBConnect;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PermissionsDAO {
-
+    
     public List<Permissions> getAll() {
         List<Permissions> list = new ArrayList<>();
-        String sql = "SELECT * FROM [permissions]";
-
-        try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
+        String sql = "SELECT * FROM permissions WHERE status = 'ACTIVE'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                Permissions obj = new Permissions();
-                obj.setPermissionId(rs.getInt("permission_id"));
-                obj.setPermissionCode(rs.getString("permission_code"));
-                obj.setPermissionName(rs.getString("permission_name"));
-                obj.setModule(rs.getString("module"));
-                obj.setStatus(rs.getString("status"));
-                list.add(obj);
+                Permissions p = new Permissions();
+                p.setPermissionId(rs.getInt("permission_id"));
+                p.setPermissionCode(rs.getString("permission_code"));
+                p.setPermissionName(rs.getString("permission_name"));
+                p.setModule(rs.getString("module"));
+                list.add(p);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 }
