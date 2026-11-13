@@ -12,6 +12,11 @@ public class PriceDropNotifications {
     private Date createdAt;
     private String status;
 
+    // Bổ sung 3 trường để hiển thị giao diện
+    private String partName;
+    private Double currentPrice;
+    private String imageUrl;
+
     public PriceDropNotifications() {}
 
     public Integer getNotificationId() { return notificationId; }
@@ -35,4 +40,12 @@ public class PriceDropNotifications {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getPartName() { return partName; }
+    public void setPartName(String partName) { this.partName = partName; }
+
+    public Double getCurrentPrice() { return currentPrice; }
+    public void setCurrentPrice(Double currentPrice) { this.currentPrice = currentPrice; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

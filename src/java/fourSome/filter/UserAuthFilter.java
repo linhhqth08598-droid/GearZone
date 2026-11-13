@@ -16,6 +16,8 @@ import java.io.IOException;
     "/cart/*",       // Giỏ hàng
     "/checkout/*",   // Thanh toán
     "/wishlist/*",   // Danh sách yêu thích
+    "/user/wishlist",
+    "/user/price-alert",
     "/order/*",      // Lịch sử đơn hàng
     "/return/*",     // Đổi trả
     "/review/*",     // Đánh giá sản phẩm

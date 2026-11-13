@@ -103,6 +103,8 @@
                                     <ul class="dropdown-menu dropdown-menu-end" style="background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                                         <li><a class="dropdown-item" href="#"><i class="fas fa-id-badge me-2 text-muted"></i>Hồ sơ cá nhân</a></li>
                                         <li><a class="dropdown-item" href="#"><i class="fas fa-shopping-bag me-2 text-muted"></i>Đơn hàng</a></li>
+                                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/order-history"><i class="fas fa-shopping-bag me-2 text-muted"></i>Lịch sử mua hàng</a></li>
+                                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/price-alert"><i class="fas fa-bell me-2 text-muted"></i>Theo dõi giá</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/auth?action=logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
                                     </ul>

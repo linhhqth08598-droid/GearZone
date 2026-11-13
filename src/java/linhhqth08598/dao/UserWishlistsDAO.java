@@ -2,29 +2,137 @@ package linhhqth08598.dao;
 
 import fourSome.model.UserWishlists;
 import fourSome.url.DBConnect;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserWishlistsDAO {
 
-    public List<UserWishlists> getAll() {
+    // Hàm lấy danh sách Wishlist của 1 User kèm thông tin sản phẩm
+    public List<UserWishlists> getWishlistByUserId(int userId) {
         List<UserWishlists> list = new ArrayList<>();
-        String sql = "SELECT * FROM [user_wishlists]";
-
-        try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                UserWishlists obj = new UserWishlists();
-                obj.setWishlistId(rs.getInt("wishlist_id"));
-                obj.setUserId(rs.getInt("user_id"));
-                obj.setPartId(rs.getInt("part_id"));
-                obj.setCreatedAt(rs.getDate("created_at"));
-                obj.setStatus(rs.getString("status"));
-                list.add(obj);
+        // Dùng LEFT JOIN để lấy thêm ảnh chính (is_primary = 1) từ bảng part_media
+        String sql = "SELECT w.wishlist_id, w.user_id, w.part_id, w.created_at, w.status, "
+                   + "p.part_name, p.product_code, p.sale_price, "
+                   + "m.media_url AS primary_image_url "
+                   + "FROM user_wishlists w "
+                   + "JOIN parts p ON w.part_id = p.part_id "
+                   + "LEFT JOIN part_media m ON p.part_id = m.part_id AND m.is_primary = 1 AND m.status = 'ACTIVE' "
+                   + "WHERE w.user_id = ? AND w.status = 'ACTIVE' "
+                   + "ORDER BY w.created_at DESC";
+                   
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    UserWishlists w = new UserWishlists();
+                    w.setWishlistId(rs.getInt("wishlist_id"));
+                    w.setUserId(rs.getInt("user_id"));
+                    w.setPartId(rs.getInt("part_id"));
+                    w.setCreatedAt(rs.getTimestamp("created_at"));
+                    w.setStatus(rs.getString("status"));
+                    
+                    w.setPartName(rs.getString("part_name"));
+                    w.setProductCode(rs.getString("product_code"));
+                    w.setSalePrice(rs.getDouble("sale_price"));
+                    w.setPrimaryImageUrl(rs.getString("primary_image_url"));
+                    
+                    list.add(w);
+                }
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Hàm thêm vào Wishlist
+    public boolean addToWishlist(int userId, int partId) {
+        // Kiểm tra xem đã có trong wishlist chưa (tránh trùng lặp)
+        if (checkExist(userId, partId)) return true; 
+        
+        String sql = "INSERT INTO user_wishlists (user_id, part_id, created_at, status) VALUES (?, ?, GETDATE(), 'ACTIVE')";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Hàm xóa khỏi Wishlist
+    public boolean removeFromWishlist(int userId, int partId) {
+        String sql = "DELETE FROM user_wishlists WHERE user_id = ? AND part_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Hàm phụ kiểm tra tồn tại
+    public boolean checkExist(int userId, int partId) {
+        String sql = "SELECT 1 FROM user_wishlists WHERE user_id = ? AND part_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, partId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Thêm vào file UserWishlistsDAO.java
+    public java.util.List<fourSome.model.OrderHistoryItem> getOrderHistory(int userId) {
+        java.util.List<fourSome.model.OrderHistoryItem> list = new java.util.ArrayList<>();
+        // JOIN bảng orders, order_items, parts, part_media
+        String sql = "SELECT o.order_id, o.order_code, o.order_status, o.created_at, o.final_amount, "
+                   + "oi.part_id, oi.quantity, oi.unit_price, p.part_name, m.media_url "
+                   + "FROM orders o "
+                   + "JOIN order_items oi ON o.order_id = oi.order_id "
+                   + "JOIN parts p ON oi.part_id = p.part_id "
+                   + "LEFT JOIN part_media m ON p.part_id = m.part_id AND m.is_primary = 1 "
+                   + "WHERE o.user_id = ? "
+                   + "ORDER BY o.created_at DESC";
+                   
+        try (java.sql.Connection conn = fourSome.url.DBConnect.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    fourSome.model.OrderHistoryItem item = new fourSome.model.OrderHistoryItem();
+                    item.setOrderId(rs.getInt("order_id"));
+                    item.setOrderCode(rs.getString("order_code"));
+                    item.setOrderStatus(rs.getString("order_status"));
+                    item.setOrderDate(rs.getTimestamp("created_at"));
+                    item.setTotalAmount(rs.getDouble("final_amount"));
+                    
+                    item.setPartId(rs.getInt("part_id"));
+                    item.setPartName(rs.getString("part_name"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setUnitPrice(rs.getDouble("unit_price"));
+                    item.setImageUrl(rs.getString("media_url"));
+                    
+                    list.add(item);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 }

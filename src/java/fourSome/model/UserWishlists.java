@@ -4,11 +4,18 @@ import java.util.Date;
 
 public class UserWishlists {
 
+    // Các trường gốc trong Database
     private Integer wishlistId;
     private Integer userId;
     private Integer partId;
     private Date createdAt;
     private String status;
+
+    // Các trường bổ sung (JOIN từ bảng parts & part_media) để hiển thị ra giao diện
+    private String partName;
+    private String productCode;
+    private Double salePrice;
+    private String primaryImageUrl;
 
     public UserWishlists() {}
 
@@ -27,4 +34,16 @@ public class UserWishlists {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    // Getter & Setter cho các trường bổ sung
+    public String getPartName() { return partName; }
+    public void setPartName(String partName) { this.partName = partName; }
+
+    public String getProductCode() { return productCode; }
+    public void setProductCode(String productCode) { this.productCode = productCode; }
+
+    public Double getSalePrice() { return salePrice; }
+    public void setSalePrice(Double salePrice) { this.salePrice = salePrice; }
+
+    public String getPrimaryImageUrl() { return primaryImageUrl; }
+    public void setPrimaryImageUrl(String primaryImageUrl) { this.primaryImageUrl = primaryImageUrl; }
 }

@@ -20,7 +20,9 @@ public class AuthServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-        if (action == null) action = "login";
+        if (action == null) {
+            action = "login";
+        }
 
         switch (action) {
             case "login":
@@ -47,7 +49,7 @@ public class AuthServlet extends HttpServlet {
                     if (dbExpiry != null) {
                         request.setAttribute("expiresAt", dbExpiry.getTime());
                     } else {
-                        request.setAttribute("expiresAt", 0); 
+                        request.setAttribute("expiresAt", 0);
                     }
                 }
                 request.getRequestDispatcher("/views/linhhqth08598/auth/verifyOTP.jsp").forward(request, response);
@@ -88,15 +90,31 @@ public class AuthServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
 
         String action = request.getParameter("action");
-        if (action == null) action = "login";
+        if (action == null) {
+            action = "login";
+        }
 
         switch (action) {
-            case "login": handleLogin(request, response); break;
-            case "register": handleRegister(request, response); break;
-            case "verify": handleVerify(request, response); break;
-            case "forget": handleForgetPassword(request, response); break;
-            case "reset": handleResetPassword(request, response); break;
-            default: response.sendRedirect(request.getContextPath() + "/auth?action=login");
+            case "login":
+                handleLogin(request, response);
+                break;
+            case "register":
+                handleRegister(request, response);
+                break;
+            case "verify":
+                handleVerify(request, response);
+                break;
+            case "resendVerify":
+                handleResendVerify(request, response);
+                break; // THÊM DÒNG NÀY
+            case "forget":
+                handleForgetPassword(request, response);
+                break;
+            case "reset":
+                handleResetPassword(request, response);
+                break;
+            default:
+                response.sendRedirect(request.getContextPath() + "/auth?action=login");
         }
     }
 
@@ -110,7 +128,7 @@ public class AuthServlet extends HttpServlet {
                 authService.sendVerificationOTP(email);
                 request.getSession().setAttribute("verify_email", email);
                 request.getSession().setAttribute("message", "Tài khoản chưa xác thực. Vui lòng nhập mã OTP vừa được gửi!");
-                
+
                 java.sql.Timestamp expiry = authService.getOTPExpiry(email, "EMAIL");
                 if (expiry != null) {
                     request.getSession().setAttribute("otp_expiry", expiry.getTime());
@@ -121,7 +139,7 @@ public class AuthServlet extends HttpServlet {
 
             HttpSession session = request.getSession();
             session.setAttribute("loggedUser", user);
-            
+
             // Lấy URL cũ từ UserAuthFilter (nếu có)
             String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {
@@ -149,12 +167,12 @@ public class AuthServlet extends HttpServlet {
             authService.sendVerificationOTP(email);
             request.getSession().setAttribute("verify_email", email);
             request.getSession().setAttribute("message", "Đăng ký thành công! Vui lòng kiểm tra email để nhận mã xác thực.");
-            
+
             java.sql.Timestamp expiry = authService.getOTPExpiry(email, "EMAIL");
             if (expiry != null) {
                 request.getSession().setAttribute("otp_expiry", expiry.getTime());
             }
-            
+
             response.sendRedirect(request.getContextPath() + "/auth?action=verify");
         } else {
             request.setAttribute("error", error);
@@ -192,13 +210,43 @@ public class AuthServlet extends HttpServlet {
         }
     }
 
+    private void handleResendVerify(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String email = request.getParameter("email");
+        if (email == null || email.trim().isEmpty()) {
+            email = (String) request.getSession().getAttribute("verify_email");
+        }
+
+        // XÓA SẠCH SESSION CŨ TRƯỚC KHI GỬI
+        request.getSession().removeAttribute("otp_expiry");
+
+        String error = authService.sendVerificationOTP(email);
+
+        if (error == null) {
+            java.sql.Timestamp expiry = authService.getOTPExpiry(email, "EMAIL");
+            if (expiry != null) {
+                request.getSession().setAttribute("otp_expiry", expiry.getTime());
+            }
+            request.getSession().setAttribute("message", "Đã gửi lại mã xác thực! Vui lòng kiểm tra email.");
+
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().println("<script>");
+            response.getWriter().println("sessionStorage.removeItem('resendStartTime');");
+            response.getWriter().println("window.location.href='" + request.getContextPath() + "/auth?action=verify&email=" + email + "&t=" + System.currentTimeMillis() + "';"); // Thêm &t=... để ép trình duyệt không dùng cache
+            response.getWriter().println("</script>");
+        } else {
+            request.setAttribute("error", error);
+            request.setAttribute("email", email);
+            request.getRequestDispatcher("/views/linhhqth08598/auth/verifyOTP.jsp").forward(request, response);
+        }
+    }
+
     private void handleForgetPassword(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String email = request.getParameter("email");
         java.util.Map<String, Object> result = authService.forgotPassword(email);
 
         if (result.get("error") == null) {
             request.getSession().setAttribute("reset_email", email);
-            request.getSession().setAttribute("otp_expiry", result.get("expiresAt")); 
+            request.getSession().setAttribute("otp_expiry", result.get("expiresAt"));
 
             response.setContentType("text/html;charset=UTF-8");
             response.getWriter().println("<script>");
@@ -231,7 +279,7 @@ public class AuthServlet extends HttpServlet {
                 request.setAttribute("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
             }
             request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
-            return; 
+            return;
         }
 
         String error = authService.resetPassword(email, otp, newPassword);
@@ -254,7 +302,7 @@ public class AuthServlet extends HttpServlet {
                 if (dbExpiry != null) {
                     request.setAttribute("expiresAt", dbExpiry.getTime());
                 } else {
-                    request.setAttribute("expiresAt", 0); 
+                    request.setAttribute("expiresAt", 0);
                 }
             }
             request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
