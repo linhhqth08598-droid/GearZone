@@ -58,7 +58,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Xác nhận mật khẩu -->
             <div class="mb-3">
                 <label class="form-label">Xác nhận mật khẩu</label>
@@ -72,7 +72,7 @@
                 <small id="pwdError" class="text-danger mt-1" style="display: none; font-size: 13px;"><i class="fas fa-exclamation-circle"></i> Mật khẩu không khớp!</small>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mb-3" style="padding: 10px;">Đăng ký</button>
+            <button type="submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none;">Đăng ký</button>
 
             <div class="text-center text-muted" style="font-size: 14px;">
                 Đã có tài khoản? <a href="${pageContext.request.contextPath}/auth?action=login" style="color: #ff4757; text-decoration: none; font-weight: 600;">Đăng nhập</a>
@@ -86,13 +86,13 @@
         var pass = document.getElementById("regPassword").value;
         var confirmPass = document.getElementById("confirmPassword").value;
         var errorMsg = document.getElementById("pwdError");
-        
+
         if (pass !== confirmPass) {
             errorMsg.style.display = "block";
-            document.getElementById("confirmPassword").classList.add("is-invalid"); 
+            document.getElementById("confirmPassword").classList.add("is-invalid");
             return false;
         }
-        
+
         errorMsg.style.display = "none";
         document.getElementById("confirmPassword").classList.remove("is-invalid");
         return true;
@@ -102,7 +102,7 @@
     function togglePassword(inputId, iconElement) {
         const input = document.getElementById(inputId);
         const icon = iconElement.querySelector('i');
-        
+
         if (input.type === "password") {
             input.type = "text";
             icon.classList.remove("fa-eye");

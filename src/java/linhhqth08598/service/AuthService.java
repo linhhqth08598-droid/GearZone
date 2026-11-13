@@ -44,7 +44,7 @@ public class AuthService {
             if (customerRole != null) {
                 userRolesDAO.assignRole(newUser.getUserId(), customerRole.getRoleId());
             }
-            return null; 
+            return null;
         }
         return "Lỗi hệ thống khi đăng ký. Vui lòng thử lại sau!";
     }
@@ -54,7 +54,7 @@ public class AuthService {
         if (user != null && user.getStatus().equals("ACTIVE")) {
             if (PasswordHasher.verify(password, user.getPasswordHash())) {
                 usersDAO.updateLastLogin(user.getUserId());
-                return user; 
+                return user;
             }
         }
         return null;
@@ -67,7 +67,7 @@ public class AuthService {
             result.put("error", "Email không tồn tại hoặc tài khoản đang bị khóa!");
             return result;
         }
-
+        userVerificationsDAO.deactivateOldOTPs(user.getUserId(), "RECOVERY");
         String otp = OTPGenerator.generateOTP();
         if (userVerificationsDAO.insertOTP(user.getUserId(), "RECOVERY", otp, 5)) {
             final String userEmail = email;
@@ -76,17 +76,19 @@ public class AuthService {
 
             new Thread(() -> {
                 try {
-                    EmailUtil.guiMaOTP(userEmail, userName, finalOtp, 5);
+                    EmailUtil.guiMaOTP(userEmail, userName, finalOtp, 5,
+                            "Mã Xác Thực Đặt Lại Mật Khẩu",
+                            "Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này. Dưới đây là mã xác thực OTP của bạn:");
                 } catch (Exception e) {
                     System.err.println("Lỗi gửi email ngầm: " + e.getMessage());
                 }
             }).start();
 
             java.sql.Timestamp expiresAt = userVerificationsDAO.getLatestOTPExpiry(user.getUserId(), "RECOVERY");
-            if(expiresAt == null){
-                 result.put("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
+            if (expiresAt == null) {
+                result.put("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
             } else {
-                 result.put("expiresAt", expiresAt.getTime());
+                result.put("expiresAt", expiresAt.getTime());
             }
             return result;
         }
@@ -96,10 +98,14 @@ public class AuthService {
 
     public String resetPassword(String email, String otp, String newPassword) {
         Users user = usersDAO.findByEmail(email);
-        if (user == null) return "Người dùng không hợp lệ!";
+        if (user == null) {
+            return "Người dùng không hợp lệ!";
+        }
 
         UserVerifications uv = userVerificationsDAO.findValidOTP(user.getUserId(), "RECOVERY", otp);
-        if (uv == null) return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
+        if (uv == null) {
+            return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
+        }
 
         String newHash = PasswordHasher.hash(newPassword);
         if (usersDAO.updatePassword(user.getUserId(), newHash)) {
@@ -108,10 +114,12 @@ public class AuthService {
         }
         return "Xảy ra lỗi khi cập nhật mật khẩu!";
     }
-    
+
     // Đã thêm tham số type để dùng chung cho RECOVERY và EMAIL
     public java.sql.Timestamp getOTPExpiry(String email, String type) {
-        if (email == null) return null;
+        if (email == null) {
+            return null;
+        }
         Users user = usersDAO.findByEmail(email);
         if (user != null) {
             return userVerificationsDAO.getLatestOTPExpiry(user.getUserId(), type);
@@ -122,9 +130,13 @@ public class AuthService {
     // --- BỔ SUNG: HÀM GỬI OTP XÁC THỰC TÀI KHOẢN ---
     public String sendVerificationOTP(String email) {
         Users user = usersDAO.findByEmail(email);
-        if (user == null) return "Tài khoản không tồn tại!";
-        if (user.getIsEmailVerified()) return "Tài khoản đã được xác thực!";
-
+        if (user == null) {
+            return "Tài khoản không tồn tại!";
+        }
+        if (user.getIsEmailVerified()) {
+            return "Tài khoản đã được xác thực!";
+        }
+        userVerificationsDAO.deactivateOldOTPs(user.getUserId(), "EMAIL");
         String otp = OTPGenerator.generateOTP();
         if (userVerificationsDAO.insertOTP(user.getUserId(), "EMAIL", otp, 5)) {
             final String userEmail = email;
@@ -133,7 +145,9 @@ public class AuthService {
 
             new Thread(() -> {
                 try {
-                    EmailUtil.guiMaOTP(userEmail, userName, finalOtp, 5);
+                    EmailUtil.guiMaOTP(userEmail, userName, finalOtp, 5,
+                            "Mã Xác Thực Tài Khoản",
+                            "Cảm ơn bạn đã đăng ký tài khoản tại GearZone. Vui lòng sử dụng mã OTP dưới đây để hoàn tất việc xác thực email:");
                 } catch (Exception e) {
                     System.err.println("Lỗi gửi email ngầm: " + e.getMessage());
                 }
@@ -146,10 +160,14 @@ public class AuthService {
     // --- BỔ SUNG: HÀM CHECK OTP XÁC THỰC ---
     public String verifyAccount(String email, String otp) {
         Users user = usersDAO.findByEmail(email);
-        if (user == null) return "Người dùng không hợp lệ!";
+        if (user == null) {
+            return "Người dùng không hợp lệ!";
+        }
 
         UserVerifications uv = userVerificationsDAO.findValidOTP(user.getUserId(), "EMAIL", otp);
-        if (uv == null) return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
+        if (uv == null) {
+            return "Mã OTP không đúng hoặc đã quá hạn 5 phút!";
+        }
 
         if (usersDAO.markEmailVerified(user.getUserId())) {
             userVerificationsDAO.markAsVerified(uv.getVerificationId());

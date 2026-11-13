@@ -73,22 +73,22 @@ public class EmailUtil {
     }
 
     /**
-     * Gửi mã OTP xác nhận quên mật khẩu (GearZone Theme).
+     * Gửi mã OTP (Dùng chung cho cả Xác thực tài khoản và Quên mật khẩu).
      */
-    public static void guiMaOTP(String toEmail, String hoTen, String maXacThuc, int soPhutHieuLuc) {
-        String subject = "[GearZone] Mã Xác Thực Đặt Lại Mật Khẩu";
+    public static void guiMaOTP(String toEmail, String hoTen, String maXacThuc, int soPhutHieuLuc, String tieuDe, String loiNhan) {
+        String subject = "[GearZone] " + tieuDe;
 
         String body = "<div style='font-family: \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 30px 20px;'>"
                 + "<div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;'>"
-                // Header Email (Logo GearZone) - Thu gọn padding
+                // Header Email (Logo GearZone)
                 + "<div style='background-color: #ffffff; border-bottom: 2px solid #ff4757; padding: 15px; text-align: center;'>"
                 + "<h2 style='margin: 0; font-size: 24px; font-weight: 800; color: #0f1117; letter-spacing: 1px;'>GEAR<span style='color: #ff4757;'>ZONE</span></h2>"
                 + "</div>"
                 // Nội dung chính
                 + "<div style='padding: 25px 30px; color: #334155;'>"
                 + "<p style='margin: 0 0 15px 0; font-size: 15px;'>Xin chào <b style='color: #0f1117;'>" + safe(hoTen) + "</b>,</p>"
-                + "<p style='margin: 0 0 20px 0; font-size: 14px; line-height: 1.5;'>Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này. Dưới đây là mã xác thực OTP của bạn:</p>"
-                // Hộp hiển thị mã OTP - Căn giữa hoàn hảo
+                + "<p style='margin: 0 0 20px 0; font-size: 14px; line-height: 1.5;'>" + loiNhan + "</p>"
+                // Hộp hiển thị mã OTP
                 + "<div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 15px; text-align: center; margin-bottom: 20px;'>"
                 + "<span style='font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #ff4757; margin-left: 6px;'>" + safe(maXacThuc) + "</span>"
                 + "</div>"

@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mb-3">Gửi mã xác thực</button>
+            <button type="submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none;">GỬI MÃ XÁC THỰC</button>
 
             <div class="text-center mt-3">
                 <a href="${pageContext.request.contextPath}/auth?action=login" class="btn btn-outline-secondary w-100" style="border-radius: 10px; padding: 12px; font-weight: 500;">

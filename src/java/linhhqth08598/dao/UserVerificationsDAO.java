@@ -61,11 +61,10 @@ public class UserVerificationsDAO {
         return false;
     }
 
-    // Thêm hàm này vào UserVerificationsDAO.java
-    public java.sql.Timestamp getLatestOTPExpiry(int userId, String type) {
+        public java.sql.Timestamp getLatestOTPExpiry(int userId, String type) {
         String sql = "SELECT TOP 1 expires_at FROM user_verifications "
                    + "WHERE user_id = ? AND type = ? AND is_verified = 0 AND status = 'ACTIVE' "
-                   + "ORDER BY created_at DESC"; // Giả sử bảng có cột created_at, nếu không có bạn dùng verification_id DESC
+                   + "ORDER BY verification_id DESC"; // <-- SỬA DÒNG NÀY
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
@@ -79,5 +78,19 @@ public class UserVerificationsDAO {
             e.printStackTrace();
         }
         return null;
+    }
+    
+        // Vô hiệu hóa tất cả OTP cũ của user trước khi tạo mới
+    public boolean deactivateOldOTPs(int userId, String type) {
+        String sql = "UPDATE user_verifications SET status = 'INACTIVE' WHERE user_id = ? AND type = ? AND status = 'ACTIVE'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, type);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

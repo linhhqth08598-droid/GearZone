@@ -64,7 +64,7 @@
                 <small id="pwdResetError" class="text-danger mt-1" style="display: none; font-size: 13px;"><i class="fas fa-exclamation-circle"></i> Mật khẩu không khớp!</small>
             </div>
 
-            <button type="submit" id="btn-submit" class="btn btn-primary w-100 mb-3">Xác nhận đổi mật khẩu</button>
+            <button type="submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none;">Xác nhận đổi mật khẩu</button>
         </form>
 
         <!-- NÚT GỬI LẠI MÃ OTP -->
@@ -101,8 +101,10 @@
         // =======================================================
         // 1. XỬ LÝ ĐỒNG HỒ ĐẾM NGƯỢC CỦA OTP & KHÓA Ô NHẬP
         // =======================================================
-        // Lấy rawExpiresAt. Nếu nó là 0 hoặc null thì gán bằng NaN để xử lý riêng
         let rawExpiresAt = ${expiresAt != null ? expiresAt : 0};
+        // Lấy thời gian hiện tại của Server (truyền từ JSP xuống)
+        let serverNow = ${serverTime != null ? serverTime : System.currentTimeMillis()};
+        
         let otpExpiresAt = (rawExpiresAt === 0) ? 0 : rawExpiresAt; 
         
         const timeDisplay = document.getElementById('time-display');
@@ -112,7 +114,6 @@
         const hiddenInput = document.getElementById('otp-hidden');
         const btnResend = document.getElementById('btn-resend');
 
-        // Hàm khóa tất cả mọi thứ
         function lockAllInputs() {
             timeDisplay.innerHTML = "Hết hạn";
             countdownTimer.classList.replace('bg-danger', 'bg-secondary');
@@ -127,21 +128,18 @@
                 input.style.cursor = "not-allowed";
             });
 
-            // Mở khóa nút Gửi lại mã
             btnResend.disabled = false;
             document.getElementById('resend-timer').innerHTML = "";
         }
 
-        // Hàm đếm ngược
         function updateOtpTimer() {
-            // Nếu otpExpiresAt === 0 (tức là hết hạn từ trước), khóa luôn không cần đếm
             if (otpExpiresAt === 0) {
                 lockAllInputs();
                 return;
             }
 
-            let now = new Date().getTime();
-            let distance = otpExpiresAt - now;
+            // Tính toán dựa trên thời gian Server
+            let distance = otpExpiresAt - serverNow;
 
             if (distance <= 0) {
                 clearInterval(intervalOtp);
@@ -150,10 +148,13 @@
                 let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 let seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 timeDisplay.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+                
+                // Cập nhật lại thời gian Server (cộng thêm 1 giây mỗi lần chạy)
+                serverNow += 1000;
             }
         }
         
-        updateOtpTimer(); // Chạy ngay lần đầu
+        updateOtpTimer();
         const intervalOtp = setInterval(updateOtpTimer, 1000);
 
         // =======================================================
@@ -185,13 +186,11 @@
             }
         }
         
-        // Chỉ chạy đếm ngược gửi lại nếu OTP chưa hết hạn
-        if (otpExpiresAt > new Date().getTime()) {
+        if (otpExpiresAt > serverNow) {
             updateResendTimer();
             var intervalResend = setInterval(updateResendTimer, 1000);
         }
 
-        // Reset bộ đếm khi submit form gửi lại mã
         document.getElementById('resend-form').addEventListener('submit', function() {
             sessionStorage.setItem('resendStartTime', new Date().getTime());
         });

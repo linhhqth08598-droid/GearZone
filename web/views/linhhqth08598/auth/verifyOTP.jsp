@@ -41,7 +41,8 @@
                 <input type="hidden" name="otp" id="otp-hidden">
             </div>
 
-            <button type="submit" id="btn-submit" class="btn btn-primary w-100 mb-3" style="padding: 12px;">Xác Thực Ngay</button>
+            <!-- Sửa lại nút Đăng nhập trong login.jsp như sau: -->
+            <button type="submit" id="btn-submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none; padding: 12px;">XÁC THỰC NGAY</button>
         </form>
 
         <!-- NÚT GỬI LẠI MÃ OTP -->
@@ -64,7 +65,7 @@
         // =======================================================
         // 1. XỬ LÝ ĐỒNG HỒ ĐẾM NGƯỢC CỦA OTP & KHÓA Ô NHẬP
         // =======================================================
-        let rawExpiresAt = ${expiresAt != null && expiresAt > 0 ? expiresAt : 0};
+        let rawExpiresAt = ${expiresAt != null ? expiresAt : 0};
         let otpExpiresAt = (rawExpiresAt === 0 || rawExpiresAt < (new Date().getTime() - 10000)) ? 0 : rawExpiresAt;
 
         const timeDisplay = document.getElementById('time-display');

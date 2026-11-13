@@ -52,6 +52,7 @@ public class AuthServlet extends HttpServlet {
                         request.setAttribute("expiresAt", 0);
                     }
                 }
+                request.setAttribute("serverTime", System.currentTimeMillis());
                 request.getRequestDispatcher("/views/linhhqth08598/auth/verifyOTP.jsp").forward(request, response);
                 break;
             case "reset":
@@ -72,6 +73,7 @@ public class AuthServlet extends HttpServlet {
                         request.setAttribute("expiresAt", 0);
                     }
                 }
+                request.setAttribute("serverTime", System.currentTimeMillis());
                 request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
                 break;
             case "logout":
@@ -125,6 +127,9 @@ public class AuthServlet extends HttpServlet {
 
         if (user != null) {
             if (!user.getIsEmailVerified()) {
+                // XÓA SESSION CŨ
+                request.getSession().removeAttribute("otp_expiry");
+
                 authService.sendVerificationOTP(email);
                 request.getSession().setAttribute("verify_email", email);
                 request.getSession().setAttribute("message", "Tài khoản chưa xác thực. Vui lòng nhập mã OTP vừa được gửi!");
@@ -133,17 +138,17 @@ public class AuthServlet extends HttpServlet {
                 if (expiry != null) {
                     request.getSession().setAttribute("otp_expiry", expiry.getTime());
                 }
-                response.sendRedirect(request.getContextPath() + "/auth?action=verify");
+
+                response.sendRedirect(request.getContextPath() + "/auth?action=verify&email=" + email + "&t=" + System.currentTimeMillis());
                 return;
             }
-
+            // Đăng nhập thành công
             HttpSession session = request.getSession();
             session.setAttribute("loggedUser", user);
 
-            // Lấy URL cũ từ UserAuthFilter (nếu có)
             String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {
-                session.removeAttribute("redirectAfterLogin"); // Xóa đi sau khi dùng
+                session.removeAttribute("redirectAfterLogin");
                 response.sendRedirect(redirectUrl);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home");

@@ -38,7 +38,8 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mb-3">Đăng nhập</button>
+            <!-- Sửa lại nút Đăng nhập trong login.jsp như sau: -->
+            <button type="submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none;">Đăng nhập</button>
 
             <!-- ĐÃ CHUYỂN QUÊN MẬT KHẨU XUỐNG ĐÂY -->
             <div class="d-flex justify-content-between align-items-center mt-3">
@@ -54,7 +55,7 @@
     function togglePassword(inputId, iconElement) {
         const input = document.getElementById(inputId);
         const icon = iconElement.querySelector('i');
-        
+
         if (input.type === "password") {
             input.type = "text";
             icon.classList.remove("fa-eye");
