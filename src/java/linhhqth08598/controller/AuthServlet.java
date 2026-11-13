@@ -33,7 +33,7 @@ public class AuthServlet extends HttpServlet {
                 request.getRequestDispatcher("/views/linhhqth08598/auth/register.jsp").forward(request, response);
                 break;
             case "forget":
-                request.getRequestDispatcher("/views/linhhqth08598/auth/forgetPS.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/linhhqth08598/auth/forgetPW.jsp").forward(request, response);
                 break;
             case "reset":
                 String email = request.getParameter("email");
@@ -51,7 +51,7 @@ public class AuthServlet extends HttpServlet {
                     request.setAttribute("expiresAt", System.currentTimeMillis() + (5 * 60 * 1000));
                 }
 
-                request.getRequestDispatcher("/views/linhhqth08598/auth/resetPS.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
                 break;
             case "logout":
                 request.getSession().invalidate(); // Xóa phiên đăng nhập
@@ -151,7 +151,7 @@ public class AuthServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth?action=reset");
         } else {
             request.setAttribute("error", result.get("error"));
-            request.getRequestDispatcher("/views/linhhqth08598/auth/forgetPS.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/linhhqth08598/auth/forgetPW.jsp").forward(request, response);
         }
     }
 
@@ -168,7 +168,7 @@ public class AuthServlet extends HttpServlet {
         } else {
             request.setAttribute("error", error);
             request.setAttribute("email", email); // Giữ lại email
-            request.getRequestDispatcher("/views/linhhqth08598/auth/resetPS.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/linhhqth08598/auth/resetPW.jsp").forward(request, response);
         }
     }
 }

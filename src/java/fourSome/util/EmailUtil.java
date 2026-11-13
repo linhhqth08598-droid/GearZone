@@ -63,11 +63,11 @@ public class EmailUtil {
             message.setContent(htmlBody, "text/html; charset=UTF-8");
 
             Transport.send(message);
-            System.out.println("[EMAIL] Đã gửi email tới " + toEmail);
+            System.out.println("[EMAIL] Đa gui email toi " + toEmail);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[EMAIL - GỬI LỖI, IN RA CONSOLE] tới " + toEmail + " | " + subject);
+            System.out.println("[EMAIL - GUI LOI, IN RA CONSOLE] toi " + toEmail + " | " + subject);
             return false;
         }
     }
