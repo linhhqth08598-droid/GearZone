@@ -1,6 +1,6 @@
 package fourSome.util;
 
-import linhhqth08598.dao.PriceDropNotificationsDAO;
+import fourSome.url.DBConnect;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
