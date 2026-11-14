@@ -155,4 +155,76 @@ public class UserWishlistsDAO {
         }
         return list;
     }
+    
+        // Lấy chi tiết linh kiện của một cấu hình
+    public java.util.List<fourSome.model.PcBuildDetailItem> getPcBuildDetails(int buildId) {
+        java.util.List<fourSome.model.PcBuildDetailItem> list = new java.util.ArrayList<>();
+        String sql = "SELECT p.part_name, bd.quantity, bd.unit_price "
+                   + "FROM pc_build_details bd "
+                   + "JOIN parts p ON bd.part_id = p.part_id "
+                   + "WHERE bd.build_id = ?";
+        try (java.sql.Connection conn = fourSome.url.DBConnect.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, buildId);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    fourSome.model.PcBuildDetailItem item = new fourSome.model.PcBuildDetailItem();
+                    item.setPartName(rs.getString("part_name"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setUnitPrice(rs.getDouble("unit_price"));
+                    list.add(item);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+        // Lấy lịch sử cấu hình PC của user
+    public java.util.List<fourSome.model.PcBuildHistoryItem> getPcBuildHistory(int userId) {
+        java.util.List<fourSome.model.PcBuildHistoryItem> list = new java.util.ArrayList<>();
+        String sql = "SELECT build_id, build_name, total_price, created_at, status, share_token "
+                   + "FROM pc_builds "
+                   + "WHERE user_id = ? AND status IN ('SAVED', 'DRAFT') "
+                   + "ORDER BY created_at DESC";
+                   
+        try (java.sql.Connection conn = fourSome.url.DBConnect.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    fourSome.model.PcBuildHistoryItem item = new fourSome.model.PcBuildHistoryItem();
+                    item.setBuildId(rs.getInt("build_id"));
+                    item.setBuildName(rs.getString("build_name"));
+                    item.setTotalPrice(rs.getDouble("total_price"));
+                    item.setCreatedAt(rs.getTimestamp("created_at"));
+                    item.setStatus(rs.getString("status"));
+                    item.setShareToken(rs.getString("share_token"));
+                    
+                    // Lấy danh sách linh kiện chi tiết
+                    item.setDetails(getPcBuildDetails(item.getBuildId()));
+                    
+                    list.add(item);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+        // Thêm vào UserWishlistsDAO.java
+    public boolean checkExists(int userId, int partId) {
+        String sql = "SELECT 1 FROM user_wishlists WHERE user_id = ? AND part_id = ? AND status = 'ACTIVE'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, partId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 }

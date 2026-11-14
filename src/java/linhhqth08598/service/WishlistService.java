@@ -24,4 +24,11 @@ public class WishlistService {
         }
         return "Lỗi khi xóa khỏi danh sách yêu thích!";
     }
+    
+    // ==========================================
+    // THÊM HÀM NÀY VÀO (Dùng cho nút Tim ở detail.jsp)
+    // ==========================================
+    public boolean checkExists(int userId, int partId) {
+        return wishlistDAO.checkExists(userId, partId);
+    }
 }

@@ -12,16 +12,22 @@ import java.io.IOException;
 
 // CHỈ LIỆT KÊ CÁC ĐƯỜNG DẪN BẮT BUỘC KHÁCH HÀNG PHẢI ĐĂNG NHẬP
 @WebFilter(urlPatterns = {
-    "/user/*",       // Hồ sơ, địa chỉ cá nhân
-    "/cart/*",       // Giỏ hàng
-    "/checkout/*",   // Thanh toán
-    "/wishlist/*",   // Danh sách yêu thích
+    "/user/*", // Hồ sơ, địa chỉ cá nhân
+    "/user/notifications",
+    "/user/returns",
+    "/user/profile",
+    "/user/support",
+    "/cart/*", // Giỏ hàng
+    "/checkout/*", // Thanh toán
+    "/wishlist/*", // Danh sách yêu thích
     "/user/wishlist",
     "/user/price-alert",
-    "/order/*",      // Lịch sử đơn hàng
-    "/return/*",     // Đổi trả
-    "/review/*",     // Đánh giá sản phẩm
-    "/support/*",    // Gửi yêu cầu hỗ trợ (ticket)
+    "/user/pc-build-history",
+    "/user/review",
+    "/order/*", // Lịch sử đơn hàng
+    "/return/*", // Đổi trả
+    "/review/*", // Đánh giá sản phẩm
+    "/support/*", // Gửi yêu cầu hỗ trợ (ticket)
     "/assembly/order" // Đặt lịch lắp ráp
 })
 public class UserAuthFilter implements Filter {
@@ -29,13 +35,13 @@ public class UserAuthFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        
+
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
         HttpSession session = req.getSession();
-        
+
         Users loggedUser = (Users) session.getAttribute("loggedUser"); // Hoặc Constants.SESSION_USER
-        
+
         // Nếu chưa đăng nhập mà cố tình vào các trang trên
         if (loggedUser == null) {
             // Kiểm tra xem đây có phải là request AJAX không (ví dụ: bấm nút "Thêm vào giỏ" không load trang)
@@ -53,13 +59,13 @@ public class UserAuthFilter implements Filter {
                     currentUrl += "?" + req.getQueryString();
                 }
                 session.setAttribute("redirectAfterLogin", currentUrl);
-                
+
                 // Đá về trang đăng nhập
                 res.sendRedirect(req.getContextPath() + "/auth?action=login");
                 return;
             }
         }
-        
+
         // Đã đăng nhập -> Cho đi tiếp
         chain.doFilter(request, response);
     }

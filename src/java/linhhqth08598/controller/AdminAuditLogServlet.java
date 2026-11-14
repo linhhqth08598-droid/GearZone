@@ -19,9 +19,12 @@ public class AdminAuditLogServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-            
-        // Lấy danh sách Log (cần đổ thêm PaginationUtil vào đây ở bước làm UI nếu dữ liệu lớn)
-        List<StaffAuditLogs> logs = auditLogService.getAllLogs();
+        
+        String keyword = request.getParameter("keyword");
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
+
+        List<StaffAuditLogs> logs = auditLogService.searchLogs(keyword, fromDate, toDate);
         
         request.setAttribute("auditLogs", logs);
         request.getRequestDispatcher("/views/linhhqth08598/admin/audit_logs.jsp").forward(request, response);

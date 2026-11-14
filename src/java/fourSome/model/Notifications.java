@@ -3,7 +3,6 @@ package fourSome.model;
 import java.util.Date;
 
 public class Notifications {
-
     private Integer notificationId;
     private Integer userId;
     private String notificationType;
@@ -19,6 +18,7 @@ public class Notifications {
 
     public Notifications() {}
 
+    // Getters and Setters
     public Integer getNotificationId() { return notificationId; }
     public void setNotificationId(Integer notificationId) { this.notificationId = notificationId; }
 
@@ -54,5 +54,4 @@ public class Notifications {
 
     public Date getSentAt() { return sentAt; }
     public void setSentAt(Date sentAt) { this.sentAt = sentAt; }
-
 }

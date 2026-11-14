@@ -3,7 +3,6 @@ package linhhqth08598.controller;
 import fourSome.model.Users;
 import fourSome.model.PriceDropNotifications;
 import linhhqth08598.service.PriceAlertService;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -37,41 +36,49 @@ public class PriceAlertServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json; charset=UTF-8");
+        
         HttpSession session = request.getSession();
         Users user = (Users) session.getAttribute("loggedUser");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth?action=login");
+            response.getWriter().write("{\"success\": false, \"message\": \"Chưa đăng nhập\"}");
             return;
         }
 
         String action = request.getParameter("action");
-        if ("register".equals(action)) {
-            try {
+        try {
+            if ("register".equals(action)) {
                 int partId = Integer.parseInt(request.getParameter("partId"));
                 double targetPrice = Double.parseDouble(request.getParameter("targetPrice"));
                 String error = service.registerPriceAlert(user.getUserId(), partId, targetPrice);
+                
                 if (error == null) {
-                    session.setAttribute("message", "Đăng ký theo dõi giá thành công!");
+                    response.getWriter().write("{\"success\": true, \"message\": \"Đăng ký thành công\", \"isAlerted\": true}");
                 } else {
-                    session.setAttribute("error", error);
+                    response.getWriter().write("{\"success\": false, \"message\": \"" + error + "\"}");
                 }
-            } catch (NumberFormatException e) {
-                session.setAttribute("error", "Dữ liệu nhập vào không hợp lệ!");
-            }
-        } else if ("delete".equals(action)) {
-            try {
+            } else if ("delete".equals(action)) {
                 int notificationId = Integer.parseInt(request.getParameter("notificationId"));
                 String error = service.deleteAlert(notificationId, user.getUserId());
+                
                 if (error == null) {
-                    session.setAttribute("message", "Đã hủy theo dõi sản phẩm.");
+                    response.getWriter().write("{\"success\": true, \"message\": \"Đã hủy theo dõi\", \"isAlerted\": false}");
                 } else {
-                    session.setAttribute("error", error);
+                    response.getWriter().write("{\"success\": false, \"message\": \"" + error + "\"}");
                 }
-            } catch (NumberFormatException e) {
-                session.setAttribute("error", "Mã không hợp lệ!");
+            } else if ("cancel".equals(action)) {
+                // Hủy theo dõi dành riêng cho AJAX
+                int partId = Integer.parseInt(request.getParameter("partId"));
+                String error = service.cancelAlertByPartId(user.getUserId(), partId); // Bạn cần thêm hàm này vào Service
+                
+                if (error == null) {
+                    response.getWriter().write("{\"success\": true, \"isAlerted\": false}");
+                } else {
+                    response.getWriter().write("{\"success\": false, \"message\": \"" + error + "\"}");
+                }
             }
+        } catch (NumberFormatException e) {
+            response.getWriter().write("{\"success\": false, \"message\": \"Dữ liệu không hợp lệ\"}");
         }
-        
-        response.sendRedirect(request.getContextPath() + "/user/price-alert");
     }
 }

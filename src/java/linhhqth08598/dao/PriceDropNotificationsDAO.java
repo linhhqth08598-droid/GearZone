@@ -103,4 +103,16 @@ public class PriceDropNotificationsDAO {
         }
         return false;
     }
+    
+        // Thêm vào PriceDropNotificationsDAO.java
+    public boolean deleteByPartId(int userId, int partId) {
+        String sql = "DELETE FROM price_drop_notifications WHERE user_id = ? AND part_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 }

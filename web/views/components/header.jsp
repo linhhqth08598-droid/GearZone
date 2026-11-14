@@ -12,6 +12,19 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/components/css/style.css">
 
         <style>
+            /* FIX LỖI DROPDOWN BỊ ẨN */
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                z-index: 1050; /* Nổi lên trên mọi thứ */
+            }
+            .dropdown-menu.show {
+                display: block !important; /* Hiển thị dạng khối khi click */
+            }
+            .dropdown-menu .dropdown-item {
+                display: block; /* Xếp dọc các mục */
+                padding: 8px 16px;
+            }
             /* Base Body (Giao diện Sáng) */
             body {
                 background-color: #f1f5f9;
@@ -26,9 +39,24 @@
             main {
                 flex: 1;
                 display: flex;
-                align-items: center; /* Căn giữa form theo chiều dọc */
-                justify-content: center;
-                padding: 20px 0; /* Thêm padding nhẹ trên dưới */
+                flex-direction: column;
+                /* align-items: center;  <-- XÓA DÒNG NÀY */
+                /* justify-content: center; <-- XÓA DÒNG NÀY */
+                padding: 20px 0;
+            }
+
+            /* THÊM ĐOẠN NÀY ĐỂ FIX LỖI DROPDOWN BỊ ẨN */
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                z-index: 1050; /* Đảm bảo menu nằm trên cùng */
+            }
+            .dropdown-menu.show {
+                display: block !important; /* Ép buộc hiển thị dạng khối khi được click */
+            }
+            .dropdown-menu .dropdown-item {
+                display: block; /* Đảm bảo các dòng menu xếp dọc */
+                padding: 8px 16px;
             }
 
             /* Đảm bảo footer không bị đẩy xuống quá xa */
@@ -93,6 +121,21 @@
                         <li class="nav-item"><a class="nav-link" href="#">Build PC</a></li>
                     </ul>
                     <ul class="navbar-nav align-items-center">
+                        <!-- Chuông thông báo -->
+                        <c:if test="${not empty sessionScope.loggedUser}">
+                            <li class="nav-item me-2">
+                                <a class="nav-link position-relative" href="${pageContext.request.contextPath}/user/notifications" title="Thông báo">
+                                    <i class="fas fa-bell fs-5"></i>
+                                    <!-- Nếu có thông báo chưa đọc thì hiện số đỏ -->
+                                    <c:set var="unreadCount" value="${sessionScope.unreadCount}" />
+                                    <c:if test="${unreadCount > 0}">
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
+                                            ${unreadCount}
+                                        </span>
+                                    </c:if>
+                                </a>
+                            </li>
+                        </c:if>
                         <c:choose>
                             <c:when test="${not empty sessionScope.loggedUser}">
                                 <li class="nav-item dropdown">
@@ -101,10 +144,12 @@
                                     </a>
                                     <!-- Menu thả xuống nền sáng -->
                                     <ul class="dropdown-menu dropdown-menu-end" style="background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                        <li><a class="dropdown-item" href="#"><i class="fas fa-id-badge me-2 text-muted"></i>Hồ sơ cá nhân</a></li>
-                                        <li><a class="dropdown-item" href="#"><i class="fas fa-shopping-bag me-2 text-muted"></i>Đơn hàng</a></li>
+                                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/profile"><i class="fas fa-id-badge me-2 text-muted"></i>Hồ sơ cá nhân</a></li>
                                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/order-history"><i class="fas fa-shopping-bag me-2 text-muted"></i>Lịch sử mua hàng</a></li>
+                                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/wishlist"><i class="fas fa-heart me-2 text-muted"></i>Sản phẩm yêu thích</a></li>
+                                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/pc-build-history"><i class="fas fa-desktop me-2 text-muted"></i>Lịch sử cấu hình PC</a></li>
                                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/price-alert"><i class="fas fa-bell me-2 text-muted"></i>Theo dõi giá</a></li>
+                                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/notifications"><i class="fas fa-envelope me-2 text-muted"></i>Thông báo</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/auth?action=logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
                                     </ul>
@@ -131,4 +176,5 @@
                 </div>
             </div>
         </nav>
-        <main>
+        <main class="flex-grow-1 w-100"> <!-- Thêm class này để main tự co giãn -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

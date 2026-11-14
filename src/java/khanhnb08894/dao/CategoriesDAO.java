@@ -28,4 +28,68 @@ public class CategoriesDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    
+        // Thêm danh mục mới
+    public boolean insert(Categories category) {
+        String sql = "INSERT INTO categories (category_code, category_name, description, is_required_in_build, status) "
+                   + "VALUES (?, ?, ?, ?, 'ACTIVE')";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, category.getCategoryCode());
+            ps.setString(2, category.getCategoryName());
+            ps.setString(3, category.getDescription());
+            ps.setBoolean(4, category.getIsRequiredInBuild());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Cập nhật danh mục
+    public boolean update(Categories category) {
+        String sql = "UPDATE categories SET category_code = ?, category_name = ?, description = ?, is_required_in_build = ?, status = ? WHERE category_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, category.getCategoryCode());
+            ps.setString(2, category.getCategoryName());
+            ps.setString(3, category.getDescription());
+            ps.setBoolean(4, category.getIsRequiredInBuild());
+            ps.setString(5, category.getStatus());
+            ps.setInt(6, category.getCategoryId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Xóa mềm danh mục
+    public boolean softDelete(int categoryId) {
+        String sql = "UPDATE categories SET status = 'INACTIVE' WHERE category_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, categoryId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Kiểm tra trùng mã code
+    public boolean checkCodeExist(String code, int excludeId) {
+        String sql = "SELECT 1 FROM categories WHERE category_code = ? AND category_id != ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, code);
+            ps.setInt(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

@@ -12,6 +12,22 @@
         </a>
     </div>
 
+    <!-- Hiển thị thông báo -->
+    <c:if test="${not empty sessionScope.message}">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-1"></i> ${sessionScope.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <c:remove var="message" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.error}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-1"></i> ${sessionScope.error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <c:remove var="error" scope="session"/>
+    </c:if>
+
     <c:choose>
         <c:when test="${empty historyList}">
             <div class="text-center py-5 bg-white rounded-4 shadow-sm">
@@ -24,7 +40,6 @@
         <c:otherwise>
             <div class="row">
                 <div class="col-12">
-                    <!-- Lặp qua từng sản phẩm trong lịch sử, gộp chung theo đơn hàng nếu muốn (ở đây hiển thị từng item) -->
                     <c:forEach var="item" items="${historyList}">
                         <div class="card shadow-sm border-0 rounded-4 mb-3">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top-4">
@@ -81,10 +96,46 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white text-end py-2 rounded-bottom-4">
+                                <!-- Nút Yêu cầu đổi trả (Chỉ hiện khi đơn đã giao) -->
+                                <c:if test="${item.orderStatus == 'DELIVERED'}">
+                                    <button type="button" class="btn btn-sm btn-outline-danger me-3" data-bs-toggle="modal" data-bs-target="#returnModal-${item.orderId}-${item.partId}">
+                                        <i class="fas fa-undo"></i> Yêu cầu đổi trả
+                                    </button>
+                                </c:if>
+
                                 <span class="text-muted me-2">Thành tiền:</span>
                                 <span class="text-danger fw-bold fs-5">
                                     <fmt:formatNumber value="${item.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                 </span>
+                            </div>
+                        </div>
+
+                        <!-- Modal nhập lý do đổi trả (Đặt ngay trong vòng lặp để lấy đúng ID) -->
+                        <div class="modal fade" id="returnModal-${item.orderId}-${item.partId}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="${pageContext.request.contextPath}/user/returns" method="POST">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Yêu cầu đổi trả sản phẩm</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="hidden" name="orderId" value="${item.orderId}">
+                                            <input type="hidden" name="partId" value="${item.partId}">
+                                            <div class="mb-3">
+                                                <label class="form-label">Số lượng muốn trả</label>
+                                                <input type="number" name="quantity" class="form-control" max="${item.quantity}" value="${item.quantity}" required min="1">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Lý do đổi trả</label>
+                                                <textarea name="reason" class="form-control" rows="3" required placeholder="Sản phẩm bị lỗi, giao sai hàng..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-danger">Gửi yêu cầu</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </c:forEach>

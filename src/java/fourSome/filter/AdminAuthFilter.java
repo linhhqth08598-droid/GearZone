@@ -24,30 +24,31 @@ public class AdminAuthFilter implements Filter {
         HttpServletResponse res = (HttpServletResponse) response;
         HttpSession session = req.getSession();
         
-        // Thống nhất dùng "loggedUser" theo checklist của nhóm
+        // 1. Lấy user đang đăng nhập (nếu có)
         Users loggedUser = (Users) session.getAttribute("loggedUser");
         
-        // 1. Chưa đăng nhập -> Đá về trang đăng nhập
+        // 2. Nếu là khách vãng lai (GUEST) -> Đá về trang đăng nhập
         if (loggedUser == null) {
             res.sendRedirect(req.getContextPath() + "/auth?action=login");
             return;
         }
         
-        // 2. Lấy danh sách roles của user này và lưu lên Session để dùng lại
-        @SuppressWarnings("unchecked")
-        List<String> roles = (List<String>) session.getAttribute("userRoles");
-        if (roles == null) {
-            roles = userRolesDAO.getRoleCodesByUserId(loggedUser.getUserId());
-            session.setAttribute("userRoles", roles);
-        }
+        // 3. Lấy danh sách quyền mới nhất từ DB
+        List<String> roles = userRolesDAO.getRoleCodesByUserId(loggedUser.getUserId());
+        session.setAttribute("userRoles", roles);
         
-        // 3. Nếu là CUSTOMER (khách hàng bình thường) và không có bất kỳ role nhân viên nào -> Báo lỗi 403
-        if (roles.isEmpty() || (roles.size() == 1 && roles.contains("CUSTOMER"))) {
+        // 4. Kiểm tra quyền: Chỉ ADMIN, OWNER hoặc STAFF mới được vào
+        boolean isAdmin = roles.contains("ADMIN");
+        boolean isOwner = roles.contains("OWNER");
+        boolean isStaff = roles.contains("STAFF");
+        
+        // Nếu chỉ là CUSTOMER (User) hoặc không có quyền gì -> Chặn
+        if (!isAdmin && !isOwner && !isStaff) {
             res.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập khu vực quản trị.");
             return;
         }
         
-        // Hợp lệ -> Cho phép đi tiếp vào trang Admin
+        // Hợp lệ -> Cho phép đi tiếp
         chain.doFilter(request, response);
     }
 }

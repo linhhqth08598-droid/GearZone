@@ -29,4 +29,9 @@ public class AuditLogService {
             }
         }).start();
     }
+    
+        // Thêm hàm này vào AuditLogService.java
+    public List<StaffAuditLogs> searchLogs(String keyword, String fromDate, String toDate) {
+        return auditLogsDAO.search(keyword, fromDate, toDate);
+    }
 }

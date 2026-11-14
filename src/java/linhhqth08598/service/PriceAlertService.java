@@ -27,4 +27,14 @@ public class PriceAlertService {
         }
         return "Lỗi khi hủy theo dõi giá!";
     }
+    
+    // ==========================================
+    // THÊM HÀM NÀY VÀO (Dùng cho nút Chuông ở detail.jsp)
+    // ==========================================
+    public String cancelAlertByPartId(int userId, int partId) {
+        if (dao.deleteByPartId(userId, partId)) {
+            return null;
+        }
+        return "Lỗi khi hủy theo dõi giá!";
+    }
 }

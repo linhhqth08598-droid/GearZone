@@ -19,7 +19,7 @@ public class PartReviewImagesDAO {
                 PartReviewImages obj = new PartReviewImages();
                 obj.setImageId(rs.getInt("image_id"));
                 obj.setReviewId(rs.getInt("review_id"));
-                obj.setImageUrl(rs.getString("image_url"));
+                obj.setImageBase64(rs.getString("image_url"));
                 obj.setStatus(rs.getString("status"));
                 list.add(obj);
             }

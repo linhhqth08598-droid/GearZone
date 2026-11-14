@@ -30,7 +30,7 @@
     <c:choose>
         <c:when test="${empty alerts}">
             <div class="text-center py-5 bg-white rounded-4 shadow-sm">
-                <img src="https://cdn-icons-png.flaticon.com/512/3602/3602129.png" alt="Empty" style="width: 120px; opacity: 0.5;" class="mb-3">
+                <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="Empty" style="width: 120px; opacity: 0.5;" class="mb-3">
                 <h5 class="text-muted">Bạn chưa theo dõi sản phẩm nào.</h5>
                 <p class="text-muted mb-4">Hãy thêm sản phẩm vào danh sách theo dõi để nhận thông báo khi giá giảm!</p>
             </div>

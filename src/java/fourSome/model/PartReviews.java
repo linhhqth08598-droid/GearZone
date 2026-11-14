@@ -6,13 +6,16 @@ public class PartReviews {
 
     private Integer reviewId;
     private Integer userId;
+    private String userName;
     private Integer partId;
+    private String partName;
     private Integer orderId;
     private Integer qualityRating;
     private Integer performanceRating;
     private String comment;
     private String status;
     private Date createdAt;
+    private String imageUrl; 
 
     public PartReviews() {}
 
@@ -24,7 +27,13 @@ public class PartReviews {
 
     public Integer getPartId() { return partId; }
     public void setPartId(Integer partId) { this.partId = partId; }
-
+    
+    public String getPartName() { return partName; }
+    public void setPartName(String partName) { this.partName = partName; }
+    
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
+    
     public Integer getOrderId() { return orderId; }
     public void setOrderId(Integer orderId) { this.orderId = orderId; }
 
@@ -42,5 +51,7 @@ public class PartReviews {
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
-
+    
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

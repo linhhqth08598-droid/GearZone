@@ -12,7 +12,10 @@
             <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${error}</div>
         </c:if>
         <c:if test="${not empty sessionScope.message}">
-            <div class="alert alert-success"><i class="fas fa-check-circle"></i> ${sessionScope.message}</div>
+            <div class="alert alert-success d-flex align-items-center justify-content-center text-center">
+                <i class="fas fa-check-circle me-2"></i> 
+                <span>${sessionScope.message}</span>
+            </div>
             <c:remove var="message" scope="session" />
         </c:if>
 
