@@ -88,9 +88,20 @@
 <div class="user-wrapper">
     <nav class="sidebar-user d-flex flex-column">
         <ul class="nav flex-column">
+            <!-- NHÓM CHỨC NĂNG CHÍNH -->
             <li class="nav-item border-bottom mb-1 pb-1">
                 <a class="nav-link" href="${pageContext.request.contextPath}/home">
                     <i class="fas fa-store"></i> Trang chủ - Mua sắm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/user/profile') ? 'active' : ''}" href="${pageContext.request.contextPath}/user/profile">
+                    <i class="fas fa-id-badge"></i> Hồ sơ cá nhân
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/user/address') ? 'active' : ''}" href="${pageContext.request.contextPath}/user?action=address">
+                    <i class="fas fa-map-marker-alt"></i> Quản lý địa chỉ
                 </a>
             </li>
             <li class="nav-item">
@@ -123,14 +134,16 @@
                     <i class="fas fa-desktop"></i> Lịch sử cấu hình PC
                 </a>
             </li>
-            <li class="nav-item mt-2 border-top pt-2">
-                <a class="nav-link text-danger" href="${pageContext.request.contextPath}/auth?action=logout">
-                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+
+            <!-- NHÓM HỖ TRỢ & ĐĂNG XUẤT (Nằm dưới cùng) -->
+            <li class="nav-item border-top mt-2 pt-2">
+                <a class="nav-link ${fn:contains(currentURL, '/user/support') ? 'active' : ''}" href="${pageContext.request.contextPath}/user/support">
+                    <i class="fas fa-headset"></i> Hỗ trợ khách hàng
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link ${fn:contains(currentURL, '/user/support') ? 'active' : ''}" href="${pageContext.request.contextPath}/user/support">
-                    <i class="fas fa-headset"></i> Hỗ trợ khách hàng
+                <a class="nav-link text-danger" href="${pageContext.request.contextPath}/auth?action=logout">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
                 </a>
             </li>
         </ul>
