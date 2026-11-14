@@ -2,7 +2,6 @@ package linhhqth08598.controller;
 
 import fourSome.model.ShippingAddresses;
 import fourSome.model.Users;
-import fourSome.util.FileUploadUtil;
 import linhhqth08598.service.UserService;
 
 import jakarta.servlet.ServletException;
@@ -91,24 +90,30 @@ public class UserServlet extends HttpServlet {
                 break;
 
             case "updateAvatar":
-                Part filePart = request.getPart("avatar");
+                Part filePart = request.getPart("avatar"); // Đã khớp với name="avatar" ở JSP
                 if (filePart != null && filePart.getSize() > 0) {
-                    // Đọc dữ liệu từ file upload
-                    java.io.InputStream fileContent = filePart.getInputStream();
-                    byte[] imageBytes = fileContent.readAllBytes();
+                    try {
+                        java.io.InputStream fileContent = filePart.getInputStream();
+                        byte[] imageBytes = fileContent.readAllBytes();
+                        String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
+                        
+                        // Lấy đúng content type của ảnh (image/png, image/jpeg...)
+                        String contentType = filePart.getContentType();
+                        String avatarBase64Url = "data:" + contentType + ";base64," + base64Image;
 
-                    // Mã hóa sang chuỗi Base64
-                    String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
-
-                    // Tạo chuỗi data URI để trình duyệt có thể hiển thị trực tiếp
-                    // Giả sử ảnh luôn là jpeg/png, bạn có thể nối chuỗi như sau:
-                    String avatarBase64Url = "data:image/jpeg;base64," + base64Image;
-
-                    if (userService.updateAvatar(loggedUser.getUserId(), avatarBase64Url) == null) {
-                        loggedUser.setAvatarUrl(avatarBase64Url);
-                        session.setAttribute("loggedUser", loggedUser);
-                        session.setAttribute("message", "Đổi ảnh đại diện thành công.");
+                        if (userService.updateAvatar(loggedUser.getUserId(), avatarBase64Url) == null) {
+                            loggedUser.setAvatarUrl(avatarBase64Url);
+                            session.setAttribute("loggedUser", loggedUser);
+                            session.setAttribute("message", "Đổi ảnh đại diện thành công.");
+                        } else {
+                            session.setAttribute("error", "Lỗi cập nhật database!");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        session.setAttribute("error", "Lỗi khi xử lý ảnh!");
                     }
+                } else {
+                    session.setAttribute("error", "Vui lòng chọn ảnh!");
                 }
                 response.sendRedirect(request.getContextPath() + "/user?action=profile");
                 break;

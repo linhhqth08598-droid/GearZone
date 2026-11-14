@@ -4,9 +4,14 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* Luôn chừa chỗ cho thanh cuộn để trang không bị giật/lệch sang trái khi nội dung dài lên */
+html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: 'Inter', 'Segoe UI', sans-serif;
-    scrollbar-gutter: stable; /* THÊM DÒNG NÀY ĐỂ KHÔNG BỊ LỆCH KHI CÓ THANH CUỘN */
 }
 
 /* Giảm margin-top xuống 20px để form không bị đẩy xuống thấp */
@@ -229,7 +234,7 @@ body {
 /* 1. Tùy chỉnh bảng dữ liệu (Table) */
 .table-responsive {
     border-radius: 10px;
-    overflow: hidden; /* Giữ cho góc bảng bo tròn */
+    overflow-x: auto; /* cho phép cuộn ngang, không cắt mất cột */
     border: 1px solid #e2e8f0;
 }
 

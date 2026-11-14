@@ -4,7 +4,7 @@
 
 <jsp:include page="/views/components/header.jsp" />
 
-<div class="container my-5" style="min-height: 60vh;">
+<jsp:include page="/views/components/sidebar.jsp" />
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold mb-0"><i class="fas fa-headset text-primary me-2"></i>Hỗ trợ khách hàng</h3>
         <a href="${pageContext.request.contextPath}/home" class="btn btn-outline-secondary">
@@ -106,6 +106,6 @@
             </div>
         </div>
     </div>
-</div>
+
 
 <jsp:include page="/views/components/footer.jsp" />

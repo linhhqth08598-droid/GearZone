@@ -4,7 +4,7 @@
 
 <jsp:include page="/views/components/header.jsp" />
 
-<div class="container my-5" style="min-height: 60vh;">
+<jsp:include page="/views/components/sidebar.jsp" />
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold mb-0"><i class="fas fa-desktop text-primary me-2"></i>Lịch sử cấu hình PC</h3>
         <a href="${pageContext.request.contextPath}/build-pc" class="btn btn-outline-primary">
@@ -24,9 +24,9 @@
         <c:otherwise>
             <div class="row">
                 <c:forEach var="build" items="${buildHistoryList}">
-                    <div class="col-md-6 mb-4">
+                    <div class="col-12 col-md-6 col-xl-4 mb-4">
                         <div class="card shadow-sm border-0 rounded-4 h-100">
-                            <div class="card-body p-4">
+                            <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h5 class="fw-bold text-dark mb-0">${build.buildName}</h5>
                                     <c:choose>
@@ -68,7 +68,7 @@
                                     </ul>
                                 </div>
                             </div>
-                            <div class="card-footer bg-white border-top-0 text-end pb-3">
+                            <div class="card-footer bg-white border-top-0 text-end pt-0 pb-3">
                                 <a href="${pageContext.request.contextPath}/build-pc?id=${build.buildId}" class="btn btn-outline-primary btn-sm me-2">
                                     <i class="fas fa-eye me-1"></i> Xem chi tiết
                                 </a>
@@ -84,7 +84,7 @@
             </div>
         </c:otherwise>
     </c:choose>
-</div>
+
 
 <script>
     function copyShareLink(token) {

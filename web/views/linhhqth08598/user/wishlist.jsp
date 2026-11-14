@@ -4,7 +4,7 @@
 
 <jsp:include page="/views/components/header.jsp" />
 
-<div class="container my-5" style="min-height: 60vh;">
+<jsp:include page="/views/components/sidebar.jsp" />
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold mb-0"><i class="fas fa-heart text-danger me-2"></i>Sản phẩm yêu thích</h3>
         <a href="${pageContext.request.contextPath}/home" class="btn btn-outline-secondary">
@@ -41,8 +41,13 @@
             <div class="row g-4">
                 <c:forEach var="item" items="${wishlist}">
                     <div class="col-md-3 col-sm-6">
-                        <div class="card h-100 shadow-sm border-0 rounded-4 product-card">
+                        <div class="card h-100 shadow-sm border-0 rounded-4 product-card position-relative">
                             <!-- Ảnh sản phẩm -->
+                            <button type="button" class="btn btn-light rounded-circle shadow-sm position-absolute wishlist-heart"
+                                    style="top: 10px; right: 10px; width: 38px; height: 38px; z-index: 2; color: #ff4757;"
+                                    onclick="toggleWishlist(${item.partId}, this)" title="Bỏ yêu thích / Thêm yêu thích">
+                                <i class="fas fa-heart"></i>
+                            </button>
                             <div class="p-3 text-center bg-light rounded-top-4" style="height: 200px; display: flex; align-items: center; justify-content: center;">
                                 <c:choose>
                                     <c:when test="${not empty item.primaryImageUrl}">
@@ -67,18 +72,9 @@
                                     </h5>
                                     
                                     <div class="d-flex gap-2">
-                                        <a href="${pageContext.request.contextPath}/product/detail?id=${item.partId}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                        <a href="${pageContext.request.contextPath}/product?action=detail&id=${item.partId}" class="btn btn-outline-primary btn-sm flex-grow-1">
                                             <i class="fas fa-eye"></i> Xem
                                         </a>
-                                        
-                                        <!-- Form xóa khỏi wishlist -->
-                                        <form action="${pageContext.request.contextPath}/user/wishlist" method="POST" class="d-inline">
-                                            <input type="hidden" name="action" value="remove">
-                                            <input type="hidden" name="partId" value="${item.partId}">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi danh sách yêu thích?');" title="Xóa khỏi yêu thích">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -88,7 +84,21 @@
             </div>
         </c:otherwise>
     </c:choose>
-</div>
+
+
+<script>
+    // Bấm tim: bỏ yêu thích (tim xám) hoặc thêm lại (tim đỏ). Thẻ vẫn giữ trên trang đến khi tải lại.
+    function toggleWishlist(partId, btn) {
+        fetch('${pageContext.request.contextPath}/user/wishlist?action=toggle&partId=' + partId, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    btn.style.color = data.isWishlisted ? '#ff4757' : '#ccc';
+                    btn.closest('.product-card').style.opacity = data.isWishlisted ? '1' : '0.6';
+                }
+            });
+    }
+</script>
 
 <!-- CSS tùy chỉnh nhỏ cho thẻ sản phẩm -->
 <style>

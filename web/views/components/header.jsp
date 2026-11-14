@@ -12,20 +12,10 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/components/css/style.css">
 
         <style>
-            /* FIX LỖI DROPDOWN BỊ ẨN */
-            .dropdown-menu {
-                display: none;
-                position: absolute;
-                z-index: 1050; /* Nổi lên trên mọi thứ */
+            /* === FIX LỖI LỆCH TRANG DO THANH CUỘN === */
+            html {
+                scrollbar-gutter: stable;
             }
-            .dropdown-menu.show {
-                display: block !important; /* Hiển thị dạng khối khi click */
-            }
-            .dropdown-menu .dropdown-item {
-                display: block; /* Xếp dọc các mục */
-                padding: 8px 16px;
-            }
-            /* Base Body (Giao diện Sáng) */
             body {
                 background-color: #f1f5f9;
                 color: #334155;
@@ -35,44 +25,25 @@
                 min-height: 100vh;
                 margin: 0;
             }
-            /* Sửa lại đoạn main và footer trong header.jsp */
             main {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-                /* align-items: center;  <-- XÓA DÒNG NÀY */
-                /* justify-content: center; <-- XÓA DÒNG NÀY */
                 padding: 20px 0;
             }
-
-            /* THÊM ĐOẠN NÀY ĐỂ FIX LỖI DROPDOWN BỊ ẨN */
-            .dropdown-menu {
-                display: none;
-                position: absolute;
-                z-index: 1050; /* Đảm bảo menu nằm trên cùng */
-            }
-            .dropdown-menu.show {
-                display: block !important; /* Ép buộc hiển thị dạng khối khi được click */
-            }
-            .dropdown-menu .dropdown-item {
-                display: block; /* Đảm bảo các dòng menu xếp dọc */
-                padding: 8px 16px;
-            }
-
-            /* Đảm bảo footer không bị đẩy xuống quá xa */
             footer {
-                padding: 15px 0 !important; /* Ghi đè padding cũ cho nhỏ lại */
+                padding: 15px 0 !important;
             }
-
-            /* Sửa lại class .navbar-custom trong header.jsp */
+            
+            /* === NAVBAR USER === */
             .navbar-custom {
                 background-color: #ffffff;
                 border-bottom: 2px solid #ff4757;
                 padding: 15px 0;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                position: sticky; /* Thêm dòng này */
-                top: 0;           /* Thêm dòng này */
-                z-index: 1000;    /* Thêm dòng này */
+                position: sticky;
+                top: 0;
+                z-index: 1000;
             }
             .navbar-custom .navbar-brand {
                 font-size: 24px;
@@ -102,9 +73,6 @@
             .btn-register:hover {
                 background-color: #ff2a3d;
             }
-            .navbar-toggler-icon {
-                filter: none !important;
-            }
         </style>
     </head>
     <body>
@@ -121,12 +89,10 @@
                         <li class="nav-item"><a class="nav-link" href="#">Build PC</a></li>
                     </ul>
                     <ul class="navbar-nav align-items-center">
-                        <!-- Chuông thông báo -->
                         <c:if test="${not empty sessionScope.loggedUser}">
                             <li class="nav-item me-2">
                                 <a class="nav-link position-relative" href="${pageContext.request.contextPath}/user/notifications" title="Thông báo">
                                     <i class="fas fa-bell fs-5"></i>
-                                    <!-- Nếu có thông báo chưa đọc thì hiện số đỏ -->
                                     <c:set var="unreadCount" value="${sessionScope.unreadCount}" />
                                     <c:if test="${unreadCount > 0}">
                                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
@@ -139,10 +105,17 @@
                         <c:choose>
                             <c:when test="${not empty sessionScope.loggedUser}">
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-user-circle me-1"></i> ${sessionScope.loggedUser.fullName}
+                                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <c:choose>
+                                            <c:when test="${not empty sessionScope.loggedUser.avatarUrl}">
+                                                <img src="${sessionScope.loggedUser.avatarUrl}" alt="Avatar" class="rounded-circle" style="width: 30px; height: 30px; object-fit: cover; border: 2px solid #ff4757;">
+                                            </c:when>
+                                            <c:otherwise>
+                                                <i class="fas fa-user-circle fs-4"></i>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <span>${sessionScope.loggedUser.fullName}</span>
                                     </a>
-                                    <!-- Menu thả xuống nền sáng -->
                                     <ul class="dropdown-menu dropdown-menu-end" style="background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/profile"><i class="fas fa-id-badge me-2 text-muted"></i>Hồ sơ cá nhân</a></li>
                                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/order-history"><i class="fas fa-shopping-bag me-2 text-muted"></i>Lịch sử mua hàng</a></li>
@@ -156,16 +129,11 @@
                                 </li>
                             </c:when>
                             <c:otherwise>
-                                <!-- Lấy tham số action hiện tại trên URL -->
                                 <c:set var="currentAction" value="${param.action}" />
-
-                                <!-- Nếu đang ở trang login thì nút Đăng nhập mới có màu đỏ (btn-register) -->
                                 <li class="nav-item">
                                     <a class="nav-link ${currentAction == 'login' ? 'btn-register' : ''} ${currentAction == 'login' ? 'ms-2' : ''}" 
                                        href="${pageContext.request.contextPath}/auth?action=login">Đăng nhập</a>
                                 </li>
-
-                                <!-- Nếu đang ở trang register thì nút Đăng ký mới có màu đỏ -->
                                 <li class="nav-item">
                                     <a class="nav-link ${currentAction == 'register' ? 'btn-register' : ''} ${currentAction != 'login' ? 'ms-2' : ''}" 
                                        href="${pageContext.request.contextPath}/auth?action=register">Đăng ký</a>
@@ -176,5 +144,4 @@
                 </div>
             </div>
         </nav>
-        <main class="flex-grow-1 w-100"> <!-- Thêm class này để main tự co giãn -->
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <main class="flex-grow-1 w-100">

@@ -53,9 +53,7 @@
                 
                 <!-- NÚT THEO DÕI GIÁ -->
                 <button type="button" id="priceAlertBtn" onclick="togglePriceAlert(${part.partId})" 
-                        class="btn btn-outline-warning btn-lg ${isPriceAlerted ? 'active' : ''}" 
-                        data-bs-toggle="${isPriceAlerted ? '' : 'modal'}" 
-                        data-bs-target="#priceAlertModal">
+                        class="btn btn-outline-warning btn-lg ${isPriceAlerted ? 'active' : ''}">
                     <i class="fas fa-bell"></i> <span id="priceAlertText">${isPriceAlerted ? 'Hủy theo dõi' : 'Theo dõi giá'}</span>
                 </button>
             </div>
@@ -121,7 +119,8 @@
                     }
                 });
         } else {
-            // Mở modal để nhập giá (Bootstrap sẽ tự lo)
+            // Mở modal nhập giá mong muốn (mở bằng JS để vẫn dùng được sau khi vừa hủy theo dõi)
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('priceAlertModal')).show();
         }
     }
 </script>

@@ -2,8 +2,9 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
-<!-- Lấy toàn bộ URL hiện tại -->
-<c:set var="currentURL" value="${pageContext.request.requestURL}" />
+<%-- Lấy URL hiện tại: gộp URL gốc (servlet, khi forward) + URL của file JSP,
+     và đổi "_" thành "-" để tên file (audit_logs.jsp) khớp với URL (/admin/audit-logs) --%>
+<c:set var="currentURL" value="${fn:replace(requestScope['jakarta.servlet.forward.request_uri'], '_', '-')} ${fn:replace(pageContext.request.requestURL, '_', '-')}" />
 
 <nav class="sidebar-admin d-flex flex-column">
     <ul class="nav flex-column">
@@ -53,7 +54,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/products') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/products">
+            <a class="nav-link ${fn:contains(currentURL, '/admin/product') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/products">
                 <i class="fas fa-box-open"></i> Quản lý Linh kiện
             </a>
         </li>
@@ -98,5 +99,6 @@
     </ul>
 </nav> <!-- Đóng thẻ nav của Sidebar -->
 
-<!-- Mở thẻ div chứa nội dung chính, đẩy sang phải 250px để không bị đè -->
-<div class="flex-grow-1 p-4" style="margin-left: 250px; min-height: calc(100vh - 65px); background-color: #f1f5f9;">
+<!-- Cột phải: nội dung chính (footer.jsp sẽ đóng các thẻ này) -->
+<div class="admin-main">
+    <main class="admin-content">
