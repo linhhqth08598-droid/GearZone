@@ -45,7 +45,7 @@
                                     <div class="me-3" style="width: 80px; height: 80px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center;">
                                         <c:choose>
                                             <c:when test="${not empty alert.imageUrl}">
-                                                <img src="${alert.imageUrl}" alt="${alert.partName}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                                                <img src="${alert.imageUrl}" alt="<c:out value='${alert.partName}'/>" style="max-width: 100%; max-height: 100%; object-fit: cover;">
                                             </c:when>
                                             <c:otherwise>
                                                 <i class="fas fa-image text-muted fs-3"></i>
@@ -53,7 +53,7 @@
                                         </c:choose>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-1 fw-bold text-dark">${alert.partName}</h6>
+                                        <h6 class="mb-1 fw-bold text-dark"><c:out value='${alert.partName}'/></h6>
                                         <div class="d-flex justify-content-between align-items-center mt-2">
                                             <div>
                                                 <span class="text-muted d-block" style="font-size: 13px;">Giá hiện tại:</span>

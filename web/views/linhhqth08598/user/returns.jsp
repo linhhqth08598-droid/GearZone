@@ -52,7 +52,7 @@
                                     </c:choose>
                                 </div>
                                 <p class="mb-1"><span class="text-muted">Số lượng:</span> ${item.quantity}</p>
-                                <p class="mb-1"><span class="text-muted">Lý do:</span> ${item.reason}</p>
+                                <p class="mb-1"><span class="text-muted">Lý do:</span> <c:out value='${item.reason}'/></p>
                                 <p class="text-muted fst-italic" style="font-size: 13px;">
                                     <i class="far fa-clock me-1"></i> Ngày gửi: <fmt:formatDate value="${item.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                 </p>

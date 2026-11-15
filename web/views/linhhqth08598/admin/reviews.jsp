@@ -13,8 +13,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: normal;
-        max-height: 3em;
         line-height: 1.5em;
+        max-height: 3em;
     }
     /* Cho phép tên sản phẩm xuống dòng thay vì cắt cụt */
     .product-name {
@@ -59,7 +59,7 @@
                             <td>#${r.reviewId}</td>
                             <!-- SỬA: Dùng class product-name thay vì text-truncate -->
                             <td class="fw-bold product-name">${r.partName}</td>
-                            <td>${r.userName}</td>
+                            <td><c:out value="${r.userName}"/></td>
                             <td class="text-warning">
                                 <!-- Hiển thị số sao (hỗ trợ nửa sao) -->
                                 <c:set var="rating" value="${r.qualityRating}" />
@@ -72,8 +72,8 @@
                                 </c:forEach>
                             </td>
                             <!-- SỬA: Bỏ title="${r.comment}" để không hiện mảng trắng -->
-                            <td class="text-clamp-2" style="max-width: 250px;">
-                                ${r.comment}
+                            <td style="max-width: 250px;">
+                                <div class="text-clamp-2"><c:out value="${r.comment}"/></div>
                             </td>
                             <td>
                                 <c:if test="${not empty r.imageUrl}">
@@ -115,7 +115,15 @@
                             </td>
                         </tr>
 
-                        <!-- MODAL XEM CHI TIẾT ĐÁNH GIÁ -->
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL XEM CHI TIẾT (đặt ngoài bảng để không phá cấu trúc <tbody>) -->
+<c:forEach var="r" items="${reviews}">
                     <div class="modal fade" id="viewReviewModal-${r.reviewId}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content border-0 shadow-lg rounded-4">
@@ -129,8 +137,8 @@
                                     <div class="row">
                                         <!-- Cột trái: Thông tin sản phẩm + khách hàng -->
                                         <div class="col-md-5 border-end">
-                                            <p class="mb-2"><strong>Sản phẩm:</strong> <br> <span class="text-primary fw-bold">${r.partName}</span></p>
-                                            <p class="mb-2"><strong>Khách hàng:</strong> <br> ${r.userName}</p>
+                                            <p class="mb-2"><strong>Sản phẩm:</strong> <br> <span class="text-primary fw-bold"><c:out value="${r.partName}"/></span></p>
+                                            <p class="mb-2"><strong>Khách hàng:</strong> <br> <c:out value="${r.userName}"/></p>
                                             <p class="mb-2"><strong>Ngày đánh giá:</strong> <br> <fmt:formatDate value="${r.createdAt}" pattern="dd/MM/yyyy HH:mm"/></p>
                                             <p class="mb-2"><strong>Trạng thái:</strong> 
                                                 <c:choose>
@@ -156,7 +164,7 @@
                                             </div>
 
                                             <p class="mb-2"><strong>Nhận xét:</strong></p>
-                                            <div class="bg-light p-3 rounded border mb-3" style="white-space: pre-wrap;">${r.comment}</div>
+                                            <div class="bg-light p-3 rounded border mb-3" style="white-space: pre-wrap;"><c:out value="${r.comment}"/></div>
 
                                             <c:if test="${not empty r.imageUrl}">
                                                 <p class="mb-2"><strong>Ảnh đính kèm:</strong></p>
@@ -171,11 +179,6 @@
                             </div>
                         </div>
                     </div>
-                </c:forEach>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+</c:forEach>
 
 <jsp:include page="/views/components/footer.jsp" />

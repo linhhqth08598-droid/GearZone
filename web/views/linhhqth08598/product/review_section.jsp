@@ -118,7 +118,7 @@
                             </c:forEach>
                         </div>
                         
-                        <p class="mb-0 text-secondary">${r.comment}</p>
+                        <p class="mb-0 text-secondary"><c:out value='${r.comment}'/></p>
                         
                         <!-- Hiển thị ảnh nếu có -->
                         <c:if test="${not empty r.imageUrl}">

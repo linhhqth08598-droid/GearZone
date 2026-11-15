@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PermissionsDAO {
-    
+
     public List<Permissions> getAll() {
         List<Permissions> list = new ArrayList<>();
-        String sql = "SELECT * FROM permissions WHERE status = 'ACTIVE'";
+        String sql = "SELECT * FROM permissions WHERE status = 'ACTIVE' ORDER BY module, permission_code";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

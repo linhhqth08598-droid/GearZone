@@ -47,7 +47,7 @@
                             <td>#${r.returnId}</td>
                             <td>#${r.orderId}</td>
                             <td>${r.quantity}</td>
-                            <td class="text-wrap" style="max-width: 250px;">${r.reason}</td>
+                            <td class="text-wrap" style="max-width: 250px;"><c:out value='${r.reason}'/></td>
                             <td>
                                 <c:choose>
                                     <c:when test="${r.status == 'PENDING'}"><span class="badge bg-warning text-dark">Chờ duyệt</span></c:when>
@@ -74,7 +74,20 @@
                             </button>
 
                             <!-- Modal Từ chối -->
-                            <div class="modal fade" id="rejectModal-${r.returnId}" tabindex="-1" aria-hidden="true">
+                            
+                        </c:if>
+                    </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Các modal đặt ngoài bảng (đặt trong <tbody> là HTML sai cấu trúc) -->
+<c:forEach var="r" items="${returnsList}">
+<div class="modal fade" id="rejectModal-${r.returnId}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <form action="${pageContext.request.contextPath}/admin/returns" method="POST">
@@ -97,13 +110,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </c:if>
-                    </td>
-                    </tr>
-                </c:forEach>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+</c:forEach>
+
 <jsp:include page="/views/components/footer.jsp" />

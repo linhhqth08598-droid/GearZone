@@ -94,50 +94,7 @@
                         </tr>
 
                         <!-- Modal Sửa Category - ĐÃ ĐƯỢC ĐƯA RA NGOÀI THẺ TR -->
-                        <div class="modal fade" id="editCategoryModal-${cat.categoryId}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg rounded-4">
-                                    <form action="${pageContext.request.contextPath}/admin/catalog" method="POST">
-                                        <input type="hidden" name="action" value="saveCategory">
-                                        <input type="hidden" name="categoryId" value="${cat.categoryId}">
-                                        <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
-                                            <h5 class="modal-title fw-bold text-primary"><i class="fas fa-edit me-2"></i>Sửa Danh mục #${cat.categoryId}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Mã danh mục</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="fas fa-code"></i></span>
-                                                    <input type="text" name="categoryCode" class="form-control" value="${cat.categoryCode}" required>
-                                                </div>
-                                            </div>
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Tên danh mục</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                                                    <input type="text" name="categoryName" class="form-control" value="${cat.categoryName}" required>
-                                                </div>
-                                            </div>
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Mô tả</label>
-                                                <textarea name="description" class="form-control" rows="3">${cat.description}</textarea>
-                                            </div>
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="isRequired" id="isRequired-${cat.categoryId}" ${cat.isRequiredInBuild ? 'checked' : ''}>
-                                                <label class="form-check-label fw-semibold text-dark" for="isRequired-${cat.categoryId}">
-                                                    Bắt buộc phải có khi Build PC
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0 bg-light rounded-bottom-4 py-3">
-                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-1"></i> Lưu thay đổi</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </c:forEach>
                 </tbody>
             </table>
@@ -190,5 +147,54 @@
         </div>
     </div>
 </div>
+
+
+<!-- Các modal đặt ngoài bảng (đặt trong <tbody> là HTML sai cấu trúc) -->
+<c:forEach var="cat" items="${categories}">
+<div class="modal fade" id="editCategoryModal-${cat.categoryId}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <form action="${pageContext.request.contextPath}/admin/catalog" method="POST">
+                                        <input type="hidden" name="action" value="saveCategory">
+                                        <input type="hidden" name="categoryId" value="${cat.categoryId}">
+                                        <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
+                                            <h5 class="modal-title fw-bold text-primary"><i class="fas fa-edit me-2"></i>Sửa Danh mục #${cat.categoryId}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Mã danh mục</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-code"></i></span>
+                                                    <input type="text" name="categoryCode" class="form-control" value="${cat.categoryCode}" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Tên danh mục</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                                    <input type="text" name="categoryName" class="form-control" value="${cat.categoryName}" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Mô tả</label>
+                                                <textarea name="description" class="form-control" rows="3">${cat.description}</textarea>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="isRequired" id="isRequired-${cat.categoryId}" ${cat.isRequiredInBuild ? 'checked' : ''}>
+                                                <label class="form-check-label fw-semibold text-dark" for="isRequired-${cat.categoryId}">
+                                                    Bắt buộc phải có khi Build PC
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light rounded-bottom-4 py-3">
+                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-1"></i> Lưu thay đổi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+</c:forEach>
 
 <jsp:include page="/views/components/footer.jsp" />

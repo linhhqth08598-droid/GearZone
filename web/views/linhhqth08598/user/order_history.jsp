@@ -75,7 +75,7 @@
                                     <div class="me-3" style="width: 80px; height: 80px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center;">
                                         <c:choose>
                                             <c:when test="${not empty item.imageUrl}">
-                                                <img src="${item.imageUrl}" alt="${item.partName}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                                                <img src="${item.imageUrl}" alt="<c:out value='${item.partName}'/>" style="max-width: 100%; max-height: 100%; object-fit: cover;">
                                             </c:when>
                                             <c:otherwise>
                                                 <i class="fas fa-image text-muted fs-3"></i>
@@ -84,7 +84,7 @@
                                     </div>
                                     <!-- Tên và số lượng -->
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-1 fw-bold text-dark">${item.partName}</h6>
+                                        <h6 class="mb-1 fw-bold text-dark"><c:out value='${item.partName}'/></h6>
                                         <span class="text-muted" style="font-size: 14px;">Số lượng: x${item.quantity}</span>
                                     </div>
                                     <!-- Giá -->

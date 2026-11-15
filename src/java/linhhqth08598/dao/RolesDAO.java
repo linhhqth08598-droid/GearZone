@@ -12,7 +12,7 @@ public class RolesDAO {
     
     public List<Roles> getAll() {
         List<Roles> list = new ArrayList<>();
-        String sql = "SELECT * FROM roles WHERE status = 'ACTIVE'";
+        String sql = "SELECT * FROM roles WHERE status = 'ACTIVE' ORDER BY role_id";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -41,6 +41,27 @@ public class RolesDAO {
                     role.setRoleId(rs.getInt("role_id"));
                     role.setRoleCode(rs.getString("role_code"));
                     role.setRoleName(rs.getString("role_name"));
+                    return role;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Roles findById(int roleId) {
+        String sql = "SELECT * FROM roles WHERE role_id = ? AND status = 'ACTIVE'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Roles role = new Roles();
+                    role.setRoleId(rs.getInt("role_id"));
+                    role.setRoleCode(rs.getString("role_code"));
+                    role.setRoleName(rs.getString("role_name"));
+                    role.setDescription(rs.getString("description"));
                     return role;
                 }
             }

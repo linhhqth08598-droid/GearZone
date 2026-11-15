@@ -71,31 +71,7 @@
                         </tr>
 
                         <!-- Modal Sửa -->
-                        <div class="modal fade" id="editModal-${item.id}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg rounded-4">
-                                    <form action="${pageContext.request.contextPath}/admin/system-catalog" method="POST">
-                                        <input type="hidden" name="action" value="save">
-                                        <input type="hidden" name="type" value="${currentType}">
-                                        <input type="hidden" name="id" value="${item.id}">
-                                        <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
-                                            <h5 class="modal-title fw-bold text-primary">Sửa Thuộc Tính #${item.id}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Tên</label>
-                                                <input type="text" name="name" class="form-control" value="${item.name}" required>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0 bg-light rounded-bottom-4 py-3">
-                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </c:forEach>
                 </tbody>
             </table>
@@ -129,5 +105,35 @@
         </div>
     </div>
 </div>
+
+
+<!-- Các modal đặt ngoài bảng (đặt trong <tbody> là HTML sai cấu trúc) -->
+<c:forEach var="item" items="${listItems}">
+<div class="modal fade" id="editModal-${item.id}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <form action="${pageContext.request.contextPath}/admin/system-catalog" method="POST">
+                                        <input type="hidden" name="action" value="save">
+                                        <input type="hidden" name="type" value="${currentType}">
+                                        <input type="hidden" name="id" value="${item.id}">
+                                        <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
+                                            <h5 class="modal-title fw-bold text-primary">Sửa Thuộc Tính #${item.id}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Tên</label>
+                                                <input type="text" name="name" class="form-control" value="${item.name}" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light rounded-bottom-4 py-3">
+                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+</c:forEach>
 
 <jsp:include page="/views/components/footer.jsp" />

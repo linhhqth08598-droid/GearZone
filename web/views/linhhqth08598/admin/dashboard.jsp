@@ -202,7 +202,7 @@
                         <tbody>
                             <c:forEach var="topPart" items="${topSellingPartsDetail}">
                                 <tr>
-                                    <td class="fw-bold text-truncate" style="max-width: 200px;" title="${topPart.partName}">${topPart.partName}</td>
+                                    <td class="fw-bold text-truncate" style="max-width: 200px;" title="<c:out value='${topPart.partName}'/>"><c:out value='${topPart.partName}'/></td>
                                     <td><span class="badge bg-success">${topPart.totalSold}</span></td>
                                     <td class="text-danger fw-semibold"><fmt:formatNumber value="${topPart.revenue}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                 </tr>

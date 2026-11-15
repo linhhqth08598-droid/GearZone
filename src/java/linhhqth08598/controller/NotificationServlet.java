@@ -1,4 +1,4 @@
-package linhhhqth08598.controller;
+package linhhqth08598.controller;
 
 import fourSome.model.Users;
 import fourSome.model.Notifications;

@@ -13,6 +13,9 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/components/css/style.css">
 
         <style>
+            /* chống lệch trang khi mở modal */
+            body.modal-open { padding-right: 0 !important; overflow: hidden; }
+            html { overflow-y: scroll; scrollbar-gutter: stable; }
             /* === FIX LỖI LỆCH TRANG DO THANH CUỘN === */
             html {
                 scrollbar-gutter: stable;

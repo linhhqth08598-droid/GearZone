@@ -100,7 +100,7 @@
                                     </td>
                                     <td><span class="badge bg-secondary">${log.targetTable}</span></td>
                                     <td>${log.targetId != 0 ? log.targetId : '-'}</td>
-                                    <td class="text-wrap" style="max-width: 250px;">${log.description}</td>
+                                    <td class="text-wrap" style="max-width: 250px;"><c:out value='${log.description}'/></td>
                                     <td><fmt:formatDate value="${log.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></td>
                                 </tr>
                             </c:forEach>

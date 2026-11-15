@@ -23,7 +23,8 @@ public class PartsDAO {
                 obj.setProductCode(rs.getString("product_code"));
                 obj.setPartName(rs.getString("part_name"));
                 obj.setBasePrice(rs.getDouble("base_price"));
-                obj.setSalePrice(rs.getDouble("sale_price"));
+                double sp = rs.getDouble("sale_price");
+                obj.setSalePrice(rs.wasNull() ? null : sp);
                 obj.setIsRgb(rs.getBoolean("is_rgb"));
                 obj.setGamingPerformanceScore(rs.getInt("gaming_performance_score"));
                 obj.setDescription(rs.getString("description"));
@@ -77,8 +78,42 @@ public class PartsDAO {
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); return false; }
     }
-    
-        // Tìm sản phẩm theo ID
+
+    // Cập nhật thông tin linh kiện (không đụng tới view_count, sold_count, status)
+    public boolean update(Parts part) {
+        String sql = "UPDATE parts SET category_id = ?, brand_id = ?, product_code = ?, part_name = ?, "
+                   + "base_price = ?, sale_price = ?, description = ?, warranty_months = ? WHERE part_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, part.getCategoryId());
+            ps.setInt(2, part.getBrandId());
+            ps.setString(3, part.getProductCode());
+            ps.setString(4, part.getPartName());
+            ps.setDouble(5, part.getBasePrice());
+            if (part.getSalePrice() != null) {
+                ps.setDouble(6, part.getSalePrice());
+            } else {
+                ps.setNull(6, java.sql.Types.DECIMAL);
+            }
+            ps.setString(7, part.getDescription());
+            ps.setInt(8, part.getWarrantyMonths());
+            ps.setInt(9, part.getPartId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    // Đổi trạng thái ACTIVE <-> HIDDEN (để hiện lại linh kiện đã ẩn)
+    public boolean setStatus(int partId, String status) {
+        String sql = "UPDATE parts SET status = ? WHERE part_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    // Tìm sản phẩm theo ID
     public Parts findById(int partId) {
         String sql = "SELECT * FROM parts WHERE part_id = ?";
         try (Connection conn = DBConnect.getConnection();
@@ -94,7 +129,8 @@ public class PartsDAO {
                     obj.setProductCode(rs.getString("product_code"));
                     obj.setPartName(rs.getString("part_name"));
                     obj.setBasePrice(rs.getDouble("base_price"));
-                    obj.setSalePrice(rs.getDouble("sale_price"));
+                    double sp = rs.getDouble("sale_price");
+                obj.setSalePrice(rs.wasNull() ? null : sp);
                     obj.setIsRgb(rs.getBoolean("is_rgb"));
                     obj.setGamingPerformanceScore(rs.getInt("gaming_performance_score"));
                     obj.setDescription(rs.getString("description"));

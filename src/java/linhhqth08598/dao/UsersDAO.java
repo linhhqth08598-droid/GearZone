@@ -188,4 +188,103 @@ public class UsersDAO {
         }
         return false;
     }
+
+    // ====== Dành cho trang Quản lý người dùng (Admin) ======
+
+    /** Thêm user và trả về user_id vừa tạo (0 nếu lỗi). */
+    public int insertReturnId(Users user) {
+        String sql = "INSERT INTO users (email, phone_number, password_hash, full_name, avatar_url, is_email_verified, is_phone_verified, status, created_at, updated_at) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, user.getEmail());
+            ps.setString(2, user.getPhoneNumber());
+            ps.setString(3, user.getPasswordHash());
+            ps.setString(4, user.getFullName());
+            ps.setString(5, user.getAvatarUrl());
+            ps.setBoolean(6, user.getIsEmailVerified() != null && user.getIsEmailVerified());
+            ps.setBoolean(7, user.getIsPhoneVerified() != null && user.getIsPhoneVerified());
+            ps.setString(8, user.getStatus() != null ? user.getStatus() : "ACTIVE");
+            if (ps.executeUpdate() > 0) {
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) return keys.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /** Admin sửa họ tên + SĐT của user (SĐT rỗng được lưu thành NULL vì cột phone_number là UNIQUE). */
+    public boolean adminUpdate(int userId, String fullName, String phone) {
+        String sql = "UPDATE users SET full_name = ?, phone_number = ?, updated_at = GETDATE() WHERE user_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            if (phone == null || phone.trim().isEmpty()) ps.setNull(2, java.sql.Types.VARCHAR);
+            else ps.setString(2, phone.trim());
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private String buildWhere(String keyword, String status, String roleCode, java.util.List<Object> params) {
+        StringBuilder sb = new StringBuilder();
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sb.append(" AND (u.full_name LIKE ? OR u.email LIKE ? OR u.phone_number LIKE ?)");
+            String like = "%" + keyword.trim() + "%";
+            params.add(like); params.add(like); params.add(like);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sb.append(" AND u.status = ?");
+            params.add(status);
+        }
+        if (roleCode != null && !roleCode.trim().isEmpty()) {
+            sb.append(" AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.role_id = ur.role_id "
+                    + "WHERE ur.user_id = u.user_id AND ur.status = 'ACTIVE' AND r.role_code = ?)");
+            params.add(roleCode);
+        }
+        return sb.toString();
+    }
+
+    /** Tìm kiếm + lọc + phân trang. */
+    public java.util.List<Users> search(String keyword, String status, String roleCode, int offset, int limit) {
+        java.util.List<Users> list = new java.util.ArrayList<>();
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        String sql = "SELECT u.* FROM users u WHERE 1=1" + buildWhere(keyword, status, roleCode, params)
+                   + " ORDER BY u.created_at DESC, u.user_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int i = 1;
+            for (Object p : params) ps.setObject(i++, p);
+            ps.setInt(i++, offset);
+            ps.setInt(i, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int count(String keyword, String status, String roleCode) {
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        String sql = "SELECT COUNT(*) FROM users u WHERE 1=1" + buildWhere(keyword, status, roleCode, params);
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int i = 1;
+            for (Object p : params) ps.setObject(i++, p);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

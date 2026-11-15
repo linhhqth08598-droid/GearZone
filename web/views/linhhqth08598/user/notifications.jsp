@@ -36,9 +36,9 @@
                                                 <c:when test="${n.notificationType == 'PRICE_DROP'}"><i class="fas fa-arrow-down text-danger me-1"></i></c:when>
                                                 <c:otherwise><i class="fas fa-info-circle text-secondary me-1"></i></c:otherwise>
                                             </c:choose>
-                                            ${n.title}
+                                            <c:out value='${n.title}'/>
                                         </h6>
-                                        <p class="text-secondary mb-2">${n.content}</p>
+                                        <p class="text-secondary mb-2"><c:out value='${n.content}'/></p>
                                         <small class="text-muted fst-italic">
                                             <i class="far fa-clock me-1"></i> <fmt:formatDate value="${n.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                         </small>

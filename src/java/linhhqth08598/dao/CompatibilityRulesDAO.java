@@ -42,15 +42,34 @@ public class CompatibilityRulesDAO {
             ps.setString(5, rule.getErrorMessage());
             ps.setString(6, rule.getSeverity());
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    public boolean softDelete(int ruleId) {
-        String sql = "UPDATE compatibility_rules SET status = 'INACTIVE' WHERE rule_id = ?";
+    public boolean update(CompatibilityRules rule) {
+        String sql = "UPDATE compatibility_rules SET rule_name=?, primary_category_id=?, target_category_id=?, "
+                   + "check_type=?, error_message=?, severity=? WHERE rule_id=?";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, ruleId);
+            ps.setString(1, rule.getRuleName());
+            ps.setInt(2, rule.getPrimaryCategoryId());
+            ps.setInt(3, rule.getTargetCategoryId());
+            ps.setString(4, rule.getCheckType());
+            ps.setString(5, rule.getErrorMessage());
+            ps.setString(6, rule.getSeverity());
+            ps.setInt(7, rule.getRuleId());
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) { e.printStackTrace(); return false; }
     }
+
+    public boolean setStatus(int ruleId, String status) {
+        String sql = "UPDATE compatibility_rules SET status = ? WHERE rule_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, ruleId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    public boolean softDelete(int ruleId) { return setStatus(ruleId, "INACTIVE"); }
 }

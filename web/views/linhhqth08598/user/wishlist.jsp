@@ -51,7 +51,7 @@
                             <div class="p-3 text-center bg-light rounded-top-4" style="height: 200px; display: flex; align-items: center; justify-content: center;">
                                 <c:choose>
                                     <c:when test="${not empty item.primaryImageUrl}">
-                                        <img src="${item.primaryImageUrl}" alt="${item.partName}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+                                        <img src="${item.primaryImageUrl}" alt="<c:out value='${item.partName}'/>" class="img-fluid" style="max-height: 100%; object-fit: contain;">
                                     </c:when>
                                     <c:otherwise>
                                         <img src="https://via.placeholder.com/200x150?text=No+Image" alt="No Image" class="img-fluid rounded">
@@ -63,7 +63,7 @@
                             <div class="card-body d-flex flex-column p-3">
                                 <small class="text-muted mb-1">Mã: ${item.productCode}</small>
                                 <h6 class="card-title fw-bold text-dark mb-2" style="height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                    ${item.partName}
+                                    <c:out value='${item.partName}'/>
                                 </h6>
                                 
                                 <div class="mt-auto">

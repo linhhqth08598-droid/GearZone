@@ -8,7 +8,11 @@
         position: relative;
         display: inline-block;
         cursor: pointer;
+        border-radius: 50%;
+        overflow: hidden;      /* cắt lớp "Thay đổi" theo hình tròn */
+        line-height: 0;
     }
+    .avatar-wrapper img { display: block; }
     .avatar-wrapper:hover::after {
         content: "Thay đổi";
         position: absolute;
@@ -19,7 +23,8 @@
         color: white;
         font-size: 12px;
         padding: 4px 0;
-        border-radius: 0 0 50% 50%;
+        line-height: normal;
+        padding-bottom: 12px;
         text-align: center;
     }
 </style>
@@ -81,7 +86,7 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Họ và tên</label>
-                                        <input type="text" name="fullName" class="form-control" value="${sessionScope.loggedUser.fullName}" required>
+                                        <input type="text" name="fullName" class="form-control" value="<c:out value='${sessionScope.loggedUser.fullName}'/>" required>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Số điện thoại</label>
@@ -90,7 +95,7 @@
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label">Email (Không thể thay đổi)</label>
-                                    <input type="email" class="form-control bg-light" value="${sessionScope.loggedUser.email}" readonly>
+                                    <input type="email" class="form-control bg-light" value="<c:out value='${sessionScope.loggedUser.email}'/>" readonly>
                                 </div>
                                 
                                 <button type="submit" class="btn btn-danger px-4 py-2">Lưu thay đổi</button>

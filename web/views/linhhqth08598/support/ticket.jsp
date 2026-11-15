@@ -76,7 +76,7 @@
                                         <h2 class="accordion-header" id="heading-${t.ticketId}">
                                             <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${t.ticketId}">
                                                 <div class="d-flex justify-content-between w-100 me-3">
-                                                    <span>${t.subject}</span>
+                                                    <span><c:out value='${t.subject}'/></span>
                                                     <span class="badge 
                                                         <c:choose>
                                                             <c:when test="${t.status == 'OPEN'}">bg-warning text-dark</c:when>
@@ -91,7 +91,7 @@
                                             <div class="accordion-body bg-light">
                                                 <p class="mb-2"><strong>Mã Ticket:</strong> #${t.ticketCode}</p>
                                                 <p class="mb-2"><strong>Loại:</strong> ${t.ticketType}</p>
-                                                <p class="mb-3"><strong>Nội dung:</strong> ${t.content}</p>
+                                                <p class="mb-3"><strong>Nội dung:</strong> <c:out value='${t.content}'/></p>
                                                 <small class="text-muted fst-italic">
                                                     <i class="far fa-clock me-1"></i> Ngày gửi: <fmt:formatDate value="${t.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                                 </small>

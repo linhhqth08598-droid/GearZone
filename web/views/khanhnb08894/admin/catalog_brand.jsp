@@ -96,47 +96,7 @@
                         </tr>
 
                         <!-- Modal Sửa Brand - ĐÃ ĐƯỢC KÉO RA NGOÀI THẺ TR -->
-                        <div class="modal fade" id="editBrandModal-${brand.brandId}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg rounded-4">
-                                    <form action="${pageContext.request.contextPath}/admin/catalog" method="POST">
-                                        <input type="hidden" name="action" value="saveBrand">
-                                        <input type="hidden" name="brandId" value="${brand.brandId}">
-                                        <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
-                                            <h5 class="modal-title fw-bold text-primary"><i class="fas fa-edit me-2"></i>Sửa Thương hiệu #${brand.brandId}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Tên thương hiệu</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                                                    <input type="text" name="brandName" class="form-control" value="${brand.brandName}" required>
-                                                </div>
-                                            </div>
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Quốc gia</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="fas fa-globe"></i></span>
-                                                    <input type="text" name="country" class="form-control" value="${brand.country}">
-                                                </div>
-                                            </div>
-                                            <div class="mb-4">
-                                                <label class="form-label fw-semibold text-dark">Logo URL</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="fas fa-link"></i></span>
-                                                    <input type="text" name="logoUrl" class="form-control" value="${brand.logoUrl}">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0 bg-light rounded-bottom-4 py-3">
-                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-1"></i> Lưu thay đổi</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </c:forEach>
                 </tbody>
             </table>
@@ -186,5 +146,51 @@
         </div>
     </div>
 </div>
+
+
+<!-- Các modal đặt ngoài bảng (đặt trong <tbody> là HTML sai cấu trúc) -->
+<c:forEach var="brand" items="${brands}">
+<div class="modal fade" id="editBrandModal-${brand.brandId}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <form action="${pageContext.request.contextPath}/admin/catalog" method="POST">
+                                        <input type="hidden" name="action" value="saveBrand">
+                                        <input type="hidden" name="brandId" value="${brand.brandId}">
+                                        <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
+                                            <h5 class="modal-title fw-bold text-primary"><i class="fas fa-edit me-2"></i>Sửa Thương hiệu #${brand.brandId}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Tên thương hiệu</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                                    <input type="text" name="brandName" class="form-control" value="${brand.brandName}" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Quốc gia</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                                                    <input type="text" name="country" class="form-control" value="${brand.country}">
+                                                </div>
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold text-dark">Logo URL</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-link"></i></span>
+                                                    <input type="text" name="logoUrl" class="form-control" value="${brand.logoUrl}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light rounded-bottom-4 py-3">
+                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-1"></i> Lưu thay đổi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+</c:forEach>
 
 <jsp:include page="/views/components/footer.jsp" />

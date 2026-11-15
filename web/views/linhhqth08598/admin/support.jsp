@@ -48,7 +48,7 @@
                                 <div class="fw-bold">${t.userId}</div>
                                 <!-- Nếu có join full_name thì hiển thị -->
                             </td>
-                            <td class="text-wrap" style="max-width: 200px;">${t.subject}</td>
+                            <td class="text-wrap" style="max-width: 200px;"><c:out value='${t.subject}'/></td>
                             <td><span class="badge bg-info text-dark">${t.ticketType}</span></td>
                             <td>
                                 <c:choose>
@@ -67,7 +67,18 @@
                         </tr>
 
                         <!-- Modal chi tiết Ticket (Đặt ngay trong vòng lặp để lấy đúng ID) -->
-                        <div class="modal fade" id="ticketModal-${t.ticketId}" tabindex="-1" aria-hidden="true">
+                        
+                    </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- Các modal đặt ngoài bảng (đặt trong <tbody> là HTML sai cấu trúc) -->
+<c:forEach var="t" items="${ticketsList}">
+<div class="modal fade" id="ticketModal-${t.ticketId}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-centered">
                                 <div class="modal-content border-0 shadow-lg rounded-4">
                                     <form action="${pageContext.request.contextPath}/admin/support" method="POST">
@@ -80,12 +91,12 @@
                                             
                                             <div class="mb-4">
                                                 <h6 class="fw-bold text-dark mb-2">Tiêu đề:</h6>
-                                                <p class="text-secondary mb-0">${t.subject}</p>
+                                                <p class="text-secondary mb-0"><c:out value='${t.subject}'/></p>
                                             </div>
                                             
                                             <div class="mb-4">
                                                 <h6 class="fw-bold text-dark mb-2">Nội dung:</h6>
-                                                <div class="bg-light p-3 rounded border" style="white-space: pre-wrap;">${t.content}</div>
+                                                <div class="bg-light p-3 rounded border" style="white-space: pre-wrap;"><c:out value='${t.content}'/></div>
                                             </div>
 
                                             <div class="mb-2">
@@ -106,11 +117,6 @@
                                 </div>
                             </div>
                         </div>
-                    </c:forEach>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+</c:forEach>
 
 <jsp:include page="/views/components/footer.jsp" />

@@ -1,6 +1,6 @@
-package linhhqth098.controller;
+package linhhqth08598.controller;
 
-import linhhqth098.service.ReportService;
+import linhhqth08598.service.ReportService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -32,7 +32,7 @@ public class AdminDashboardServlet extends HttpServlet {
         StringBuilder categories = new StringBuilder("[");
         StringBuilder revenues = new StringBuilder("[");
         for (Map.Entry<String, Double> entry : revenueByCategory.entrySet()) {
-            categories.append("'").append(entry.getKey()).append("',");
+            categories.append("'").append(js(entry.getKey())).append("',");
             revenues.append(entry.getValue()).append(",");
         }
         if (categories.length() > 1) { categories.setLength(categories.length() - 1); revenues.setLength(revenues.length() - 1); }
@@ -41,7 +41,7 @@ public class AdminDashboardServlet extends HttpServlet {
         StringBuilder partNames = new StringBuilder("[");
         StringBuilder partQtys = new StringBuilder("[");
         for (Map.Entry<String, Integer> entry : topParts.entrySet()) {
-            partNames.append("'").append(entry.getKey()).append("',");
+            partNames.append("'").append(js(entry.getKey())).append("',");
             partQtys.append(entry.getValue()).append(",");
         }
         if (partNames.length() > 1) { partNames.setLength(partNames.length() - 1); partQtys.setLength(partQtys.length() - 1); }
@@ -53,5 +53,11 @@ public class AdminDashboardServlet extends HttpServlet {
         request.setAttribute("partData", partQtys.toString());
 
         request.getRequestDispatcher("/views/linhhqth08598/admin/dashboard.jsp").forward(request, response);
+    }
+
+    /** Escape chuỗi để nhúng an toàn vào JavaScript trong dấu nháy đơn. */
+    private static String js(String v) {
+        if (v == null) return "";
+        return v.replace("\\", "\\\\").replace("'", "\\'").replace("<", "\\u003c").replace("\n", " ").replace("\r", " ");
     }
 }

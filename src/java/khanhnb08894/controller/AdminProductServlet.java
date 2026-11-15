@@ -70,16 +70,42 @@ public class AdminProductServlet extends HttpServlet {
                 } else {
                     session.setAttribute("error", "Lỗi: Mã sản phẩm có thể bị trùng!");
                 }
+            } else if ("updateProduct".equals(action)) {
+                Parts part = new Parts();
+                part.setPartId(Integer.parseInt(request.getParameter("partId")));
+                part.setCategoryId(Integer.parseInt(request.getParameter("categoryId")));
+                part.setBrandId(Integer.parseInt(request.getParameter("brandId")));
+                part.setProductCode(request.getParameter("productCode").trim());
+                part.setPartName(request.getParameter("partName").trim());
+                part.setBasePrice(Double.parseDouble(request.getParameter("basePrice")));
+                String sale = request.getParameter("salePrice");
+                part.setSalePrice(sale != null && !sale.isEmpty() ? Double.valueOf(sale) : null);
+                part.setDescription(request.getParameter("description"));
+                part.setWarrantyMonths(Integer.parseInt(request.getParameter("warrantyMonths")));
+
+                if (partsDAO.update(part)) {
+                    session.setAttribute("message", "Cập nhật linh kiện thành công!");
+                    new AuditLogService().logAction(adminUser.getUserId(), "UPDATE_PART", "parts", part.getPartId(), "Sửa linh kiện: " + part.getPartName());
+                } else {
+                    session.setAttribute("error", "Không cập nhật được (mã sản phẩm có thể bị trùng).");
+                }
             } else if ("deleteProduct".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("partId"));
                 if (partsDAO.softDelete(id)) {
                     session.setAttribute("message", "Đã ẩn linh kiện!");
+                    new AuditLogService().logAction(adminUser.getUserId(), "HIDE_PART", "parts", id, "Ẩn linh kiện #" + id);
+                }
+            } else if ("restoreProduct".equals(action)) {
+                int id = Integer.parseInt(request.getParameter("partId"));
+                if (partsDAO.setStatus(id, "ACTIVE")) {
+                    session.setAttribute("message", "Đã hiện lại linh kiện!");
+                    new AuditLogService().logAction(adminUser.getUserId(), "SHOW_PART", "parts", id, "Hiện lại linh kiện #" + id);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("error", "Dữ liệu không hợp lệ! Lỗi: " + e.getMessage());
         }
-        response.sendRedirect(request.getContextPath() + "/admin/product");
+        response.sendRedirect(request.getContextPath() + "/admin/products");
     }
 }

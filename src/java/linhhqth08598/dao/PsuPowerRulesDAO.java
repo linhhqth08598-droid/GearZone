@@ -10,7 +10,7 @@ public class PsuPowerRulesDAO {
 
     public List<PsuPowerRules> getAll() {
         List<PsuPowerRules> list = new ArrayList<>();
-        String sql = "SELECT * FROM [psu_power_rules]";
+        String sql = "SELECT * FROM [psu_power_rules] ORDER BY min_system_wattage";
 
         try (Connection con = DBConnect.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -26,5 +26,35 @@ public class PsuPowerRulesDAO {
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
+    }
+
+    public boolean insert(int minWattage, double headroomPercent, String description) {
+        String sql = "INSERT INTO psu_power_rules (min_system_wattage, recommended_psu_headroom_percent, description, status) VALUES (?, ?, ?, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, minWattage);
+            ps.setDouble(2, headroomPercent);
+            ps.setString(3, description);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    public boolean update(int ruleId, int minWattage, double headroomPercent, String description) {
+        String sql = "UPDATE psu_power_rules SET min_system_wattage = ?, recommended_psu_headroom_percent = ?, description = ? WHERE rule_id = ?";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, minWattage);
+            ps.setDouble(2, headroomPercent);
+            ps.setString(3, description);
+            ps.setInt(4, ruleId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    public boolean setStatus(int ruleId, String status) {
+        String sql = "UPDATE psu_power_rules SET status = ? WHERE rule_id = ?";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, ruleId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
     }
 }

@@ -450,3 +450,12 @@ main .btn-primary:hover {
     padding: 4px 10px !important;
     font-size: 13px !important;
 }
+
+/* =========================================
+   CHỐNG LỆCH TRANG KHI MỞ MODAL
+   Luôn chừa sẵn chỗ cho thanh cuộn, Bootstrap không bù padding nữa
+   ========================================= */
+html { scrollbar-gutter: stable; overflow-y: scroll; }
+body.modal-open { padding-right: 0 !important; overflow: hidden; }
+.modal-open .fixed-top, .modal-open .fixed-bottom,
+.modal-open .sticky-top, .modal-open .navbar { padding-right: 0 !important; margin-right: 0 !important; }
