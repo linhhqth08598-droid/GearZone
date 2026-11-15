@@ -32,39 +32,70 @@ public class ShippingAddressesDAO {
         return list;
     }
 
+    /** Lỗi SQL gần nhất của thao tác lưu (để hiện cho người dùng/dev biết nguyên nhân thật). */
+    private static final ThreadLocal<String> LAST_ERROR = new ThreadLocal<>();
+    public static String getLastError() { return LAST_ERROR.get(); }
+
+    /** Bỏ mặc định cũ + ghi địa chỉ trong CÙNG một giao dịch: lỗi thì không mất địa chỉ mặc định cũ. */
     public boolean insert(ShippingAddresses address) {
-        if (address.getIsDefault()) clearDefaultAddress(address.getUserId());
-        String sql = "INSERT INTO shipping_addresses (user_id, recipient_name, phone, province, ward, detailed_address, is_default, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
-        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, address.getUserId());
-            ps.setString(2, address.getRecipientName());
-            ps.setString(3, address.getPhone());
-            ps.setString(4, address.getProvince());
-            ps.setString(5, address.getWard());
-            ps.setString(6, address.getDetailedAddress());
-            ps.setBoolean(7, address.getIsDefault());
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
+        String sql = "INSERT INTO shipping_addresses (user_id, recipient_name, phone, province, ward, detailed_address, is_default, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        return save(address, sql, false);
     }
 
     public boolean update(ShippingAddresses address) {
-        if (address.getIsDefault()) clearDefaultAddress(address.getUserId());
-        String sql = "UPDATE shipping_addresses SET recipient_name = ?, phone = ?, province = ?, ward = ?, detailed_address = ?, is_default = ? " +
-                     "WHERE address_id = ? AND user_id = ?";
-        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, address.getRecipientName());
-            ps.setString(2, address.getPhone());
-            ps.setString(3, address.getProvince());
-            ps.setString(4, address.getWard());
-            ps.setString(5, address.getDetailedAddress());
-            ps.setBoolean(6, address.getIsDefault());
-            ps.setInt(8, address.getAddressId());
-            ps.setInt(9, address.getUserId());
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
+        String sql = "UPDATE shipping_addresses SET recipient_name = ?, phone = ?, province = ?, ward = ?, detailed_address = ?, is_default = ? "
+                   + "WHERE address_id = ? AND user_id = ? AND status = 'ACTIVE'";
+        return save(address, sql, true);
+    }
+
+    private boolean save(ShippingAddresses a, String sql, boolean isUpdate) {
+        LAST_ERROR.remove();
+        boolean makeDefault = Boolean.TRUE.equals(a.getIsDefault());
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                if (makeDefault) {
+                    try (PreparedStatement ps = conn.prepareStatement("UPDATE shipping_addresses SET is_default = 0 WHERE user_id = ?")) {
+                        ps.setInt(1, a.getUserId());
+                        ps.executeUpdate();
+                    }
+                }
+                int rows;
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    if (isUpdate) {
+                        ps.setString(1, a.getRecipientName());
+                        ps.setString(2, a.getPhone());
+                        ps.setString(3, a.getProvince());
+                        ps.setString(4, a.getWard());
+                        ps.setString(5, a.getDetailedAddress());
+                        ps.setBoolean(6, makeDefault);
+                        ps.setInt(7, a.getAddressId());
+                        ps.setInt(8, a.getUserId());
+                    } else {
+                        ps.setInt(1, a.getUserId());
+                        ps.setString(2, a.getRecipientName());
+                        ps.setString(3, a.getPhone());
+                        ps.setString(4, a.getProvince());
+                        ps.setString(5, a.getWard());
+                        ps.setString(6, a.getDetailedAddress());
+                        ps.setBoolean(7, makeDefault);
+                    }
+                    rows = ps.executeUpdate();
+                }
+                if (rows > 0) { conn.commit(); return true; }
+                conn.rollback();
+                LAST_ERROR.set(isUpdate ? "không tìm thấy địa chỉ cần sửa (đã bị xóa hoặc không thuộc tài khoản này)" : "không ghi được dòng nào");
+                return false;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            LAST_ERROR.set(e.getMessage());
+            return false;
+        }
     }
 
     public boolean delete(int addressId, int userId) {

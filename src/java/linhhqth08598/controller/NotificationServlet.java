@@ -34,6 +34,7 @@ public class NotificationServlet extends HttpServlet {
         String action = request.getParameter("action");
         if ("markRead".equals(action)) {
             service.markAllRead(user.getUserId());
+            request.getSession().setAttribute("unreadCount", 0);
             response.sendRedirect(request.getContextPath() + "/user/notifications");
             return;
         }
@@ -46,6 +47,7 @@ public class NotificationServlet extends HttpServlet {
         
         // Đánh dấu đã đọc sau khi load xong
         service.markAllRead(user.getUserId());
+        request.getSession().setAttribute("unreadCount", 0);
 
         request.getRequestDispatcher("/views/linhhqth08598/user/notifications.jsp").forward(request, response);
     }

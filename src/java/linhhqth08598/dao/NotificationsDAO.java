@@ -95,4 +95,20 @@ public class NotificationsDAO {
         }
         return 0;
     }
+
+    /** Tạo thông báo trong ứng dụng (kênh IN_APP). type: ORDER, WARRANTY, PROMOTION, PRICE_DROP, SUPPORT, SYSTEM, LOW_STOCK, OUT_OF_STOCK. */
+    public boolean insert(int userId, String type, String title, String content, String refType, Integer refId) {
+        String sql = "INSERT INTO notifications (user_id, notification_type, title, content, channel, reference_type, reference_id, status, is_read, created_at, sent_at) "
+                   + "VALUES (?, ?, ?, ?, 'IN_APP', ?, ?, 'SENT', 0, SYSDATETIME(), SYSDATETIME())";
+        try (java.sql.Connection con = fourSome.url.DBConnect.getConnection();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, type);
+            ps.setString(3, title);
+            ps.setString(4, content);
+            ps.setString(5, refType);
+            if (refId == null) ps.setNull(6, java.sql.Types.INTEGER); else ps.setInt(6, refId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
 }

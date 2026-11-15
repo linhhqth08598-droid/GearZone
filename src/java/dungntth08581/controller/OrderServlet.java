@@ -1,21 +1,60 @@
 package dungntth08581.controller;
 
+import dungntth08581.service.OrderService;
+import fourSome.model.Users;
+
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
+/** Chi tiết đơn hàng của khách (/order?id=) + hủy đơn (UC 231, 232). */
 @WebServlet(name = "OrderServlet", urlPatterns = {"/order"})
 public class OrderServlet extends HttpServlet {
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private final OrderService service = new OrderService();
+
+    private Users requireLogin(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        HttpSession session = req.getSession();
+        Users user = (Users) session.getAttribute("loggedUser");
+        if (user == null) {
+            session.setAttribute("redirectAfterLogin", req.getRequestURI() + (req.getQueryString() != null ? "?" + req.getQueryString() : ""));
+            res.sendRedirect(req.getContextPath() + "/auth?action=login");
+        }
+        return user;
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {}
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Users user = requireLogin(request, response);
+        if (user == null) return;
+        OrderService.OrderRow order = null;
+        try { order = service.getUserOrder(user.getUserId(), Integer.parseInt(request.getParameter("id"))); } catch (Exception ignored) { }
+        if (order == null) {
+            request.getSession().setAttribute("error", "Không tìm thấy đơn hàng!");
+            response.sendRedirect(request.getContextPath() + "/user/order-history");
+            return;
+        }
+        request.setAttribute("order", order);
+        request.setAttribute("lines", service.getLines(order.getOrderId()));
+        request.getRequestDispatcher("/views/dungntth08581/user/order_detail.jsp").forward(request, response);
+    }
 
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        Users user = requireLogin(request, response);
+        if (user == null) return;
+        HttpSession session = request.getSession();
+        int id = 0;
+        try { id = Integer.parseInt(request.getParameter("id")); } catch (Exception ignored) { }
+        if ("cancel".equals(request.getParameter("action"))) {
+            String err = service.cancelByUser(user.getUserId(), id, request.getParameter("reason"));
+            if (err == null) session.setAttribute("message", "Đã hủy đơn hàng."); else session.setAttribute("error", err);
+        }
+        response.sendRedirect(request.getContextPath() + "/order?id=" + id);
+    }
 }

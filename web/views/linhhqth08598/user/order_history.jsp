@@ -44,7 +44,7 @@
                         <div class="card shadow-sm border-0 rounded-4 mb-3">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top-4">
                                 <div>
-                                    <span class="fw-bold text-dark">Mã đơn: #${item.orderCode}</span>
+                                    <a href="${pageContext.request.contextPath}/order?id=${item.orderId}" class="fw-bold text-dark text-decoration-none">Mã đơn: #${item.orderCode}</a>
                                     <span class="text-muted ms-3" style="font-size: 14px;">
                                         <i class="far fa-calendar-alt me-1"></i> <fmt:formatDate value="${item.orderDate}" pattern="dd/MM/yyyy HH:mm"/>
                                     </span>

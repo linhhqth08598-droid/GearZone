@@ -65,8 +65,6 @@ public class UserService {
         a.setRecipientName(a.getRecipientName().trim());
         a.setPhone(a.getPhone().trim());
         a.setProvince(a.getProvince().trim());
-        // Cấp Quận/Huyện đã bãi bỏ (từ 01/07/2025): cột district trong DB là NOT NULL nên lưu chuỗi rỗng.
-        a.setDistrict(a.getDistrict() == null ? "" : a.getDistrict().trim());
         a.setWard(a.getWard().trim());
         a.setDetailedAddress(a.getDetailedAddress().trim());
 
@@ -75,7 +73,9 @@ public class UserService {
         if (isNew && addressDAO.findByUserId(a.getUserId()).isEmpty()) a.setIsDefault(true);
 
         boolean ok = isNew ? addressDAO.insert(a) : addressDAO.update(a);
-        return ok ? null : "Không lưu được địa chỉ, vui lòng thử lại!";
+        if (ok) return null;
+        String why = ShippingAddressesDAO.getLastError();
+        return "Không lưu được địa chỉ" + (why == null ? "" : " (" + why + ")") + ", vui lòng thử lại!";
     }
 
     public boolean addAddress(ShippingAddresses address) { return addressDAO.insert(address); }

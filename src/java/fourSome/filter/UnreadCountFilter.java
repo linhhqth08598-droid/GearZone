@@ -1,0 +1,42 @@
+package fourSome.filter;
+
+import fourSome.model.Users;
+import linhhqth08598.service.NotificationService;
+
+import jakarta.servlet.*;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
+
+/**
+ * Cập nhật số thông báo chưa đọc (session "unreadCount") cho chuông ở header.
+ * Chỉ chạy với request GET tới trang (bỏ qua css/js/ảnh) của người đã đăng nhập.
+ */
+@WebFilter(urlPatterns = {"/*"})
+public class UnreadCountFilter implements Filter {
+
+    private final NotificationService service = new NotificationService();
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        HttpServletRequest req = (HttpServletRequest) request;
+        if ("GET".equalsIgnoreCase(req.getMethod()) && !isStatic(req.getRequestURI())) {
+            HttpSession session = req.getSession(false);
+            Users user = session == null ? null : (Users) session.getAttribute("loggedUser");
+            if (user != null) {
+                try {
+                    session.setAttribute("unreadCount", service.getUnreadCount(user.getUserId()));
+                } catch (Exception e) { /* không để lỗi đếm thông báo làm hỏng trang */ }
+            }
+        }
+        chain.doFilter(request, response);
+    }
+
+    private boolean isStatic(String uri) {
+        String u = uri.toLowerCase();
+        return u.endsWith(".css") || u.endsWith(".js") || u.endsWith(".png") || u.endsWith(".jpg") || u.endsWith(".jpeg")
+            || u.endsWith(".gif") || u.endsWith(".svg") || u.endsWith(".ico") || u.endsWith(".woff") || u.endsWith(".woff2")
+            || u.contains("/api/");
+    }
+}
