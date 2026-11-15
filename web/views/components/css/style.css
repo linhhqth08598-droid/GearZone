@@ -142,6 +142,12 @@ body {
     padding: 0 !important;
     transition: all 0.2s ease;
     flex: 0 0 auto !important; 
+    background-image: none !important;
+    -webkit-appearance: none; appearance: none;
+}
+.otp-box::-webkit-contacts-auto-fill-button,
+.otp-box::-webkit-credentials-auto-fill-button {
+    visibility: hidden !important; display: none !important; pointer-events: none; position: absolute; right: 0;
 }
 
 .otp-box:focus {

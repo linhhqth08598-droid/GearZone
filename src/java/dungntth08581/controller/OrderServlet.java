@@ -64,6 +64,15 @@ public class OrderServlet extends HttpServlet {
             String err = service.cancelByUser(user.getUserId(), id, request.getParameter("reason"));
             if (err == null) session.setAttribute("message", "Đã hủy đơn hàng."); else session.setAttribute("error", err);
         }
+        if ("received".equals(request.getParameter("action"))) {
+            String err = service.confirmReceived(user.getUserId(), id);
+            if (err == null) session.setAttribute("message", "Cảm ơn bạn! Đơn hàng đã được xác nhận là đã nhận.");
+            else session.setAttribute("error", err);
+            if ("history".equals(request.getParameter("back"))) {
+                response.sendRedirect(request.getContextPath() + "/user/order-history");
+                return;
+            }
+        }
         response.sendRedirect(request.getContextPath() + "/order?id=" + id);
     }
 }

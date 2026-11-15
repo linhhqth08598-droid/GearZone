@@ -258,6 +258,14 @@ public class OrderService {
         return cancel(o, reason == null || reason.trim().isEmpty() ? "Khách hàng hủy đơn" : reason.trim());
     }
 
+    /** Khách xác nhận đã nhận hàng: chỉ chủ đơn, chỉ khi đơn đang SHIPPING -> DELIVERED. Trả về null nếu OK. */
+    public String confirmReceived(int userId, int orderId) {
+        OrderRow o = getUserOrder(userId, orderId);
+        if (o == null) return "Không tìm thấy đơn hàng!";
+        if (!"SHIPPING".equals(o.status)) return "Chỉ xác nhận được khi đơn đang giao!";
+        return adminUpdateStatus(orderId, "DELIVERED", null);
+    }
+
     private String cancel(OrderRow o, String reason) {
         if (!"PENDING".equals(o.status) && !"CONFIRMED".equals(o.status)) return "Đơn ở trạng thái hiện tại không thể hủy!";
         try (Connection con = DBConnect.getConnection()) {

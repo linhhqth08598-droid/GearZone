@@ -32,10 +32,16 @@ public class OrderHistoryServlet extends HttpServlet {
         }
 
         List<OrderHistoryItem> history = dao.getOrderHistory(user.getUserId());
-        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.DEFAULT_PAGE_SIZE, history.size());
-        history = page.slice(history);
+        // Gộp các dòng sản phẩm cùng một đơn vào một nhóm (giữ thứ tự mới nhất trước)
+        java.util.Map<Integer, List<OrderHistoryItem>> grouped = new java.util.LinkedHashMap<>();
+        for (OrderHistoryItem it : history) {
+            grouped.computeIfAbsent(it.getOrderId(), k -> new java.util.ArrayList<>()).add(it);
+        }
+        List<List<OrderHistoryItem>> orders = new java.util.ArrayList<>(grouped.values());
+        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.DEFAULT_PAGE_SIZE, orders.size());
+        orders = page.slice(orders);
         request.setAttribute("pagination", page);
-        request.setAttribute("historyList", history);
+        request.setAttribute("historyList", orders);
 
         request.getRequestDispatcher("/views/linhhqth08598/user/order_history.jsp").forward(request, response);
     }

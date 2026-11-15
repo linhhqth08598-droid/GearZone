@@ -31,12 +31,12 @@
             <!-- 6 ô OTP độc lập -->
             <div class="mb-4 text-center">
                 <div class="d-flex justify-content-center gap-2" id="otp-container">
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" required>
+                    <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" required>
                 </div>
                 <input type="hidden" name="otp" id="otp-hidden">
             </div>

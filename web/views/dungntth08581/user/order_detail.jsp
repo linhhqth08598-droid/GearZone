@@ -56,6 +56,13 @@
         </div>
     </div></div>
 
+    <c:if test="${order.status == 'SHIPPING'}">
+        <form action="${pageContext.request.contextPath}/order" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng?');" class="mb-3">
+            <input type="hidden" name="action" value="received">
+            <input type="hidden" name="id" value="${order.orderId}">
+            <button type="submit" class="btn btn-success text-nowrap"><i class="fas fa-check me-1"></i> Đã nhận hàng</button>
+        </form>
+    </c:if>
     <c:if test="${order.status == 'PENDING' || order.status == 'CONFIRMED'}">
         <form action="${pageContext.request.contextPath}/order" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');" class="d-flex gap-2">
             <input type="hidden" name="action" value="cancel">
