@@ -141,6 +141,7 @@
                     </c:forEach>
                 </div>
             </div>
+            <jsp:include page="/views/components/pagination.jsp"><jsp:param name="url" value="/user/order-history"/></jsp:include>
         </c:otherwise>
     </c:choose>
 

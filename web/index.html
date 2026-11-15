@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Html.html to edit this template
--->
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>Đang chuyển hướng...</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Chuyển hướng bằng thẻ meta HTML (dự phòng) -->
+        <meta http-equiv="refresh" content="0; url=http://localhost:8080/gearzone/admin/dashboard">
+        <!-- Chuyển hướng tức thì bằng JavaScript -->
+        <script type="text/javascript">
+            window.location.replace("http://localhost:8080/gearzone/admin/dashboard");
+        </script>
     </head>
     <body>
-        <div>TODO write content</div>
+        <p>Đang chuyển hướng đến trang quản trị. Nếu trình duyệt không tự động chuyển, vui lòng <a href="http://localhost:8080/gearzone/admin/dashboard">nhấn vào đây</a>.</p>
     </body>
 </html>

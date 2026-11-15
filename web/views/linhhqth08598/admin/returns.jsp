@@ -82,6 +82,7 @@
                 </tbody>
             </table>
         </div>
+        <jsp:include page="/views/components/pagination.jsp"><jsp:param name="url" value="/admin/returns"/></jsp:include>
     </div>
 </div>
 

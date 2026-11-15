@@ -109,6 +109,32 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Phân trang -->
+        <c:if test="${pagination.totalPages > 1}">
+            <nav class="mt-3">
+                <ul class="pagination justify-content-center mb-0">
+                    <c:url var="prevUrl" value="/admin/audit-logs">
+                        <c:param name="keyword" value="${param.keyword}"/><c:param name="fromDate" value="${param.fromDate}"/><c:param name="toDate" value="${param.toDate}"/>
+                        <c:param name="page" value="${pagination.currentPage - 1}"/>
+                    </c:url>
+                    <li class="page-item ${pagination.hasPrevious() ? '' : 'disabled'}"><a class="page-link" href="${prevUrl}">&laquo;</a></li>
+                    <c:forEach begin="1" end="${pagination.totalPages}" var="p">
+                        <c:url var="pUrl" value="/admin/audit-logs">
+                            <c:param name="keyword" value="${param.keyword}"/><c:param name="fromDate" value="${param.fromDate}"/><c:param name="toDate" value="${param.toDate}"/>
+                            <c:param name="page" value="${p}"/>
+                        </c:url>
+                        <li class="page-item ${p == pagination.currentPage ? 'active' : ''}"><a class="page-link" href="${pUrl}">${p}</a></li>
+                    </c:forEach>
+                    <c:url var="nextUrl" value="/admin/audit-logs">
+                        <c:param name="keyword" value="${param.keyword}"/><c:param name="fromDate" value="${param.fromDate}"/><c:param name="toDate" value="${param.toDate}"/>
+                        <c:param name="page" value="${pagination.currentPage + 1}"/>
+                    </c:url>
+                    <li class="page-item ${pagination.hasNext() ? '' : 'disabled'}"><a class="page-link" href="${nextUrl}">&raquo;</a></li>
+                </ul>
+            </nav>
+            <div class="text-center text-muted small mt-2">Trang ${pagination.currentPage}/${pagination.totalPages} - ${pagination.totalItems} bản ghi</div>
+        </c:if>
     </div>
 </div>
 

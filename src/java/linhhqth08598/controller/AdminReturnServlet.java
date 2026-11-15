@@ -1,5 +1,7 @@
 package linhhqth08598.controller;
 
+import fourSome.util.Constants;
+import fourSome.util.PaginationUtil;
 import fourSome.model.Users;
 import fourSome.model.ProductReturns;
 import linhhqth08598.service.ReturnService;
@@ -22,6 +24,9 @@ public class AdminReturnServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         List<ProductReturns> returns = returnService.getAllReturnsForAdmin();
+        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.ADMIN_PAGE_SIZE, returns.size());
+        returns = page.slice(returns);
+        request.setAttribute("pagination", page);
         request.setAttribute("returnsList", returns);
         request.getRequestDispatcher("/views/linhhqth08598/admin/returns.jsp").forward(request, response);
     }

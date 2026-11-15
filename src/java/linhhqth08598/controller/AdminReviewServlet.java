@@ -1,5 +1,7 @@
 package linhhqth08598.controller;
 
+import fourSome.util.Constants;
+import fourSome.util.PaginationUtil;
 import fourSome.model.PartReviews;
 import fourSome.model.Users;
 import linhhqth08598.dao.PartReviewsDAO;
@@ -19,6 +21,9 @@ public class AdminReviewServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // SỬA DÒNG NÀY: Dùng hàm getAllForAdmin() thay vì getAll()
         List<PartReviews> reviews = reviewDAO.getAllForAdmin();
+        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.ADMIN_PAGE_SIZE, reviews.size());
+        reviews = page.slice(reviews);
+        request.setAttribute("pagination", page);
         request.setAttribute("reviews", reviews);
         request.getRequestDispatcher("/views/linhhqth08598/admin/reviews.jsp").forward(request, response);
     }

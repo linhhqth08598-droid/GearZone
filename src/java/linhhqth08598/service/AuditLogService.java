@@ -34,4 +34,12 @@ public class AuditLogService {
     public List<StaffAuditLogs> searchLogs(String keyword, String fromDate, String toDate) {
         return auditLogsDAO.search(keyword, fromDate, toDate);
     }
+
+    public int countLogs(String keyword, String fromDate, String toDate) {
+        return auditLogsDAO.count(keyword, fromDate, toDate);
+    }
+
+    public List<StaffAuditLogs> searchLogsPaged(String keyword, String fromDate, String toDate, int offset, int pageSize) {
+        return auditLogsDAO.searchPaged(keyword, fromDate, toDate, offset, pageSize);
+    }
 }

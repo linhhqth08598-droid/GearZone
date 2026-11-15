@@ -1,6 +1,8 @@
 package linhhqth08598.controller;
 
 import fourSome.model.StaffAuditLogs;
+import fourSome.util.Constants;
+import fourSome.util.PaginationUtil;
 import linhhqth08598.service.AuditLogService;
 
 import jakarta.servlet.ServletException;
@@ -24,9 +26,12 @@ public class AdminAuditLogServlet extends HttpServlet {
         String fromDate = request.getParameter("fromDate");
         String toDate = request.getParameter("toDate");
 
-        List<StaffAuditLogs> logs = auditLogService.searchLogs(keyword, fromDate, toDate);
-        
+        int total = auditLogService.countLogs(keyword, fromDate, toDate);
+        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.ADMIN_PAGE_SIZE, total);
+        List<StaffAuditLogs> logs = auditLogService.searchLogsPaged(keyword, fromDate, toDate, page.getOffset(), page.getPageSize());
+
         request.setAttribute("auditLogs", logs);
+        request.setAttribute("pagination", page);
         request.getRequestDispatcher("/views/linhhqth08598/admin/audit_logs.jsp").forward(request, response);
     }
 }

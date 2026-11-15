@@ -22,7 +22,6 @@ public class ShippingAddressesDAO {
                     sa.setRecipientName(rs.getString("recipient_name"));
                     sa.setPhone(rs.getString("phone"));
                     sa.setProvince(rs.getString("province"));
-                    sa.setDistrict(rs.getString("district"));
                     sa.setWard(rs.getString("ward"));
                     sa.setDetailedAddress(rs.getString("detailed_address"));
                     sa.setIsDefault(rs.getBoolean("is_default"));
@@ -35,17 +34,16 @@ public class ShippingAddressesDAO {
 
     public boolean insert(ShippingAddresses address) {
         if (address.getIsDefault()) clearDefaultAddress(address.getUserId());
-        String sql = "INSERT INTO shipping_addresses (user_id, recipient_name, phone, province, district, ward, detailed_address, is_default, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        String sql = "INSERT INTO shipping_addresses (user_id, recipient_name, phone, province, ward, detailed_address, is_default, status) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
         try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, address.getUserId());
             ps.setString(2, address.getRecipientName());
             ps.setString(3, address.getPhone());
             ps.setString(4, address.getProvince());
-            ps.setString(5, address.getDistrict());
-            ps.setString(6, address.getWard());
-            ps.setString(7, address.getDetailedAddress());
-            ps.setBoolean(8, address.getIsDefault());
+            ps.setString(5, address.getWard());
+            ps.setString(6, address.getDetailedAddress());
+            ps.setBoolean(7, address.getIsDefault());
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
@@ -53,16 +51,15 @@ public class ShippingAddressesDAO {
 
     public boolean update(ShippingAddresses address) {
         if (address.getIsDefault()) clearDefaultAddress(address.getUserId());
-        String sql = "UPDATE shipping_addresses SET recipient_name = ?, phone = ?, province = ?, district = ?, ward = ?, detailed_address = ?, is_default = ? " +
+        String sql = "UPDATE shipping_addresses SET recipient_name = ?, phone = ?, province = ?, ward = ?, detailed_address = ?, is_default = ? " +
                      "WHERE address_id = ? AND user_id = ?";
         try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, address.getRecipientName());
             ps.setString(2, address.getPhone());
             ps.setString(3, address.getProvince());
-            ps.setString(4, address.getDistrict());
-            ps.setString(5, address.getWard());
-            ps.setString(6, address.getDetailedAddress());
-            ps.setBoolean(7, address.getIsDefault());
+            ps.setString(4, address.getWard());
+            ps.setString(5, address.getDetailedAddress());
+            ps.setBoolean(6, address.getIsDefault());
             ps.setInt(8, address.getAddressId());
             ps.setInt(9, address.getUserId());
             return ps.executeUpdate() > 0;

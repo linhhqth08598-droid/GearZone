@@ -1,5 +1,7 @@
 package linhhqth08598.controller;
 
+import fourSome.util.Constants;
+import fourSome.util.PaginationUtil;
 import fourSome.model.Users;
 import fourSome.model.OrderHistoryItem;
 import linhhqth08598.dao.UserWishlistsDAO;
@@ -30,6 +32,9 @@ public class OrderHistoryServlet extends HttpServlet {
         }
 
         List<OrderHistoryItem> history = dao.getOrderHistory(user.getUserId());
+        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.DEFAULT_PAGE_SIZE, history.size());
+        history = page.slice(history);
+        request.setAttribute("pagination", page);
         request.setAttribute("historyList", history);
 
         request.getRequestDispatcher("/views/linhhqth08598/user/order_history.jsp").forward(request, response);

@@ -111,7 +111,7 @@ public class UserServlet extends HttpServlet {
                 addr.setRecipientName(request.getParameter("recipientName"));
                 addr.setPhone(request.getParameter("phone"));
                 addr.setProvince(request.getParameter("province"));
-                addr.setDistrict(request.getParameter("district"));
+                // Cấp Quận/Huyện đã bãi bỏ từ 01/07/2025: không nhận tham số district (UserService lưu chuỗi rỗng)
                 addr.setWard(request.getParameter("ward"));
                 addr.setDetailedAddress(request.getParameter("detailedAddress"));
                 addr.setIsDefault(request.getParameter("isDefault") != null);

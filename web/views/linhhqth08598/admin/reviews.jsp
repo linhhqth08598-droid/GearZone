@@ -119,6 +119,7 @@
                 </tbody>
             </table>
         </div>
+        <jsp:include page="/views/components/pagination.jsp"><jsp:param name="url" value="/admin/reviews"/></jsp:include>
     </div>
 </div>
 

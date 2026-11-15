@@ -1,5 +1,7 @@
 package fourSome.util;
 
+import java.util.List;
+
 /**
  * Tính toán phân trang cho danh sách.
  * Dùng với SQL Server: ORDER BY ... OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
@@ -39,4 +41,12 @@ public class PaginationUtil {
     public int getTotalPages() { return totalPages; }
     public boolean hasPrevious() { return currentPage > 1; }
     public boolean hasNext() { return currentPage < totalPages; }
+
+    /** Cắt danh sách đã tải sẵn thành đúng trang hiện tại (dùng cho danh sách nhỏ, không cần phân trang ở SQL). */
+    public <T> List<T> slice(List<T> all) {
+        if (all == null) return java.util.Collections.emptyList();
+        int from = Math.min(getOffset(), all.size());
+        int to = Math.min(from + pageSize, all.size());
+        return all.subList(from, to);
+    }
 }

@@ -1,5 +1,7 @@
 package linhhqth08598.controller;
 
+import fourSome.util.Constants;
+import fourSome.util.PaginationUtil;
 import fourSome.model.Users;
 import fourSome.model.Notifications;
 import linhhqth08598.service.NotificationService;
@@ -37,6 +39,9 @@ public class NotificationServlet extends HttpServlet {
         }
 
         List<Notifications> list = service.getNotifications(user.getUserId());
+        PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.DEFAULT_PAGE_SIZE, list.size());
+        list = page.slice(list);
+        request.setAttribute("pagination", page);
         request.setAttribute("notifications", list);
         
         // Đánh dấu đã đọc sau khi load xong
