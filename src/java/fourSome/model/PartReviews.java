@@ -10,7 +10,7 @@ public class PartReviews {
     private Integer partId;
     private String partName;
     private Integer orderId;
-    private Integer qualityRating;
+    private Double qualityRating;
     private Integer performanceRating;
     private String comment;
     private String status;
@@ -37,8 +37,8 @@ public class PartReviews {
     public Integer getOrderId() { return orderId; }
     public void setOrderId(Integer orderId) { this.orderId = orderId; }
 
-    public Integer getQualityRating() { return qualityRating; }
-    public void setQualityRating(Integer qualityRating) { this.qualityRating = qualityRating; }
+    public Double getQualityRating() { return qualityRating; }
+    public void setQualityRating(Double qualityRating) { this.qualityRating = qualityRating; }
 
     public Integer getPerformanceRating() { return performanceRating; }
     public void setPerformanceRating(Integer performanceRating) { this.performanceRating = performanceRating; }

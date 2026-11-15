@@ -45,6 +45,28 @@ public class CartServlet extends HttpServlet {
         Users user = requireLogin(request, response);
         if (user == null) return;
         HttpSession session = request.getSession();
+        if ("add".equals(request.getParameter("action"))) {
+            try {
+                int partId = Integer.parseInt(request.getParameter("partId"));
+                String q = request.getParameter("quantity");
+                String err = service.addPart(user.getUserId(), partId, q == null || q.isEmpty() ? 1 : Integer.parseInt(q));
+                if (err == null) session.setAttribute("message", "Đã thêm vào giỏ hàng.");
+                else session.setAttribute("error", err);
+            } catch (NumberFormatException e) {
+                session.setAttribute("error", "Dữ liệu không hợp lệ!");
+            }
+            // Ở lại trang đang xem (danh sách / chi tiết / trang chủ); chỉ chuyển sang /cart khi bấm "Mua ngay"
+            String ctx = request.getContextPath();
+            String back = request.getHeader("Referer");
+            String target = ctx + "/product";
+            if ("1".equals(request.getParameter("buyNow"))) target = ctx + "/cart";
+            else if (back != null) {
+                int i = back.indexOf(ctx + "/");
+                if (i >= 0 && back.startsWith("http") && !back.contains("/cart")) target = back.substring(i);
+            }
+            response.sendRedirect(target);
+            return;
+        }
         try {
             int cartId = Integer.parseInt(request.getParameter("cartId"));
             if ("remove".equals(request.getParameter("action"))) {

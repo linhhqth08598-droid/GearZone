@@ -31,12 +31,12 @@
             <div class="mb-4 text-center">
                 <label class="form-label text-center w-100 mb-3">Mã Xác Thực (OTP)</label>
                 <div class="d-flex justify-content-center gap-2" id="otp-container">
-                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
-                    <input type="text" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
                 </div>
                 <input type="hidden" name="otp" id="otp-hidden">
             </div>

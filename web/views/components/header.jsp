@@ -88,7 +88,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/home">Trang chủ</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Linh kiện PC</a></li>
+                        <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/product">Linh kiện PC</a></li>
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/build-pc">Build PC</a></li>
                     </ul>
                     <ul class="navbar-nav align-items-center">

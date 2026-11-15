@@ -10,6 +10,8 @@ public class PcBuildHistoryItem {
     private Date createdAt;
     private String status;
     private String shareToken;
+    private Integer reviewRating;
+    private String reviewComment;
     
     // Danh sách linh kiện chi tiết
     private List<PcBuildDetailItem> details;
@@ -32,6 +34,12 @@ public class PcBuildHistoryItem {
 
     public String getShareToken() { return shareToken; }
     public void setShareToken(String shareToken) { this.shareToken = shareToken; }
+
+    public Integer getReviewRating() { return reviewRating; }
+    public void setReviewRating(Integer reviewRating) { this.reviewRating = reviewRating; }
+
+    public String getReviewComment() { return reviewComment; }
+    public void setReviewComment(String reviewComment) { this.reviewComment = reviewComment; }
 
     public List<PcBuildDetailItem> getDetails() { return details; }
     public void setDetails(List<PcBuildDetailItem> details) { this.details = details; }

@@ -52,7 +52,7 @@
                                     <p class="text-muted mb-1"><i class="fas fa-phone me-1"></i> <c:out value='${addr.phone}'/></p>
                                     <p class="text-secondary mb-0">
                                         <i class="fas fa-map-marker-alt me-1"></i> 
-                                        <c:out value='${addr.detailedAddress}'/>, <c:out value='${addr.ward}'/><c:if test="${not empty addr.district}">, <c:out value='${addr.district}'/></c:if>, <c:out value='${addr.province}'/>
+                                        <c:out value='${addr.detailedAddress}'/>, <c:out value='${addr.ward}'/>, <c:out value='${addr.province}'/>
                                     </p>
                                 </div>
                                 <div class="d-flex gap-2">

@@ -4,6 +4,20 @@
 
 <jsp:include page="/views/components/header.jsp" />
 
+<div class="container mt-4">
+    <c:if test="${not empty sessionScope.message}">
+        <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
+            <a href="${pageContext.request.contextPath}/cart" class="alert-link ms-2">Xem giỏ hàng</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <c:remove var="message" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.error}">
+        <div class="alert alert-danger alert-dismissible fade show"><i class="fas fa-exclamation-circle me-1"></i> <c:out value="${sessionScope.error}"/>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <c:remove var="error" scope="session"/>
+    </c:if>
+</div>
+
 <div class="container my-5">
     <div class="row">
         <!-- Ảnh sản phẩm -->
@@ -47,9 +61,13 @@
             </div>
             
             <div class="d-flex gap-3">
-                <button class="btn btn-primary btn-lg flex-grow-1" style="background-color: #ff4757; border: none;">
-                    <i class="fas fa-cart-plus me-2"></i> Thêm vào giỏ hàng
-                </button>
+                <form action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="partId" value="${part.partId}">
+                    <button type="submit" class="btn btn-primary btn-lg w-100" style="background-color: #ff4757; border: none;">
+                        <i class="fas fa-cart-plus me-2"></i> Thêm vào giỏ hàng
+                    </button>
+                </form>
                 
                 <!-- NÚT THEO DÕI GIÁ -->
                 <button type="button" id="priceAlertBtn" onclick="togglePriceAlert(${part.partId})" 

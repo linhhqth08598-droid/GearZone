@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <jsp:include page="/views/components/header.jsp" />
 
@@ -52,12 +53,38 @@
 <!-- SẢN PHẨM NỔI BẬT -->
 <div class="container my-5">
     <h3 class="fw-bold mb-4"><i class="fas fa-fire text-danger me-2"></i>Sản phẩm nổi bật</h3>
-    <!-- Tạm thời để trống, bạn có thể gọi danh sách sản phẩm từ ProductService sau -->
+    <c:if test="${not empty sessionScope.message}">
+    <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
+        <a href="${pageContext.request.contextPath}/cart" class="alert-link ms-2">Xem giỏ hàng</a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <c:remove var="message" scope="session"/>
+</c:if>
+    <c:if test="${not empty sessionScope.error}"><div class="alert alert-danger"><c:out value="${sessionScope.error}"/></div><c:remove var="error" scope="session"/></c:if>
     <div class="row">
-        <div class="col-12 text-center text-muted py-5">
-            <p>Danh sách sản phẩm sẽ được hiển thị tại đây.</p>
+        <c:if test="${empty featured}"><div class="col-12 text-center text-muted py-5"><p>Chưa có sản phẩm nào đang bán.</p></div></c:if>
+<c:forEach var="p" items="${featured}">
+    <div class="col-6 col-md-3 mb-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4">
+            <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="text-decoration-none text-dark">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-microchip fa-3x text-secondary mb-3"></i>
+                    <h6 class="fw-bold" style="min-height:40px"><c:out value="${p.partName}"/></h6>
+                    <div class="text-danger fw-bold">
+                        <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                    </div>
+                </div>
+            </a>
+            <div class="card-footer bg-white border-0 pb-3">
+                <form action="${pageContext.request.contextPath}/cart" method="POST" class="m-0">
+                    <input type="hidden" name="action" value="add"><input type="hidden" name="partId" value="${p.partId}">
+                    <button type="submit" class="btn btn-danger btn-sm w-100"><i class="fas fa-cart-plus me-1"></i> Thêm vào giỏ</button>
+                </form>
+            </div>
         </div>
     </div>
+</c:forEach>
+    </div>
+    <div class="text-center"><a href="${pageContext.request.contextPath}/product" class="btn btn-outline-danger">Xem tất cả linh kiện</a></div>
 </div>
 
 <!-- KHUYẾN MÃI -->

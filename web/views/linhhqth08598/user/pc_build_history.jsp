@@ -104,6 +104,11 @@
                                             data-mode="rename" data-id="${build.buildId}" data-name="<c:out value='${build.buildName}'/>" title="Đổi tên">
                                         <i class="fas fa-pen"></i>
                                     </button>
+                                    <!-- UC 300: đánh giá cấu hình -->
+                                    <button type="button" class="btn btn-outline-warning btn-sm js-review-btn" data-bs-toggle="modal" data-bs-target="#reviewModal"
+                                            data-id="${build.buildId}" data-rating="${build.reviewRating}" data-comment="<c:out value='${build.reviewComment}'/>">
+                                        <i class="fas fa-star me-1"></i> <c:choose><c:when test="${empty build.reviewRating}">Đánh giá</c:when><c:otherwise>${build.reviewRating}/5</c:otherwise></c:choose>
+                                    </button>
                                 </c:if>
 
                                 <form action="${pageContext.request.contextPath}/user/pc-build-history" method="POST" class="d-inline">
@@ -149,6 +154,42 @@
 </div>
 
 <!-- ===== Modal Chia sẻ ===== -->
+<!-- UC 300: Đánh giá cấu hình -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" action="${pageContext.request.contextPath}/review" method="POST">
+            <input type="hidden" name="action" value="reviewBuild">
+            <input type="hidden" name="buildId" id="rv_id">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Đánh giá cấu hình</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-semibold">Số sao</label>
+                <select name="rating" id="rv_rating" class="form-select mb-3">
+                    <option value="5">5 - Rất hài lòng</option><option value="4">4 - Hài lòng</option>
+                    <option value="3">3 - Bình thường</option><option value="2">2 - Chưa tốt</option><option value="1">1 - Rất tệ</option>
+                </select>
+                <label class="form-label fw-semibold">Nhận xét</label>
+                <textarea name="comment" id="rv_comment" class="form-control" rows="3" maxlength="2000"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('.js-review-btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.getElementById('rv_id').value = b.dataset.id;
+            document.getElementById('rv_rating').value = b.dataset.rating || '5';
+            document.getElementById('rv_comment').value = b.dataset.comment || '';
+        });
+    });
+</script>
+
 <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

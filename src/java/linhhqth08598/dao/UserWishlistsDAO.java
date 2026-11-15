@@ -184,7 +184,7 @@ public class UserWishlistsDAO {
         // Lấy lịch sử cấu hình PC của user
     public java.util.List<fourSome.model.PcBuildHistoryItem> getPcBuildHistory(int userId) {
         java.util.List<fourSome.model.PcBuildHistoryItem> list = new java.util.ArrayList<>();
-        String sql = "SELECT build_id, build_name, total_price, created_at, status, share_token "
+        String sql = "SELECT build_id, build_name, total_price, created_at, status, share_token, review_rating, review_comment "
                    + "FROM pc_builds "
                    + "WHERE user_id = ? AND status IN ('SAVED', 'DRAFT') "
                    + "ORDER BY created_at DESC";
@@ -201,6 +201,8 @@ public class UserWishlistsDAO {
                     item.setCreatedAt(rs.getTimestamp("created_at"));
                     item.setStatus(rs.getString("status"));
                     item.setShareToken(rs.getString("share_token"));
+                    item.setReviewRating(rs.getObject("review_rating", Integer.class));
+                    item.setReviewComment(rs.getString("review_comment"));
                     
                     // Lấy danh sách linh kiện chi tiết
                     item.setDetails(getPcBuildDetails(item.getBuildId()));

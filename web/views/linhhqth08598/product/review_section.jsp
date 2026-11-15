@@ -46,7 +46,10 @@
         <div class="col-md-5 mb-4">
             <div class="card shadow-sm border-0 rounded-4 p-4">
                 <h5 class="fw-bold mb-3">Viết đánh giá của bạn</h5>
-                <c:if test="${not empty sessionScope.loggedUser}">
+                <c:if test="${not empty sessionScope.loggedUser and not canReview}">
+                    <p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>Bạn có thể đánh giá sau khi đã nhận hàng linh kiện này (mỗi đơn đánh giá 1 lần).</p>
+                </c:if>
+                <c:if test="${not empty sessionScope.loggedUser and canReview}">
                     <form action="${pageContext.request.contextPath}/review" method="POST" enctype="multipart/form-data" onsubmit="prepareRating()">
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="partId" value="${part.partId}">
@@ -73,6 +76,15 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label class="form-label fw-semibold">Điểm hiệu năng <span class="text-muted fw-normal">(không bắt buộc)</span></label>
+                            <select name="performanceRating" class="form-select">
+                                <option value="">-- Không chấm --</option>
+                                <option value="5">5 - Rất mạnh</option><option value="4">4 - Mạnh</option>
+                                <option value="3">3 - Đủ dùng</option><option value="2">2 - Yếu</option><option value="1">1 - Rất yếu</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label fw-semibold">Nhận xét của bạn</label>
                             <textarea name="comment" class="form-control" rows="4" required placeholder="Chia sẻ cảm nhận..."></textarea>
                         </div>
@@ -92,6 +104,25 @@
             </div>
         </div>
 
+        <!-- UC 302: báo cáo thông tin sai -->
+        <div class="col-md-5 mb-4" style="margin-top:-8px">
+            <div class="card shadow-sm border-0 rounded-4 p-4">
+                <h6 class="fw-bold mb-2"><i class="fas fa-flag text-danger me-1"></i>Báo cáo thông tin sai</h6>
+                <c:if test="${not empty sessionScope.loggedUser}">
+                    <form action="${pageContext.request.contextPath}/review" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="reportInfo">
+                        <input type="hidden" name="partId" value="${part.partId}">
+                        <textarea name="content" class="form-control mb-2" rows="3" minlength="10" maxlength="2000" required placeholder="Thông số/giá/hình ảnh nào chưa đúng?"></textarea>
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Gửi báo cáo</button>
+                    </form>
+                </c:if>
+                <c:if test="${empty sessionScope.loggedUser}">
+                    <p class="text-muted small mb-0">Vui lòng đăng nhập để báo cáo.</p>
+                </c:if>
+            </div>
+        </div>
+        <div class="w-100"></div>
+
         <!-- Danh sách đánh giá -->
         <div class="col-md-7">
             <div class="card shadow-sm border-0 rounded-4 p-4">
@@ -102,7 +133,7 @@
                 <c:forEach var="r" items="${reviews}">
                     <div class="border-bottom pb-3 mb-3">
                         <div class="d-flex justify-content-between">
-                            <strong>Người dùng #${r.userId}</strong>
+                            <strong><c:out value="${r.userName}"/></strong>
                             <span class="text-muted" style="font-size: 13px;"><fmt:formatDate value="${r.createdAt}" pattern="dd/MM/yyyy"/></span>
                         </div>
                         
@@ -118,6 +149,7 @@
                             </c:forEach>
                         </div>
                         
+                        <c:if test="${not empty r.performanceRating}"><div class="small text-muted">Hiệu năng: <strong>${r.performanceRating}/5</strong></div></c:if>
                         <p class="mb-0 text-secondary"><c:out value='${r.comment}'/></p>
                         
                         <!-- Hiển thị ảnh nếu có -->

@@ -34,6 +34,7 @@ public class ProductServlet extends HttpServlet {
                     
                     // 2. KIỂM TRA TRẠNG THÁI YÊU THÍCH & THEO DÕI GIÁ
                     Users loggedUser = (Users) request.getSession().getAttribute("loggedUser");
+                    request.setAttribute("canReview", loggedUser != null && reviewService.canReview(loggedUser.getUserId(), partId));
                     boolean isWishlisted = false;
                     boolean isPriceAlerted = false;
                     
@@ -76,7 +77,15 @@ public class ProductServlet extends HttpServlet {
             }
         } else {
             // Hiển thị danh sách sản phẩm
-            request.setAttribute("parts", partsDAO.getAll());
+            java.util.List<Parts> active = new java.util.ArrayList<>();
+            String kw = request.getParameter("q");
+            for (Parts p : partsDAO.getAll()) {
+                if (!"ACTIVE".equals(p.getStatus())) continue;
+                if (kw != null && !kw.trim().isEmpty() && (p.getPartName() == null
+                        || !p.getPartName().toLowerCase().contains(kw.trim().toLowerCase()))) continue;
+                active.add(p);
+            }
+            request.setAttribute("parts", active);
             request.getRequestDispatcher("/views/khanhnb08894/product/list.jsp").forward(request, response);
         }
     }

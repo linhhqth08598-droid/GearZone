@@ -123,6 +123,24 @@ public class CartService {
         }
     }
 
+    /** Thêm 1 linh kiện vào giỏ (cộng dồn nếu đã có). Trả null nếu thành công, ngược lại là thông báo lỗi. */
+    public String addPart(int userId, int partId, int qty) {
+        if (qty < 1 || qty > 99) return "Số lượng phải từ 1 đến 99!";
+        try (Connection con = DBConnect.getConnection()) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT status FROM parts WHERE part_id = ?")) {
+                ps.setInt(1, partId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next() || !"ACTIVE".equals(rs.getString(1))) return "Linh kiện không còn được bán!";
+                }
+            }
+            upsert(con, userId, partId, qty);
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Không thêm được vào giỏ hàng, vui lòng thử lại!";
+        }
+    }
+
     public boolean updateQuantity(int userId, int cartId, int qty) {
         if (qty < 1 || qty > 99) return false;
         return exec("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND user_id = ?", qty, cartId, userId);
