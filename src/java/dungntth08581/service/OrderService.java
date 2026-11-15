@@ -20,6 +20,7 @@ public class OrderService {
 
     private final InventoryService inventory = new InventoryService();
     private final NotificationService notifications = new NotificationService();
+    private final PromotionService promotions = new PromotionService();
 
     // ---------- DTO ----------
     public static class ShippingMethod {
@@ -32,7 +33,7 @@ public class OrderService {
 
     public static class OrderRow {
         private int orderId, userId; private String orderCode, status, recipient, phone, address, note, cancelReason, trackingCode, customerName;
-        private double total, fee, finalAmount; private Timestamp createdAt;
+        private double total, fee, finalAmount, discount; private Timestamp createdAt; private String couponCode;
         public int getOrderId() { return orderId; }
         public int getUserId() { return userId; }
         public String getOrderCode() { return orderCode; }
@@ -47,6 +48,8 @@ public class OrderService {
         public double getTotal() { return total; }
         public double getFee() { return fee; }
         public double getFinalAmount() { return finalAmount; }
+        public double getDiscount() { return discount; }
+        public String getCouponCode() { return couponCode; }
         public Timestamp getCreatedAt() { return createdAt; }
     }
 
@@ -83,16 +86,16 @@ public class OrderService {
         o.status = rs.getString("order_status"); o.recipient = rs.getString("recipient_name"); o.phone = rs.getString("recipient_phone");
         o.address = rs.getString("shipping_address"); o.note = rs.getString("note"); o.cancelReason = rs.getString("cancel_reason");
         o.trackingCode = rs.getString("tracking_code"); o.total = rs.getDouble("total_amount"); o.fee = rs.getDouble("shipping_fee");
-        o.finalAmount = rs.getDouble("final_amount"); o.createdAt = rs.getTimestamp("created_at");
+        o.finalAmount = rs.getDouble("final_amount"); o.createdAt = rs.getTimestamp("created_at"); o.discount = rs.getDouble("discount_amount");
         return o;
     }
 
     /** Đơn của user (null nếu không phải đơn của họ). */
     public OrderRow getUserOrder(int userId, int orderId) {
         try (Connection con = DBConnect.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT * FROM orders WHERE order_id = ? AND user_id = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT o.*, c.code AS coupon_code FROM orders o LEFT JOIN coupons c ON c.coupon_id = o.coupon_id WHERE o.order_id = ? AND o.user_id = ?")) {
             ps.setInt(1, orderId); ps.setInt(2, userId);
-            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return map(rs); }
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { OrderRow o = map(rs); o.couponCode = rs.getString("coupon_code"); return o; } }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
@@ -139,6 +142,11 @@ public class OrderService {
 
     // ---------- Đặt hàng (UC 222-227, 229) ----------
     public PlaceResult placeOrder(int userId, ShippingAddresses addr, int shippingMethodId, String note) {
+        return placeOrder(userId, addr, shippingMethodId, note, null);
+    }
+
+    /** UC 224: couponCode có thể null/rỗng. Giảm giá tính lại ở server; mã sai/hết hạn -> không đặt đơn, báo lỗi để khách sửa. */
+    public PlaceResult placeOrder(int userId, ShippingAddresses addr, int shippingMethodId, String note, String couponCode) {
         PlaceResult res = new PlaceResult();
         if (addr == null) { res.error = "Vui lòng chọn địa chỉ nhận hàng!"; return res; }
         if (note != null && note.length() > 500) note = note.substring(0, 500);
@@ -176,7 +184,15 @@ public class OrderService {
                         try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { fee = rs.getBigDecimal(1); methodId = shippingMethodId; } }
                     }
                 }
-                BigDecimal finalAmount = total.add(fee);
+                // 2b. Khuyến mãi tự động + mã giảm giá (UC 224, 241-247), tính trong cùng transaction
+                PromotionService.Result disc = promotions.calculate(con, promotions.loadCartItems(con, userId), fee, userId, couponCode);
+                if (disc.error != null) { con.rollback(); res.error = disc.error; return res; }
+                if (disc.couponId != null && !promotions.reserveCouponUse(con, disc.couponId)) {
+                    con.rollback(); res.error = "Mã giảm giá đã hết lượt sử dụng!"; return res;
+                }
+                BigDecimal goodsDiscount = disc.getGoodsDiscount().min(total);
+                BigDecimal shipFee = fee.subtract(disc.getShippingDiscount()).max(BigDecimal.ZERO);
+                BigDecimal finalAmount = total.subtract(goodsDiscount).add(shipFee);
 
                 // 3. Ghi đơn
                 String code = "GZ" + new java.text.SimpleDateFormat("yyMMddHHmmss").format(new java.util.Date()) + (100 + new Random().nextInt(900));
@@ -184,12 +200,14 @@ public class OrderService {
                 if (fullAddress.length() > 255) fullAddress = fullAddress.substring(0, 255);
                 int orderId;
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO orders (order_code, user_id, recipient_name, recipient_phone, shipping_address, shipping_method_id, shipping_fee, total_amount, discount_amount, final_amount, order_status, note, created_at) "
-                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'PENDING', ?, SYSDATETIME())", Statement.RETURN_GENERATED_KEYS)) {
+                        "INSERT INTO orders (order_code, user_id, recipient_name, recipient_phone, shipping_address, shipping_method_id, shipping_fee, total_amount, discount_amount, final_amount, order_status, note, coupon_id, promotion_id, created_at) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, SYSDATETIME())", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setString(1, code); ps.setInt(2, userId); ps.setString(3, addr.getRecipientName()); ps.setString(4, addr.getPhone());
                     ps.setString(5, fullAddress);
                     if (methodId == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, methodId);
-                    ps.setBigDecimal(7, fee); ps.setBigDecimal(8, total); ps.setBigDecimal(9, finalAmount); ps.setString(10, note);
+                    ps.setBigDecimal(7, shipFee); ps.setBigDecimal(8, total); ps.setBigDecimal(9, goodsDiscount); ps.setBigDecimal(10, finalAmount); ps.setString(11, note);
+                    if (disc.couponId == null) ps.setNull(12, Types.INTEGER); else ps.setInt(12, disc.couponId);
+                    if (disc.promotionId == null || disc.promoDiscount.signum() == 0) ps.setNull(13, Types.INTEGER); else ps.setInt(13, disc.promotionId);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); orderId = rs.getInt(1); }
                 }
@@ -246,6 +264,7 @@ public class OrderService {
             con.setAutoCommit(false);
             try {
                 releaseItems(con, o.orderId);
+                promotions.releaseCouponUse(con, o.orderId);
                 try (PreparedStatement ps = con.prepareStatement(
                         "UPDATE orders SET order_status = 'CANCELLED', cancel_reason = ?, cancelled_at = SYSDATETIME() WHERE order_id = ?")) {
                     ps.setString(1, reason.length() > 500 ? reason.substring(0, 500) : reason); ps.setInt(2, o.orderId); ps.executeUpdate();

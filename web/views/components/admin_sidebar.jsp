@@ -57,6 +57,18 @@
             </a>
         </li>
         </c:if>
+        <c:if test="${isFull || perms.contains('PROMOTION_VIEW') || perms.contains('PROMOTION_MANAGE')}">
+        <li class="nav-item">
+            <a class="nav-link ${fn:contains(currentURL, '/admin/promotion') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/promotion">
+                <i class="fas fa-tags"></i> Khuyến mãi & Mã giảm giá
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link ${fn:contains(currentURL, '/admin/shipping') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/shipping">
+                <i class="fas fa-truck"></i> Vận chuyển
+            </a>
+        </li>
+        </c:if>
         <c:if test="${isFull || perms.contains('RETURN_VIEW') || perms.contains('RETURN_MANAGE')}">
         <li class="nav-item">
             <a class="nav-link ${fn:contains(currentURL, '/admin/returns') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/returns">

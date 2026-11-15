@@ -69,7 +69,19 @@
                     <div class="d-flex justify-content-between fs-5 fw-bold mt-3">
                         <span>Tạm tính</span><span class="text-danger"><fmt:formatNumber value="${cartTotal}" type="number" maxFractionDigits="0"/> ₫</span>
                     </div>
-                    <div class="form-text">Phí vận chuyển được cộng khi đặt hàng.</div>
+                    <div class="input-group mt-3">
+                        <input type="text" id="couponCode" name="couponCode" value="<c:out value='${couponCode}'/>" class="form-control text-uppercase" maxlength="30" placeholder="Mã giảm giá">
+                        <button type="button" class="btn btn-outline-primary" id="btnCoupon">Áp dụng</button>
+                    </div>
+                    <div id="couponMsg" class="small mt-1"></div>
+                    <c:if test="${not empty runningPromotions}"><div class="small text-muted mt-1"><i class="fas fa-tags me-1"></i>Đang có khuyến mãi tự động, xem tại <a href="${pageContext.request.contextPath}/promotion" target="_blank">Khuyến mãi</a>.</div></c:if>
+                    <div class="small mt-3">
+                        <div class="d-flex justify-content-between"><span>Phí vận chuyển</span><span id="sumFee">-</span></div>
+                        <div class="d-flex justify-content-between text-success"><span>Khuyến mãi</span><span id="sumPromo">0 ₫</span></div>
+                        <div class="d-flex justify-content-between text-success"><span>Mã giảm giá</span><span id="sumCoupon">0 ₫</span></div>
+                        <div class="d-flex justify-content-between fw-bold fs-5 border-top pt-2 mt-2"><span>Tổng thanh toán</span><span class="text-danger" id="sumTotal">-</span></div>
+                    </div>
+                    <div class="form-text">Số tiền cuối cùng được hệ thống tính lại khi đặt hàng.</div>
                     <button type="submit" class="btn btn-success w-100 mt-3" ${empty addresses ? 'disabled' : ''}><i class="fas fa-check me-1"></i> Xác nhận đặt hàng</button>
                     <a href="${pageContext.request.contextPath}/cart" class="btn btn-link w-100">Quay lại giỏ hàng</a>
                 </div></div>
@@ -77,5 +89,31 @@
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    var base = '${pageContext.request.contextPath}/checkout';
+    var vnd = function (n) { return Math.round(n).toLocaleString('vi-VN') + ' ₫'; };
+    var msg = document.getElementById('couponMsg');
+    function refresh() {
+        var m = document.querySelector('input[name=shippingMethodId]:checked');
+        var code = document.getElementById('couponCode').value.trim();
+        var url = base + '?action=preview&code=' + encodeURIComponent(code) + '&shippingMethodId=' + (m ? m.value : 0);
+        fetch(url, {headers: {'Accept': 'application/json'}}).then(function (r) { return r.json(); }).then(function (d) {
+            var fee = Math.max(d.fee - d.shipDiscount, 0);
+            document.getElementById('sumFee').textContent = vnd(fee);
+            document.getElementById('sumPromo').textContent = '-' + vnd(d.promo);
+            document.getElementById('sumCoupon').textContent = '-' + vnd(d.coupon);
+            document.getElementById('sumTotal').textContent = vnd(d.subtotal - d.promo - d.coupon + fee);
+            if (code === '') msg.textContent = '';
+            else if (d.error) { msg.className = 'small mt-1 text-danger'; msg.textContent = d.error; }
+            else { msg.className = 'small mt-1 text-success'; msg.textContent = d.shipDiscount > 0 ? 'Đã áp dụng: miễn/giảm phí vận chuyển.' : 'Đã áp dụng mã giảm giá.'; }
+        }).catch(function () { msg.className = 'small mt-1 text-danger'; msg.textContent = 'Không kiểm tra được mã, vui lòng thử lại!'; });
+    }
+    document.getElementById('btnCoupon').addEventListener('click', refresh);
+    document.querySelectorAll('input[name=shippingMethodId]').forEach(function (e) { e.addEventListener('change', refresh); });
+    refresh();
+})();
+</script>
 
 <jsp:include page="/views/components/footer.jsp" />

@@ -8,7 +8,10 @@
 <div>
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="fw-bold mb-0"><i class="fas fa-receipt text-primary me-2"></i>Đơn hàng #<c:out value="${order.orderCode}"/></h3>
-        <a href="${pageContext.request.contextPath}/user/order-history" class="btn btn-outline-secondary">Lịch sử mua hàng</a>
+        <div class="d-flex gap-2">
+            <c:if test="${order.status != 'CANCELLED'}"><a href="${pageContext.request.contextPath}/order?id=${order.orderId}&action=invoice" target="_blank" class="btn btn-outline-primary"><i class="fas fa-print me-1"></i>Hóa đơn</a></c:if>
+            <a href="${pageContext.request.contextPath}/user/order-history" class="btn btn-outline-secondary">Lịch sử mua hàng</a>
+        </div>
     </div>
 
     <c:if test="${not empty sessionScope.message}">
@@ -47,6 +50,7 @@
         </table>
         <div class="text-end">
             <div>Tạm tính: <fmt:formatNumber value="${order.total}" type="number" maxFractionDigits="0"/> ₫</div>
+            <c:if test="${order.discount > 0}"><div class="text-success">Giảm giá<c:if test="${not empty order.couponCode}"> (<c:out value="${order.couponCode}"/>)</c:if>: -<fmt:formatNumber value="${order.discount}" type="number" maxFractionDigits="0"/> ₫</div></c:if>
             <div>Phí vận chuyển: <fmt:formatNumber value="${order.fee}" type="number" maxFractionDigits="0"/> ₫</div>
             <div class="fs-5 fw-bold text-danger">Tổng cộng: <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> ₫</div>
         </div>

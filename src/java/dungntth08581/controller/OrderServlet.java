@@ -40,6 +40,15 @@ public class OrderServlet extends HttpServlet {
         }
         request.setAttribute("order", order);
         request.setAttribute("lines", service.getLines(order.getOrderId()));
+        if ("invoice".equals(request.getParameter("action"))) {   // UC 235: hóa đơn in được (chỉ chủ đơn, không cho hóa đơn của đơn đã hủy)
+            if ("CANCELLED".equals(order.getStatus())) {
+                request.getSession().setAttribute("error", "Đơn đã hủy không có hóa đơn!");
+                response.sendRedirect(request.getContextPath() + "/order?id=" + order.getOrderId());
+                return;
+            }
+            request.getRequestDispatcher("/views/dungntth08581/user/invoice.jsp").forward(request, response);
+            return;
+        }
         request.getRequestDispatcher("/views/dungntth08581/user/order_detail.jsp").forward(request, response);
     }
 
