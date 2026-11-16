@@ -224,15 +224,15 @@ public class ReportService {
                 + "WHERE b.created_at >= ? AND b.created_at < ? GROUP BY p.part_name ORDER BY 2 DESC");
 
         add("build_budget", G_BUILD, "Cấu hình theo ngân sách",
-                "Chỉ tính cấu hình có nhập ngân sách dự kiến.", true,
+                "Ngân sách dự kiến; cấu hình chưa nhập ngân sách thì lấy tổng giá làm mốc.", true,
                 new String[]{"Mức ngân sách", "Số cấu hình", "Giá trung bình"},
                 "SELECT bucket, COUNT(*), AVG(total_price) FROM ("
-                + "SELECT CASE WHEN estimated_budget < 10000000 THEN 1 WHEN estimated_budget < 20000000 THEN 2 "
-                + "WHEN estimated_budget < 30000000 THEN 3 WHEN estimated_budget < 50000000 THEN 4 ELSE 5 END AS ord, "
-                + "CASE WHEN estimated_budget < 10000000 THEN N'Dưới 10 triệu' WHEN estimated_budget < 20000000 THEN N'10 - 20 triệu' "
-                + "WHEN estimated_budget < 30000000 THEN N'20 - 30 triệu' WHEN estimated_budget < 50000000 THEN N'30 - 50 triệu' "
+                + "SELECT CASE WHEN COALESCE(estimated_budget, total_price) < 10000000 THEN 1 WHEN COALESCE(estimated_budget, total_price) < 20000000 THEN 2 "
+                + "WHEN COALESCE(estimated_budget, total_price) < 30000000 THEN 3 WHEN COALESCE(estimated_budget, total_price) < 50000000 THEN 4 ELSE 5 END AS ord, "
+                + "CASE WHEN COALESCE(estimated_budget, total_price) < 10000000 THEN N'Dưới 10 triệu' WHEN COALESCE(estimated_budget, total_price) < 20000000 THEN N'10 - 20 triệu' "
+                + "WHEN COALESCE(estimated_budget, total_price) < 30000000 THEN N'20 - 30 triệu' WHEN COALESCE(estimated_budget, total_price) < 50000000 THEN N'30 - 50 triệu' "
                 + "ELSE N'Từ 50 triệu' END AS bucket, total_price FROM pc_builds "
-                + "WHERE estimated_budget IS NOT NULL AND created_at >= ? AND created_at < ?) t GROUP BY ord, bucket ORDER BY ord");
+                + "WHERE total_price > 0 AND created_at >= ? AND created_at < ?) t GROUP BY ord, bucket ORDER BY ord");
 
         add("part_replaced", G_BUILD, "Linh kiện hay được đề xuất thay thế",
                 "Theo bảng gợi ý nâng cấp (upgrade_recommendations).", false,

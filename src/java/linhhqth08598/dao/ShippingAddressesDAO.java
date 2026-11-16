@@ -24,6 +24,7 @@ public class ShippingAddressesDAO {
                     sa.setProvince(rs.getString("province"));
                     sa.setWard(rs.getString("ward"));
                     sa.setDetailedAddress(rs.getString("detailed_address"));
+                    try { sa.setStreetName(rs.getString("street_name")); } catch (SQLException ignore) { /* chưa chạy file SQL thêm cột street_name */ }
                     sa.setIsDefault(rs.getBoolean("is_default"));
                     list.add(sa);
                 }
@@ -38,13 +39,13 @@ public class ShippingAddressesDAO {
 
     /** Bỏ mặc định cũ + ghi địa chỉ trong CÙNG một giao dịch: lỗi thì không mất địa chỉ mặc định cũ. */
     public boolean insert(ShippingAddresses address) {
-        String sql = "INSERT INTO shipping_addresses (user_id, recipient_name, phone, province, ward, detailed_address, is_default, status) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        String sql = "INSERT INTO shipping_addresses (user_id, recipient_name, phone, province, ward, detailed_address, street_name, is_default, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
         return save(address, sql, false);
     }
 
     public boolean update(ShippingAddresses address) {
-        String sql = "UPDATE shipping_addresses SET recipient_name = ?, phone = ?, province = ?, ward = ?, detailed_address = ?, is_default = ? "
+        String sql = "UPDATE shipping_addresses SET recipient_name = ?, phone = ?, province = ?, ward = ?, detailed_address = ?, street_name = ?, is_default = ? "
                    + "WHERE address_id = ? AND user_id = ? AND status = 'ACTIVE'";
         return save(address, sql, true);
     }
@@ -69,9 +70,10 @@ public class ShippingAddressesDAO {
                         ps.setString(3, a.getProvince());
                         ps.setString(4, a.getWard());
                         ps.setString(5, a.getDetailedAddress());
-                        ps.setBoolean(6, makeDefault);
-                        ps.setInt(7, a.getAddressId());
-                        ps.setInt(8, a.getUserId());
+                        ps.setString(6, a.getStreetName());
+                        ps.setBoolean(7, makeDefault);
+                        ps.setInt(8, a.getAddressId());
+                        ps.setInt(9, a.getUserId());
                     } else {
                         ps.setInt(1, a.getUserId());
                         ps.setString(2, a.getRecipientName());
@@ -79,7 +81,8 @@ public class ShippingAddressesDAO {
                         ps.setString(4, a.getProvince());
                         ps.setString(5, a.getWard());
                         ps.setString(6, a.getDetailedAddress());
-                        ps.setBoolean(7, makeDefault);
+                        ps.setString(7, a.getStreetName());
+                        ps.setBoolean(8, makeDefault);
                     }
                     rows = ps.executeUpdate();
                 }

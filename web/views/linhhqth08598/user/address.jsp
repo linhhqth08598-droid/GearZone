@@ -117,8 +117,8 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Tên đường <span class="text-muted fw-normal">(không bắt buộc)</span></label>
-                                        <input type="text" data-street class="form-control" maxlength="100" placeholder="VD: Đường Nguyễn Trãi">
-                                        <div class="form-text">Nếu nhập, tên đường sẽ được ghép vào cuối địa chỉ chi tiết.</div>
+                                        <input type="text" name="streetName" data-street class="form-control" maxlength="100" placeholder="VD: Đường Nguyễn Trãi" value="<c:out value='${addr.streetName}'/>">
+                                        <div class="form-text">Nếu nhập, tên đường sẽ được ghép vào đầu địa chỉ chi tiết (Tên đường, Thôn/Xóm, Xã/Phường, Tỉnh/TP).</div>
                                     </div>
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" name="isDefault" id="isDefault-${addr.addressId}" ${addr.isDefault ? 'checked' : ''}>
@@ -173,8 +173,8 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tên đường <span class="text-muted fw-normal">(không bắt buộc)</span></label>
-                        <input type="text" data-street class="form-control" maxlength="100" placeholder="VD: Đường Nguyễn Trãi">
-                        <div class="form-text">Nếu nhập, tên đường sẽ được ghép vào cuối địa chỉ chi tiết.</div>
+                        <input type="text" name="streetName" data-street class="form-control" maxlength="100" placeholder="VD: Đường Nguyễn Trãi">
+                        <div class="form-text">Nếu nhập, tên đường sẽ được ghép vào đầu địa chỉ chi tiết (Tên đường, Thôn/Xóm, Xã/Phường, Tỉnh/TP).</div>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="isDefault" id="isDefaultAdd">
@@ -191,7 +191,31 @@
 </div>
 
 <script>
-    // Gộp "Tên đường" (không bắt buộc) vào cuối "Số nhà / Thôn / Xóm" trước khi gửi.
+    // Khi mở form sửa: tách phần "Tên đường" (đoạn đầu trước dấu phẩy, bắt đầu bằng Đường/Phố/...) ra khỏi ô Số nhà/Thôn/Xóm.
+    (function () {
+        var re = /^(đường|duong|phố|pho|đại lộ|quốc lộ|tỉnh lộ|ql\s*\d|tl\s*\d|đ\.)/i;
+        document.querySelectorAll('form.address-form').forEach(function (form) {
+            var detail = form.querySelector('[name="detailedAddress"]');
+            var street = form.querySelector('[data-street]');
+            if (!detail || !street || !detail.value) return;
+            var cur = street.value.trim();
+            if (cur) { // địa chỉ đã lưu street_name: bỏ phần tên đường ở đầu ô Thôn/Xóm
+                var prefix = cur + ', ';
+                if (detail.value.indexOf(prefix) === 0) detail.value = detail.value.substring(prefix.length).trim();
+                return;
+            }
+            // địa chỉ cũ (chưa có street_name): đoán theo từ đầu đoạn
+            var i = detail.value.indexOf(',');
+            if (i < 0) return;
+            var head = detail.value.substring(0, i).trim();
+            if (head && re.test(head)) {
+                street.value = head;
+                detail.value = detail.value.substring(i + 1).trim();
+            }
+        });
+    })();
+
+    // Gộp "Tên đường" (không bắt buộc) vào ĐẦU "Số nhà / Thôn / Xóm" trước khi gửi: Tên đường, Thôn/Xóm, Xã/Phường, Tỉnh/TP.
     // detailed_address trong DB là nvarchar(255) NOT NULL nên không cần thêm cột mới.
     document.querySelectorAll('form.address-form').forEach(function (form) {
         form.addEventListener('submit', function (e) {
@@ -199,14 +223,13 @@
             var street = form.querySelector('[data-street]');
             var value = detail.value.trim();
             var st = street.value.trim();
-            if (st) value = value + ', ' + st;
+            if (st) value = st + ', ' + value;
             if (value.length > 255) {
                 e.preventDefault();
                 alert('Địa chỉ chi tiết quá dài (tối đa 255 ký tự).');
                 return;
             }
             detail.value = value;
-            street.value = '';
         });
     });
 </script>
