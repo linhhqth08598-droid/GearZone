@@ -66,7 +66,7 @@ public class UserService {
         a.setPhone(a.getPhone().trim());
         a.setProvince(a.getProvince().trim());
         a.setWard(a.getWard().trim());
-        a.setDetailedAddress(a.getDetailedAddress().trim());
+        a.setDetailedAddress(fourSome.util.FormatUtil.cleanAddress(a.getDetailedAddress()));   // gộp dấu phẩy thừa (",,")
 
         boolean isNew = a.getAddressId() == null || a.getAddressId() <= 0;
         // Địa chỉ đầu tiên của user luôn là mặc định
