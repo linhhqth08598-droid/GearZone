@@ -40,6 +40,20 @@ public class PartsDAO {
         return list;
     }
 
+    /** Như getAll() nhưng gắn thêm ảnh chính (part_media) cho từng linh kiện - dùng cho trang chủ / danh sách. */
+    public List<Parts> getAllWithImages() {
+        List<Parts> list = getAll();
+        java.util.Map<Integer, String> img = new java.util.HashMap<>();
+        String sql = "SELECT part_id, media_url FROM part_media WHERE status = 'ACTIVE' AND media_type = 'IMAGE' ORDER BY is_primary, media_id";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) img.put(rs.getInt(1), rs.getString(2)); // dòng sau (ảnh chính) ghi đè dòng trước
+        } catch (Exception e) { e.printStackTrace(); }
+        for (Parts p : list) p.setImageUrl(img.get(p.getPartId()));
+        return list;
+    }
+
     // Thêm linh kiện mới
     public boolean insert(Parts part) {
         String sql = "INSERT INTO parts (category_id, brand_id, product_code, part_name, base_price, sale_price, is_rgb, gaming_performance_score, description, warranty_months, view_count, sold_count, status) "

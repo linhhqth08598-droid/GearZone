@@ -383,4 +383,46 @@ public class ReportService {
         } catch (Exception e) { e.printStackTrace(); }
         return map;
     }
+
+    // Đơn hàng mới nhất cho bảng ở dashboard (Map để EL đọc trực tiếp: orderCode, recipientName, finalAmount, createdAt, orderStatus)
+    public java.util.List<Map<String, Object>> getRecentOrders(int limit) {
+        java.util.List<Map<String, Object>> list = new java.util.ArrayList<>();
+        String sql = "SELECT TOP (?) order_code, recipient_name, final_amount, created_at, order_status FROM orders ORDER BY created_at DESC, order_id DESC";
+        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("orderCode", rs.getString("order_code"));
+                    m.put("recipientName", rs.getString("recipient_name"));
+                    m.put("finalAmount", rs.getDouble("final_amount"));
+                    m.put("createdAt", rs.getTimestamp("created_at"));
+                    m.put("orderStatus", rs.getString("order_status"));
+                    list.add(m);
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // Top linh kiện bán chạy kèm doanh thu (bảng ở dashboard: partName, totalSold, revenue)
+    public java.util.List<Map<String, Object>> getTopSellingPartsDetail(int limit) {
+        java.util.List<Map<String, Object>> list = new java.util.ArrayList<>();
+        String sql = "SELECT TOP (?) p.part_name, SUM(oi.quantity) AS qty, SUM(oi.unit_price * oi.quantity) AS revenue "
+                   + "FROM order_items oi JOIN parts p ON oi.part_id = p.part_id JOIN orders o ON oi.order_id = o.order_id "
+                   + "WHERE o.order_status != 'CANCELLED' GROUP BY p.part_name ORDER BY qty DESC, revenue DESC";
+        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("partName", rs.getString("part_name"));
+                    m.put("totalSold", rs.getInt("qty"));
+                    m.put("revenue", rs.getDouble("revenue"));
+                    list.add(m);
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
 }

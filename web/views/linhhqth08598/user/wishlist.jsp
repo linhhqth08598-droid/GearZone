@@ -54,7 +54,7 @@
                                         <img src="${item.primaryImageUrl}" alt="<c:out value='${item.partName}'/>" class="img-fluid" style="max-height: 100%; object-fit: contain;">
                                     </c:when>
                                     <c:otherwise>
-                                        <img src="https://via.placeholder.com/200x150?text=No+Image" alt="No Image" class="img-fluid rounded">
+                                        <i class="fas fa-image text-muted" style="font-size:4rem;"></i>
                                     </c:otherwise>
                                 </c:choose>
                             </div>

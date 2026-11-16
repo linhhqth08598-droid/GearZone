@@ -28,6 +28,9 @@
         border-right: 1px solid #e2e8f0;
         z-index: 100;
     }
+
+    .sidebar-user { scrollbar-width: none; -ms-overflow-style: none; }
+    .sidebar-user::-webkit-scrollbar { display: none; }
     .user-main {
         flex: 1;
         min-width: 0;

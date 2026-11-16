@@ -90,6 +90,7 @@
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/home">Trang chủ</a></li>
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/product">Linh kiện PC</a></li>
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/build-pc">Build PC</a></li>
+                        <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/promotion">Khuyến mãi</a></li>
                     </ul>
                     <ul class="navbar-nav align-items-center">
                         <c:if test="${not empty sessionScope.loggedUser}">

@@ -31,7 +31,12 @@
         <div class="card h-100 border-0 shadow-sm rounded-4">
             <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="text-decoration-none text-dark">
                 <div class="card-body text-center p-4">
-                    <i class="fas fa-microchip fa-3x text-secondary mb-3"></i>
+                    <div class="d-flex align-items-center justify-content-center mb-3" style="height:150px;">
+                        <c:choose>
+                            <c:when test="${not empty p.imageUrl}"><img src="<c:out value='${p.imageUrl}'/>" alt="<c:out value='${p.partName}'/>" style="max-width:100%; max-height:150px; object-fit:contain;"></c:when>
+                            <c:otherwise><i class="fas fa-microchip fa-3x text-secondary"></i></c:otherwise>
+                        </c:choose>
+                    </div>
                     <h6 class="fw-bold" style="min-height:40px"><c:out value="${p.partName}"/></h6>
                     <div class="text-danger fw-bold">
                         <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>

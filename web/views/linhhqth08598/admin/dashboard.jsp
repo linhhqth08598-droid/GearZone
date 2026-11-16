@@ -88,6 +88,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
     // 1. Vẽ biểu đồ tròn (Doanh thu)
     const catLabels = ${categoryLabels};
@@ -166,8 +167,8 @@
                         <tbody>
                             <c:forEach var="order" items="${recentOrders}">
                                 <tr>
-                                    <td class="fw-bold">#${order.orderId}</td>
-                                    <td>${order.recipientName}</td>
+                                    <td class="fw-bold"><c:out value="${order.orderCode}"/></td>
+                                    <td><c:out value="${order.recipientName}"/></td>
                                     <td class="text-danger fw-semibold"><fmt:formatNumber value="${order.finalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                     <td><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                                 </tr>
