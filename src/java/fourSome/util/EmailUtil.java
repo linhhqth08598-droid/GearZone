@@ -16,8 +16,8 @@ import jakarta.mail.internet.MimeMessage;
 public class EmailUtil {
 
     // ==== CẤU HÌNH TÀI KHOẢN GỬI ====
-    private static final String SENDER_EMAIL = "smartfarmmanage@gmail.com";
-    private static final String SENDER_APP_PASSWORD = "grxhduafxftczxjm"; // App Password Gmail
+    private static final String SENDER_EMAIL = "gearzonepc@gmail.com";
+    private static final String SENDER_APP_PASSWORD = "tgxnrmbhnlncsgva"; // App Password Gmail
     private static final String SENDER_NAME = "GearZone Support";
 
     private static final String SMTP_HOST = "smtp.gmail.com";
