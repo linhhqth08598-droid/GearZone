@@ -37,6 +37,7 @@ public class CartServlet extends HttpServlet {
         request.getSession().setAttribute("cartCount", lines.size());
         request.setAttribute("cartLines", lines);
         request.setAttribute("cartTotal", total);
+        request.setAttribute("compat", service.checkCompatibility(user.getUserId()));   // UC 219
         request.getRequestDispatcher("/views/dungntth08581/checkout/cart.jsp").forward(request, response);
     }
 
@@ -73,9 +74,20 @@ public class CartServlet extends HttpServlet {
                 service.remove(user.getUserId(), cartId);
                 session.setAttribute("message", "Đã xóa khỏi giỏ hàng.");
             } else if ("update".equals(request.getParameter("action"))) {
-                if (!service.updateQuantity(user.getUserId(), cartId, Integer.parseInt(request.getParameter("quantity")))) {
-                    session.setAttribute("error", "Số lượng phải từ 1 đến 99!");
+                boolean ok = service.updateQuantity(user.getUserId(), cartId, Integer.parseInt(request.getParameter("quantity")));
+                if ("1".equals(request.getParameter("ajax"))) {
+                    // Cập nhật không tải lại trang: trả JSON để trang cập nhật thành tiền/tổng ngay
+                    double total = 0, lineTotal = 0; boolean shortage = false; int available = 0;
+                    for (CartService.CartLine l : service.getCart(user.getUserId())) {
+                        total += l.getLineTotal();
+                        if (l.getCartId() == cartId) { lineTotal = l.getLineTotal(); shortage = l.isShortage(); available = l.getAvailable(); }
+                    }
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":" + ok + ",\"lineTotal\":" + (long) lineTotal
+                            + ",\"total\":" + (long) total + ",\"shortage\":" + shortage + ",\"available\":" + available + "}");
+                    return;
                 }
+                if (!ok) session.setAttribute("error", "Số lượng phải từ 1 đến 99!");
             }
         } catch (NumberFormatException e) {
             session.setAttribute("error", "Dữ liệu không hợp lệ!");

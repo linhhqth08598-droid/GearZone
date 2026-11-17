@@ -24,7 +24,16 @@
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm border-0 rounded-4 position-relative">
                 <div class="card-body p-5 text-center">
-                    <img src="https://via.placeholder.com/500x400?text=GearZone+Product" alt="${part.partName}" class="img-fluid rounded">
+                    <c:choose>
+                        <c:when test="${not empty primaryImage}">
+                            <img src="<c:out value='${primaryImage}'/>" alt="<c:out value='${part.partName}'/>" class="img-fluid rounded" style="max-height:420px; object-fit:contain;">
+                        </c:when>
+                        <c:otherwise>
+                            <div class="d-flex flex-column align-items-center justify-content-center rounded bg-light text-muted" style="height:360px;">
+                                <i class="fas fa-image fa-4x mb-2"></i><span>Chưa có ảnh sản phẩm</span>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
                 
                 <!-- NÚT YÊU THÍCH -->

@@ -10,13 +10,39 @@ import linhhqth08598.service.AuditLogService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import jakarta.servlet.http.Part;
 import java.io.IOException;
 
+@jakarta.servlet.annotation.MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 5 * 1024 * 1024, maxRequestSize = 10 * 1024 * 1024)
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/products"})
 public class AdminProductServlet extends HttpServlet {
     private PartsDAO partsDAO = new PartsDAO();
     private CategoriesDAO categoriesDAO = new CategoriesDAO();
     private BrandsDAO brandsDAO = new BrandsDAO();
+    private khanhnb08894.dao.PartMediaDAO mediaDAO = new khanhnb08894.dao.PartMediaDAO();
+
+    /** Lưu ảnh chính: ưu tiên file tải lên (jpg/png/webp/gif ≤ 5MB), nếu không có thì dùng đường dẫn ảnh. */
+    private String saveImage(HttpServletRequest request, int partId) throws IOException, ServletException {
+        String url = null;
+        Part filePart = request.getPart("imageFile");
+        if (filePart != null && filePart.getSize() > 0) {
+            String ct = filePart.getContentType() == null ? "" : filePart.getContentType().toLowerCase();
+            if (!java.util.Arrays.asList("image/jpeg", "image/png", "image/webp", "image/gif").contains(ct)) return "Ảnh phải là jpg, png, webp hoặc gif!";
+            if (filePart.getSize() > 2 * 1024 * 1024) return "Ảnh tối đa 2MB!";
+            // Lưu Base64 thẳng vào part_media.media_url (giống ảnh đại diện)
+            byte[] bytes = filePart.getInputStream().readAllBytes();
+            url = "data:" + ct + ";base64," + java.util.Base64.getEncoder().encodeToString(bytes);
+        } else {
+            String u = request.getParameter("imageUrl");
+            if (u != null && !u.trim().isEmpty()) {
+                u = u.trim();
+                if (!(u.startsWith("http://") || u.startsWith("https://"))) return "Đường dẫn ảnh phải bắt đầu bằng http:// hoặc https://";
+                url = u;
+            }
+        }
+        if (url == null) return null;
+        return mediaDAO.setPrimary(partId, url) ? null : "Không lưu được ảnh (đã chạy file SQL đổi cột media_url sang nvarchar(max) chưa?)";
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -65,6 +91,8 @@ public class AdminProductServlet extends HttpServlet {
                 boolean success = partsDAO.insert(part);
                 if (success) {
                     session.setAttribute("message", "Thêm linh kiện thành công!");
+                    String imgErr = saveImage(request, mediaDAO.findPartIdByCode(part.getProductCode()));
+                    if (imgErr != null) session.setAttribute("error", imgErr);
                     AuditLogService log = new AuditLogService();
                     log.logAction(adminUser.getUserId(), "INSERT_PART", "parts", 0, "Thêm linh kiện: " + part.getPartName());
                 } else {
@@ -85,6 +113,8 @@ public class AdminProductServlet extends HttpServlet {
 
                 if (partsDAO.update(part)) {
                     session.setAttribute("message", "Cập nhật linh kiện thành công!");
+                    String imgErr = saveImage(request, part.getPartId());
+                    if (imgErr != null) session.setAttribute("error", imgErr);
                     new AuditLogService().logAction(adminUser.getUserId(), "UPDATE_PART", "parts", part.getPartId(), "Sửa linh kiện: " + part.getPartName());
                 } else {
                     session.setAttribute("error", "Không cập nhật được (mã sản phẩm có thể bị trùng).");

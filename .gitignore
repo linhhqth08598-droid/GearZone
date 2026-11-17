@@ -4,3 +4,4 @@
 build.xml
 /build/
 /dist/
+src/java/payos.properties

@@ -21,11 +21,11 @@
 
         <!-- THỐNG KÊ CHI TIẾT -->
         <c:if test="${isFull || perms.contains('REPORT_VIEW')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/report') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/report">
-                <i class="fas fa-chart-bar"></i> Thống kê chi tiết
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/report') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/report">
+                    <i class="fas fa-chart-bar"></i> Thống kê chi tiết
+                </a>
+            </li>
         </c:if>
 
         <c:if test="${sessionScope.userRoles.contains('ADMIN') || sessionScope.userRoles.contains('OWNER')}">
@@ -51,52 +51,59 @@
             <span class="text-muted px-3 text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 1px;">Bán hàng</span>
         </li>
         <c:if test="${isFull || perms.contains('ORDER_VIEW') || perms.contains('ORDER_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/orders') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders">
-                <i class="fas fa-shopping-cart"></i> Quản lý Đơn hàng
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/orders') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders">
+                    <i class="fas fa-shopping-cart"></i> Quản lý Đơn hàng
+                </a>
+            </li>
+        </c:if>
+        <c:if test="${isFull || perms.contains('TECH_VIEW') || perms.contains('TECH_MANAGE')}">
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/assembly') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/assembly">
+                    <i class="fas fa-tools"></i> Lắp ráp PC
+                </a>
+            </li>
         </c:if>
         <c:if test="${isFull || perms.contains('PROMOTION_VIEW') || perms.contains('PROMOTION_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/promotion') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/promotion">
-                <i class="fas fa-tags"></i> Khuyến mãi & Mã giảm giá
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/shipping') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/shipping">
-                <i class="fas fa-truck"></i> Vận chuyển
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/promotion') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/promotion">
+                    <i class="fas fa-tags"></i> Khuyến mãi & Mã giảm giá
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/shipping') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/shipping">
+                    <i class="fas fa-truck"></i> Vận chuyển
+                </a>
+            </li>
         </c:if>
         <c:if test="${isFull || perms.contains('RETURN_VIEW') || perms.contains('RETURN_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/returns') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/returns">
-                <i class="fas fa-undo-alt"></i> Quản lý Đổi trả
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/returns') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/returns">
+                    <i class="fas fa-undo-alt"></i> Quản lý Đổi trả
+                </a>
+            </li>
         </c:if>
         <c:if test="${isFull || perms.contains('REVIEW_VIEW') || perms.contains('REVIEW_MANAGE')}">
-        <li class="nav-item">
-            <!-- Sửa /admin/reviews thành /admin/reviews -->
-            <a class="nav-link ${fn:contains(currentURL, '/admin/reviews') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/reviews">
-                <i class="fas fa-star"></i> Quản lý Đánh giá
-            </a>
-        </li>
+            <li class="nav-item">
+                <!-- Sửa /admin/reviews thành /admin/reviews -->
+                <a class="nav-link ${fn:contains(currentURL, '/admin/reviews') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/reviews">
+                    <i class="fas fa-star"></i> Quản lý Đánh giá
+                </a>
+            </li>
         </c:if>
         <c:if test="${isFull || perms.contains('PRODUCT_VIEW') || perms.contains('PRODUCT_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/product') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/products">
-                <i class="fas fa-box-open"></i> Quản lý Linh kiện
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/product') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/products">
+                    <i class="fas fa-box-open"></i> Quản lý Linh kiện
+                </a>
+            </li>
         </c:if>
         <c:if test="${isFull || perms.contains('SUPPORT_VIEW') || perms.contains('SUPPORT_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/support') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/support">
-                <i class="fas fa-headset"></i> Hỗ trợ khách hàng
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/support') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/support">
+                    <i class="fas fa-headset"></i> Hỗ trợ khách hàng
+                </a>
+            </li>
         </c:if>
 
         <!-- HỆ THỐNG -->
@@ -106,47 +113,47 @@
 
         <!-- Quản lý Danh mục -->
         <c:if test="${isFull || perms.contains('CATALOG_VIEW') || perms.contains('CATALOG_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/catalog') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/catalog?type=brand">
-                <i class="fas fa-tags"></i> Quản lý Danh mục
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/catalog') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/catalog?type=brand">
+                    <i class="fas fa-tags"></i> Quản lý Danh mục
+                </a>
+            </li>
         </c:if>
 
         <!-- Quản lý Socket -->
         <c:if test="${isFull || perms.contains('CATALOG_VIEW') || perms.contains('CATALOG_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/socket') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/socket">
-                <i class="fas fa-microchip"></i> Quản lý Socket CPU
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/socket') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/socket">
+                    <i class="fas fa-microchip"></i> Quản lý Socket CPU
+                </a>
+            </li>
         </c:if>
 
         <!-- Danh mục hệ thống -->
         <c:if test="${isFull || perms.contains('CATALOG_VIEW') || perms.contains('CATALOG_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/system-catalog') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/system-catalog?type=chipset">
-                <i class="fas fa-cogs"></i> Danh mục hệ thống
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/system-catalog') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/system-catalog?type=chipset">
+                    <i class="fas fa-cogs"></i> Danh mục hệ thống
+                </a>
+            </li>
         </c:if>
 
         <!-- Cấu hình hệ thống (ngưỡng nguồn PSU, tiêu chí gaming) -->
         <c:if test="${isFull || perms.contains('CATALOG_VIEW') || perms.contains('CATALOG_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/system ') || fn:contains(currentURL, '/admin/system.jsp') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/system">
-                <i class="fas fa-sliders-h"></i> Cấu hình hệ thống
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/system ') || fn:contains(currentURL, '/admin/system.jsp') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/system">
+                    <i class="fas fa-sliders-h"></i> Cấu hình hệ thống
+                </a>
+            </li>
         </c:if>
 
         <!-- Quy tắc tương thích -->
         <c:if test="${isFull || perms.contains('COMPAT_VIEW') || perms.contains('COMPAT_MANAGE')}">
-        <li class="nav-item">
-            <a class="nav-link ${fn:contains(currentURL, '/admin/compatibility') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/compatibility">
-                <i class="fas fa-project-diagram"></i> Quy tắc tương thích
-            </a>
-        </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/admin/compatibility') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/compatibility">
+                    <i class="fas fa-project-diagram"></i> Quy tắc tương thích
+                </a>
+            </li>
         </c:if>
     </ul>
 </nav> <!-- Đóng thẻ nav của Sidebar -->

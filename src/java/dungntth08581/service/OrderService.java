@@ -21,6 +21,7 @@ public class OrderService {
     private final InventoryService inventory = new InventoryService();
     private final NotificationService notifications = new NotificationService();
     private final PromotionService promotions = new PromotionService();
+    private final PaymentService paymentService = new PaymentService();
 
     // ---------- DTO ----------
     public static class ShippingMethod {
@@ -33,7 +34,7 @@ public class OrderService {
 
     public static class OrderRow {
         private int orderId, userId; private String orderCode, status, recipient, phone, address, note, cancelReason, trackingCode, customerName;
-        private double total, fee, finalAmount, discount; private Timestamp createdAt; private String couponCode;
+        private double total, fee, finalAmount, discount; private Timestamp createdAt; private String couponCode; private String paymentMethod, paymentStatus;
         public int getOrderId() { return orderId; }
         public int getUserId() { return userId; }
         public String getOrderCode() { return orderCode; }
@@ -50,6 +51,8 @@ public class OrderService {
         public double getFinalAmount() { return finalAmount; }
         public double getDiscount() { return discount; }
         public String getCouponCode() { return couponCode; }
+        public String getPaymentMethod() { return paymentMethod; }
+        public String getPaymentStatus() { return paymentStatus; }
         public Timestamp getCreatedAt() { return createdAt; }
     }
 
@@ -84,7 +87,7 @@ public class OrderService {
         OrderRow o = new OrderRow();
         o.orderId = rs.getInt("order_id"); o.userId = rs.getInt("user_id"); o.orderCode = rs.getString("order_code");
         o.status = rs.getString("order_status"); o.recipient = rs.getString("recipient_name"); o.phone = rs.getString("recipient_phone");
-        o.address = rs.getString("shipping_address"); o.note = rs.getString("note"); o.cancelReason = rs.getString("cancel_reason");
+        o.address = fourSome.util.FormatUtil.cleanAddress(rs.getString("shipping_address"));  /* đơn cũ có thể đã lưu ",," */ o.note = rs.getString("note"); o.cancelReason = rs.getString("cancel_reason");
         o.trackingCode = rs.getString("tracking_code"); o.total = rs.getDouble("total_amount"); o.fee = rs.getDouble("shipping_fee");
         o.finalAmount = rs.getDouble("final_amount"); o.createdAt = rs.getTimestamp("created_at"); o.discount = rs.getDouble("discount_amount");
         return o;
@@ -95,7 +98,7 @@ public class OrderService {
         try (Connection con = DBConnect.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT o.*, c.code AS coupon_code FROM orders o LEFT JOIN coupons c ON c.coupon_id = o.coupon_id WHERE o.order_id = ? AND o.user_id = ?")) {
             ps.setInt(1, orderId); ps.setInt(2, userId);
-            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { OrderRow o = map(rs); o.couponCode = rs.getString("coupon_code"); return o; } }
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { OrderRow o = map(rs); o.couponCode = rs.getString("coupon_code"); loadPayment(con, o); return o; } }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
@@ -104,9 +107,17 @@ public class OrderService {
         try (Connection con = DBConnect.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT * FROM orders WHERE order_id = ?")) {
             ps.setInt(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return map(rs); }
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { OrderRow o = map(rs); loadPayment(con, o); return o; } }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
+    }
+
+    /** Nạp phương thức + trạng thái thanh toán mới nhất của đơn. */
+    private void loadPayment(Connection con, OrderRow o) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("SELECT TOP 1 payment_method, payment_status FROM payments WHERE order_id = ? ORDER BY payment_id DESC")) {
+            ps.setInt(1, o.orderId);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { o.paymentMethod = rs.getString(1); o.paymentStatus = rs.getString(2); } }
+        }
     }
 
     public List<OrderLine> getLines(int orderId) {
@@ -147,7 +158,14 @@ public class OrderService {
 
     /** UC 224: couponCode có thể null/rỗng. Giảm giá tính lại ở server; mã sai/hết hạn -> không đặt đơn, báo lỗi để khách sửa. */
     public PlaceResult placeOrder(int userId, ShippingAddresses addr, int shippingMethodId, String note, String couponCode) {
+        return placeOrder(userId, addr, shippingMethodId, note, couponCode, PaymentService.METHOD_COD);
+    }
+
+    /** paymentMethod: COD hoặc PAYOS (UC 228/229). PAYOS: đơn + payments PENDING được tạo, controller gọi PaymentService.createLink để sang trang thanh toán. */
+    public PlaceResult placeOrder(int userId, ShippingAddresses addr, int shippingMethodId, String note, String couponCode, String paymentMethod) {
         PlaceResult res = new PlaceResult();
+        final String method = PaymentService.METHOD_PAYOS.equalsIgnoreCase(paymentMethod) ? PaymentService.METHOD_PAYOS : PaymentService.METHOD_COD;
+        if (PaymentService.METHOD_PAYOS.equals(method) && !fourSome.util.PayOSUtil.isConfigured()) { res.error = "Thanh toán online chưa được cấu hình, vui lòng chọn thanh toán khi nhận hàng!"; return res; }
         if (addr == null) { res.error = "Vui lòng chọn địa chỉ nhận hàng!"; return res; }
         if (note != null && note.length() > 500) note = note.substring(0, 500);
 
@@ -196,18 +214,19 @@ public class OrderService {
 
                 // 3. Ghi đơn
                 String code = "GZ" + new java.text.SimpleDateFormat("yyMMddHHmmss").format(new java.util.Date()) + (100 + new Random().nextInt(900));
-                String fullAddress = addr.getDetailedAddress() + ", " + addr.getWard() + ", " + addr.getProvince();
+                String fullAddress = fourSome.util.FormatUtil.joinAddress(addr.getDetailedAddress(), addr.getWard(), addr.getProvince());   // bỏ dấu phẩy thừa/phần trống
                 if (fullAddress.length() > 255) fullAddress = fullAddress.substring(0, 255);
                 int orderId;
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO orders (order_code, user_id, recipient_name, recipient_phone, shipping_address, shipping_method_id, shipping_fee, total_amount, discount_amount, final_amount, order_status, note, coupon_id, promotion_id, created_at) "
-                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, SYSDATETIME())", Statement.RETURN_GENERATED_KEYS)) {
+                        "INSERT INTO orders (order_code, user_id, recipient_name, recipient_phone, shipping_address, shipping_method_id, shipping_fee, total_amount, discount_amount, final_amount, order_status, note, coupon_id, promotion_id, combo_id, created_at) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, SYSDATETIME())", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setString(1, code); ps.setInt(2, userId); ps.setString(3, addr.getRecipientName()); ps.setString(4, addr.getPhone());
                     ps.setString(5, fullAddress);
                     if (methodId == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, methodId);
                     ps.setBigDecimal(7, shipFee); ps.setBigDecimal(8, total); ps.setBigDecimal(9, goodsDiscount); ps.setBigDecimal(10, finalAmount); ps.setString(11, note);
                     if (disc.couponId == null) ps.setNull(12, Types.INTEGER); else ps.setInt(12, disc.couponId);
                     if (disc.promotionId == null || disc.promoDiscount.signum() == 0) ps.setNull(13, Types.INTEGER); else ps.setInt(13, disc.promotionId);
+                    if (disc.comboId == null || disc.comboDiscount.signum() == 0) ps.setNull(14, Types.INTEGER); else ps.setInt(14, disc.comboId);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); orderId = rs.getInt(1); }
                 }
@@ -229,10 +248,10 @@ public class OrderService {
                     }
                 }
 
-                // 5. Thanh toán khi nhận hàng (COD) + xóa giỏ
+                // 5. Ghi thanh toán (COD hoặc PAYOS, đều PENDING) + xóa giỏ
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO payments (order_id, payment_method, amount, payment_status, created_at) VALUES (?, 'COD', ?, 'PENDING', SYSDATETIME())")) {
-                    ps.setInt(1, orderId); ps.setBigDecimal(2, finalAmount); ps.executeUpdate();
+                        "INSERT INTO payments (order_id, payment_method, amount, payment_status, created_at) VALUES (?, ?, ?, 'PENDING', SYSDATETIME())")) {
+                    ps.setInt(1, orderId); ps.setString(2, method); ps.setBigDecimal(3, finalAmount); ps.executeUpdate();
                 }
                 try (PreparedStatement ps = con.prepareStatement("DELETE FROM cart_items WHERE user_id = ?")) {
                     ps.setInt(1, userId); ps.executeUpdate();
@@ -255,7 +274,16 @@ public class OrderService {
     public String cancelByUser(int userId, int orderId, String reason) {
         OrderRow o = getUserOrder(userId, orderId);
         if (o == null) return "Không tìm thấy đơn hàng!";
+        if (paymentService.isPaidOnline(orderId)) return "Đơn đã thanh toán online. Vui lòng liên hệ cửa hàng để được hỗ trợ hoàn tiền!";
         return cancel(o, reason == null || reason.trim().isEmpty() ? "Khách hàng hủy đơn" : reason.trim());
+    }
+
+    /** Khách xác nhận đã nhận hàng: chỉ chủ đơn, chỉ khi đơn đang SHIPPING -> DELIVERED. Trả về null nếu OK. */
+    public String confirmReceived(int userId, int orderId) {
+        OrderRow o = getUserOrder(userId, orderId);
+        if (o == null) return "Không tìm thấy đơn hàng!";
+        if (!"SHIPPING".equals(o.status)) return "Chỉ xác nhận được khi đơn đang giao!";
+        return adminUpdateStatus(orderId, "DELIVERED", null);
     }
 
     private String cancel(OrderRow o, String reason) {
@@ -275,6 +303,7 @@ public class OrderService {
                 con.commit();
             } catch (Exception e) { con.rollback(); throw e; }
         } catch (Exception e) { e.printStackTrace(); return "Không hủy được đơn, vui lòng thử lại!"; }
+        paymentService.cancelOnlineLink(o.orderId, reason);   // đóng link PayOS còn mở (nếu có)
         notifications.notifyOrder(o.userId, o.orderId, "Đơn hàng " + o.orderCode + " đã được hủy.");
         return null;
     }

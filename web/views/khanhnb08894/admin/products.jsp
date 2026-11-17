@@ -98,7 +98,7 @@
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <form action="${pageContext.request.contextPath}/admin/products" method="POST">
+            <form action="${pageContext.request.contextPath}/admin/products" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="saveProduct">
                 <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
                     <h5 class="modal-title fw-bold text-primary"><i class="fas fa-plus-circle me-2"></i>Thêm Linh kiện mới</h5>
@@ -148,6 +148,12 @@
                         </div>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-semibold">Ảnh sản phẩm</label>
+                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/png,image/jpeg,image/webp,image/gif">
+                        <input type="text" name="imageUrl" class="form-control" placeholder="hoặc dán đường dẫn ảnh (https://...)">
+                        <div class="form-text">Để trống nếu không đổi ảnh.</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">Mô tả</label>
                         <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả chi tiết..."></textarea>
                     </div>
@@ -165,7 +171,7 @@
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <form action="${pageContext.request.contextPath}/admin/products" method="POST">
+            <form action="${pageContext.request.contextPath}/admin/products" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="updateProduct">
                 <input type="hidden" name="partId" id="editPartId">
                 <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
@@ -212,6 +218,12 @@
                             <label class="form-label fw-semibold">Bảo hành (Tháng)</label>
                             <input type="number" name="warrantyMonths" id="editWarranty" class="form-control" required min="0">
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ảnh sản phẩm</label>
+                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/png,image/jpeg,image/webp,image/gif">
+                        <input type="text" name="imageUrl" class="form-control" placeholder="hoặc dán đường dẫn ảnh (https://...)">
+                        <div class="form-text">Để trống nếu không đổi ảnh.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mô tả</label>

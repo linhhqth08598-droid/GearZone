@@ -78,6 +78,8 @@
                 border-right: 1px solid #e2e8f0;
                 z-index: 100;
             }
+            .sidebar-admin { scrollbar-width: none; -ms-overflow-style: none; }
+            .sidebar-admin::-webkit-scrollbar { display: none; }
             .admin-main {
                 flex: 1;
                 min-width: 0;

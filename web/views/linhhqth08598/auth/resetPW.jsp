@@ -31,12 +31,12 @@
             <div class="mb-4 text-center">
                 <label class="form-label text-center w-100 mb-3">Mã Xác Thực (OTP)</label>
                 <div class="d-flex justify-content-center gap-2" id="otp-container">
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
-                    <input type="tel" class="otp-box form-control" maxlength="1" pattern="\d" inputmode="numeric" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-bwignore="true" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-kwimpalastatus="off" data-np-intersection-state="off" name="c_box_x" readonly onfocus="this.removeAttribute('readonly')" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-bwignore="true" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-kwimpalastatus="off" data-np-intersection-state="off" name="c_box_x" readonly onfocus="this.removeAttribute('readonly')" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-bwignore="true" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-kwimpalastatus="off" data-np-intersection-state="off" name="c_box_x" readonly onfocus="this.removeAttribute('readonly')" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-bwignore="true" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-kwimpalastatus="off" data-np-intersection-state="off" name="c_box_x" readonly onfocus="this.removeAttribute('readonly')" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-bwignore="true" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-kwimpalastatus="off" data-np-intersection-state="off" name="c_box_x" readonly onfocus="this.removeAttribute('readonly')" required>
+                    <input type="tel" class="otp-box form-control" maxlength="1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-bwignore="true" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" data-kwimpalastatus="off" data-np-intersection-state="off" name="c_box_x" readonly onfocus="this.removeAttribute('readonly')" required>
                 </div>
                 <input type="hidden" name="otp" id="otp-hidden">
             </div>
@@ -64,7 +64,7 @@
                 <small id="pwdResetError" class="text-danger mt-1" style="display: none; font-size: 13px;"><i class="fas fa-exclamation-circle"></i> Mật khẩu không khớp!</small>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none;">Xác nhận đổi mật khẩu</button>
+            <button type="submit" id="btn-submit" class="btn btn-primary w-100 mb-3" style="background: linear-gradient(135deg, #ff4757 0%, #ff2a3d 100%) !important; border: none;">Xác nhận đổi mật khẩu</button>
         </form>
 
         <!-- NÚT GỬI LẠI MÃ OTP -->

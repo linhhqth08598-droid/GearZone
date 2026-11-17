@@ -4,7 +4,9 @@ import fourSome.url.DBConnect;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Giỏ hàng (bản gọn, làm hộ Dũng để UC 98/221 "thêm cả cấu hình vào giỏ" và UC 99 "kiểm tra tồn kho cả cấu hình" chạy được).
@@ -155,5 +157,38 @@ public class CartService {
             for (int i = 0; i < params.length; i++) ps.setInt(i + 1, params[i]);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    // ---------- UC 219: kiểm tra tương thích các linh kiện trong giỏ (dùng CompatibilityService của Khánh) ----------
+
+    /** Nhận diện loại linh kiện từ mã/tên danh mục (giống BuildPCService.slotKey). Null = không kiểm tra. */
+    private static String slotKey(String code, String name) {
+        String t = ((code == null ? "" : code) + " " + (name == null ? "" : name)).toUpperCase();
+        if (t.contains("COOL") || t.contains("TẢN")) return null;
+        if (t.contains("PSU") || t.contains("NGUỒN") || t.contains("POWER")) return "psu";
+        if (t.contains("VGA") || t.contains("GPU") || t.contains("ĐỒ HỌA")) return "vga";
+        if (t.contains("MAIN") || t.contains("MẠCH CHỦ")) return "main";
+        if (t.contains("RAM")) return "ram";
+        if (t.contains("CPU") || t.contains("VI XỬ LÝ")) return "cpu";
+        return null;
+    }
+
+    /** Lỗi + cảnh báo tương thích của giỏ hàng. Giỏ có < 2 loại linh kiện cần so sánh thì trả kết quả rỗng. */
+    public fourSome.model.CompatibilityResult checkCompatibility(int userId) {
+        Map<String, Integer> parts = new HashMap<>();
+        String sql = "SELECT c.part_id, ca.category_code, ca.category_name FROM cart_items c "
+                   + "JOIN parts p ON p.part_id = c.part_id JOIN categories ca ON ca.category_id = p.category_id "
+                   + "WHERE c.user_id = ? AND c.status = 'ACTIVE' ORDER BY c.added_at, c.cart_id";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String k = slotKey(rs.getString(2), rs.getString(3));
+                    if (k != null) parts.put(k, rs.getInt(1));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        if (parts.size() < 2) return new fourSome.model.CompatibilityResult();
+        return new khanhnb08894.service.CompatibilityService().checkBuild(parts);
     }
 }

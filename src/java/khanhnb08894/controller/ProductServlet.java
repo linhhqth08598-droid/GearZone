@@ -27,6 +27,7 @@ public class ProductServlet extends HttpServlet {
                 
                 if (part != null) {
                     request.setAttribute("part", part);
+                    request.setAttribute("primaryImage", new khanhnb08894.dao.PartMediaDAO().getPrimaryUrl(partId));
                     
                     // 1. Lấy danh sách đánh giá
                     linhhqth08598.service.ReviewService reviewService = new linhhqth08598.service.ReviewService();
@@ -41,7 +42,7 @@ public class ProductServlet extends HttpServlet {
                     if (loggedUser != null) {
                         try (Connection conn = DBConnect.getConnection()) {
                             // Check Wishlist
-                            String sqlW = "SELECT 1 FROM user_wishlists WHERE user_id = ? AND part_id = ?";
+                            String sqlW = "SELECT 1 FROM user_wishlists WHERE user_id = ? AND part_id = ? AND status = 'ACTIVE'";
                             try (PreparedStatement ps = conn.prepareStatement(sqlW)) {
                                 ps.setInt(1, loggedUser.getUserId());
                                 ps.setInt(2, partId);
@@ -50,7 +51,7 @@ public class ProductServlet extends HttpServlet {
                                 }
                             }
                             // Check Price Alert
-                            String sqlP = "SELECT 1 FROM price_drop_notifications WHERE user_id = ? AND part_id = ?";
+                            String sqlP = "SELECT 1 FROM price_drop_notifications WHERE user_id = ? AND part_id = ? AND status = 'ACTIVE'";
                             try (PreparedStatement ps = conn.prepareStatement(sqlP)) {
                                 ps.setInt(1, loggedUser.getUserId());
                                 ps.setInt(2, partId);
@@ -79,7 +80,7 @@ public class ProductServlet extends HttpServlet {
             // Hiển thị danh sách sản phẩm
             java.util.List<Parts> active = new java.util.ArrayList<>();
             String kw = request.getParameter("q");
-            for (Parts p : partsDAO.getAll()) {
+            for (Parts p : partsDAO.getAllWithImages()) {
                 if (!"ACTIVE".equals(p.getStatus())) continue;
                 if (kw != null && !kw.trim().isEmpty() && (p.getPartName() == null
                         || !p.getPartName().toLowerCase().contains(kw.trim().toLowerCase()))) continue;

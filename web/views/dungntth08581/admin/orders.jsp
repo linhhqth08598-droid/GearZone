@@ -43,15 +43,15 @@
                             <td><jsp:include page="/views/components/order_status_badge.jsp"><jsp:param name="status" value="${o.status}"/></jsp:include></td>
                             <td><fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                             <td>
-                                <div class="d-flex gap-1 flex-wrap">
+                                <div class="d-flex gap-1 flex-wrap align-items-center">
                                     <c:set var="nextStatus" value="${o.status == 'PENDING' ? 'CONFIRMED' : (o.status == 'CONFIRMED' ? 'SHIPPING' : (o.status == 'SHIPPING' ? 'DELIVERED' : ''))}"/>
                                     <c:if test="${not empty nextStatus}">
-                                        <form action="${pageContext.request.contextPath}/admin/orders" method="POST" class="d-flex gap-1 m-0">
+                                        <form action="${pageContext.request.contextPath}/admin/orders" method="POST" class="d-flex gap-1 m-0 align-items-center">
                                             <input type="hidden" name="id" value="${o.orderId}">
                                             <input type="hidden" name="next" value="${nextStatus}">
                                             <input type="hidden" name="status" value="${status}">
-                                            <c:if test="${nextStatus == 'SHIPPING'}"><input type="text" name="extra" class="form-control form-control-sm" style="width:130px" placeholder="Mã vận đơn"></c:if>
-                                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                                            <c:if test="${nextStatus == 'SHIPPING'}"><input type="text" name="extra" class="form-control form-control-sm" style="width:130px; height:30px" placeholder="Mã vận đơn"></c:if>
+                                            <button type="submit" class="btn btn-sm btn-primary text-nowrap" style="height:30px">
                                                 <c:choose>
                                                     <c:when test="${nextStatus == 'CONFIRMED'}">Xác nhận</c:when>
                                                     <c:when test="${nextStatus == 'SHIPPING'}">Giao hàng</c:when>
@@ -65,7 +65,7 @@
                                             <input type="hidden" name="id" value="${o.orderId}">
                                             <input type="hidden" name="next" value="CANCELLED">
                                             <input type="hidden" name="status" value="${status}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap" style="height:30px">Hủy</button>
                                         </form>
                                     </c:if>
                                 </div>

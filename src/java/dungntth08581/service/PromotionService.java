@@ -25,17 +25,21 @@ public class PromotionService {
     public static final String FREE_SHIP = "FREE_SHIP";    // miễn phí vận chuyển (chỉ coupon)
     public static final String ACTIVE = "ACTIVE";
     public static final String INACTIVE = "INACTIVE";
-    public static final String PROMO_PART = "PART", PROMO_CATEGORY = "CATEGORY", PROMO_BRAND = "BRAND";
-    public static final String COMBO_FULL_PC = "FULL_PC", COMBO_PARTS = "COMBO";
+    public static final String PROMO_DISCOUNT = "DISCOUNT";   // khớp CHECK promotions.promotion_type (DISCOUNT / FREE_SHIPPING); đối tượng áp dụng nằm ở target_*_id
+    public static final String COMBO_FULL_PC = "FULL_BUILD", COMBO_PARTS = "PART_COMBO";   // khớp CHECK combo_promotions.combo_type
 
     // ---------- DTO ----------
     public static class Item {            // 1 dòng trong giỏ để tính giảm giá
-        public int partId, qty; public Integer categoryId, brandId; public BigDecimal unitPrice;
+        public int partId, qty; public Integer categoryId, brandId; public BigDecimal unitPrice; public String slot;   // slot: cpu/main/ram/vga/psu hoặc null
         public BigDecimal total() { return unitPrice.multiply(BigDecimal.valueOf(qty)); }
     }
 
     /** Kết quả tính giảm giá. error != null => mã không dùng được (khuyến mãi tự động vẫn hợp lệ). */
     public static class Result {
+        public java.util.List<String[]> lines = new ArrayList<>();   // chi tiết giảm giá: {loại, tên, số tiền}
+        public java.util.List<String[]> getLines() { return lines; }
+        public BigDecimal comboDiscount = BigDecimal.ZERO; public Integer comboId; public String comboName;
+        public BigDecimal getComboDiscount() { return comboDiscount; } public Integer getComboId() { return comboId; } public String getComboName() { return comboName; }
         public BigDecimal subtotal = BigDecimal.ZERO, promoDiscount = BigDecimal.ZERO, couponDiscount = BigDecimal.ZERO, shippingDiscount = BigDecimal.ZERO;
         public Integer couponId, promotionId; public String couponCode, error;
         public BigDecimal getSubtotal() { return subtotal; }
@@ -43,7 +47,7 @@ public class PromotionService {
         public BigDecimal getCouponDiscount() { return couponDiscount; }
         public BigDecimal getShippingDiscount() { return shippingDiscount; }
         /** Giảm trên tiền hàng (ghi vào orders.discount_amount). */
-        public BigDecimal getGoodsDiscount() { return promoDiscount.add(couponDiscount); }
+        public BigDecimal getGoodsDiscount() { return promoDiscount.add(comboDiscount).add(couponDiscount); }
         public String getError() { return error; }
     }
 
@@ -98,17 +102,29 @@ public class PromotionService {
     // TÍNH GIẢM GIÁ (UC 224, 241-242, 245-247)
     // =====================================================================
 
+    /** Nhận diện loại linh kiện từ mã/tên danh mục (giống BuildPCService.slotKey). */
+    static String slotKey(String code, String name) {
+        String t = ((code == null ? "" : code) + " " + (name == null ? "" : name)).toUpperCase();
+        if (t.contains("COOL") || t.contains("TẢN")) return null;
+        if (t.contains("PSU") || t.contains("NGUỒN") || t.contains("POWER")) return "psu";
+        if (t.contains("VGA") || t.contains("GPU") || t.contains("ĐỒ HỌA")) return "vga";
+        if (t.contains("MAIN") || t.contains("MẠCH CHỦ")) return "main";
+        if (t.contains("RAM")) return "ram";
+        if (t.contains("CPU") || t.contains("VI XỬ LÝ")) return "cpu";
+        return null;
+    }
+
     /** Lấy giỏ hàng ACTIVE của user (kèm danh mục/thương hiệu) để tính giảm giá. */
     public List<Item> loadCartItems(Connection con, int userId) throws SQLException {
         List<Item> list = new ArrayList<>();
-        String sql = "SELECT c.part_id, c.quantity, p.category_id, p.brand_id, ISNULL(p.sale_price, p.base_price) AS price "
-                   + "FROM cart_items c JOIN parts p ON p.part_id = c.part_id WHERE c.user_id = ? AND c.status = 'ACTIVE' AND p.status = 'ACTIVE'";
+        String sql = "SELECT c.part_id, c.quantity, p.category_id, p.brand_id, ISNULL(p.sale_price, p.base_price) AS price, ca.category_code, ca.category_name "
+                   + "FROM cart_items c JOIN parts p ON p.part_id = c.part_id LEFT JOIN categories ca ON ca.category_id = p.category_id WHERE c.user_id = ? AND c.status = 'ACTIVE' AND p.status = 'ACTIVE'";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Item it = new Item(); it.partId = rs.getInt("part_id"); it.qty = rs.getInt("quantity");
-                    it.categoryId = intOrNull(rs, "category_id"); it.brandId = intOrNull(rs, "brand_id"); it.unitPrice = rs.getBigDecimal("price");
+                    it.categoryId = intOrNull(rs, "category_id"); it.brandId = intOrNull(rs, "brand_id"); it.unitPrice = rs.getBigDecimal("price"); it.slot = slotKey(rs.getString("category_code"), rs.getString("category_name"));
                     list.add(it);
                 }
             }
@@ -136,29 +152,53 @@ public class PromotionService {
 
         // 1. Khuyến mãi tự động đang chạy: {id, partId, categoryId, brandId, discountType, value, minOrder}
         List<Object[]> promos = new ArrayList<>();
-        String sql = "SELECT promotion_id, target_part_id, target_category_id, target_brand_id, discount_type, discount_value, ISNULL(min_order_value,0) AS min_order "
+        String sql = "SELECT promotion_name, promotion_id, target_part_id, target_category_id, target_brand_id, discount_type, discount_value, ISNULL(min_order_value,0) AS min_order "
                    + "FROM promotions p WHERE p.status = ? AND " + RUNNING_P;
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, ACTIVE);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) promos.add(new Object[]{rs.getInt("promotion_id"), intOrNull(rs, "target_part_id"), intOrNull(rs, "target_category_id"),
-                        intOrNull(rs, "target_brand_id"), rs.getString("discount_type"), rs.getBigDecimal("discount_value"), rs.getBigDecimal("min_order")});
+                        intOrNull(rs, "target_brand_id"), rs.getString("discount_type"), rs.getBigDecimal("discount_value"), rs.getBigDecimal("min_order"), rs.getString("promotion_name")});
             }
         }
         BigDecimal biggest = BigDecimal.ZERO;
+        java.util.Map<String, BigDecimal> promoByName = new java.util.LinkedHashMap<>();
         for (Item it : items) {
-            BigDecimal best = BigDecimal.ZERO; Integer bestId = null;
+            BigDecimal best = BigDecimal.ZERO; Integer bestId = null; String bestName = null;
             for (Object[] p : promos) {
                 Integer tp = (Integer) p[1], tc = (Integer) p[2], tb = (Integer) p[3];
                 boolean match = (tp != null && tp == it.partId) || (tc != null && tc.equals(it.categoryId)) || (tb != null && tb.equals(it.brandId));
                 if (!match || r.subtotal.compareTo((BigDecimal) p[6]) < 0) continue;
                 BigDecimal d = discountOf((String) p[4], (BigDecimal) p[5], it.total(), null);
-                if (d.compareTo(best) > 0) { best = d; bestId = (Integer) p[0]; }
+                if (d.compareTo(best) > 0) { best = d; bestId = (Integer) p[0]; bestName = (String) p[7]; }
             }
             r.promoDiscount = r.promoDiscount.add(best);
+            if (bestName != null) promoByName.merge(bestName, best, BigDecimal::add);
             if (best.compareTo(biggest) > 0) { biggest = best; r.promotionId = bestId; }   // orders.promotion_id chỉ lưu được 1 khuyến mãi: lấy cái giảm nhiều nhất
         }
         r.promoDiscount = money(r.promoDiscount);
+        for (java.util.Map.Entry<String, BigDecimal> e : promoByName.entrySet()) r.lines.add(new String[]{"Khuyến mãi", e.getKey(), money(e.getValue()).toPlainString()});
+
+        // 1b. Combo / trọn bộ PC (UC 243-244): lấy combo giảm nhiều nhất mà giỏ đủ điều kiện
+        java.util.Set<String> slots = new java.util.HashSet<>();
+        for (Item it : items) if (it.slot != null) slots.add(it.slot);
+        boolean fullBuild = slots.containsAll(java.util.Arrays.asList("cpu", "main", "ram", "psu"));
+        BigDecimal comboBase = r.subtotal.subtract(r.promoDiscount).max(BigDecimal.ZERO);
+        String csql = "SELECT combo_id, combo_name, discount_percentage, min_parts_count, combo_type FROM combo_promotions p WHERE p.status = ? AND " + RUNNING_P;
+        try (PreparedStatement ps = con.prepareStatement(csql)) {
+            ps.setString(1, ACTIVE);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String ctype = rs.getString("combo_type");
+                    if (items.size() < rs.getInt("min_parts_count")) continue;
+                    if (COMBO_FULL_PC.equals(ctype) && !fullBuild) continue;     // trọn bộ PC: cần đủ CPU, Mainboard, RAM, nguồn
+                    BigDecimal d = money(comboBase.multiply(rs.getBigDecimal("discount_percentage")).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP));
+                    if (d.compareTo(r.comboDiscount) > 0) { r.comboDiscount = d; r.comboId = rs.getInt("combo_id"); r.comboName = rs.getString("combo_name"); }
+                }
+            }
+        }
+
+        if (r.comboId != null) r.lines.add(new String[]{"Combo", r.comboName, r.comboDiscount.toPlainString()});
 
         // 2. Mã giảm giá
         if (!blank(couponCode)) {
@@ -166,6 +206,9 @@ public class PromotionService {
             if (err != null) {
                 r.error = err; r.couponId = null; r.couponCode = null;
                 r.couponDiscount = BigDecimal.ZERO; r.shippingDiscount = BigDecimal.ZERO;
+            } else {
+                BigDecimal amt = r.couponDiscount.signum() > 0 ? r.couponDiscount : r.shippingDiscount;
+                r.lines.add(new String[]{r.shippingDiscount.signum() > 0 ? "Mã miễn phí vận chuyển" : "Mã giảm giá", r.couponCode, amt.toPlainString()});
             }
         }
         return r;
@@ -186,7 +229,16 @@ public class PromotionService {
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, code);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return "Mã giảm giá không tồn tại!";
+                if (!rs.next()) {
+                    // người dùng hay nhầm tên khuyến mãi/combo (tự động áp dụng) với mã giảm giá -> báo rõ
+                    for (String[] l : r.lines) {
+                        if (("Khuyến mãi".equals(l[0]) || "Combo".equals(l[0])) && l[1] != null && l[1].equalsIgnoreCase(code))
+                            return "\"" + l[1] + "\" là " + (l[0].equals("Combo") ? "combo" : "khuyến mãi") + " tự động, đã được áp dụng sẵn vào đơn, không cần nhập mã. Ô này chỉ dành cho mã tạo ở mục \"Mã giảm giá\"!";
+                    }
+                    if (nameExists(con, code))
+                        return "\"" + code + "\" là tên khuyến mãi/combo (tự áp dụng khi đủ điều kiện), không phải mã giảm giá. Hãy tạo mã ở Admin → Mã giảm giá!";
+                    return "Mã giảm giá không tồn tại!";
+                }
                 int id = rs.getInt("coupon_id"); String type = rs.getString("discount_type");
                 BigDecimal value = rs.getBigDecimal("discount_value"), min = rs.getBigDecimal("min_order"), cap = rs.getBigDecimal("max_disc");
                 Date start = rs.getDate("start_date"), end = rs.getDate("end_date");
@@ -213,12 +265,21 @@ public class PromotionService {
                     if (cap != null && cap.signum() > 0 && d.compareTo(cap) > 0) d = cap;
                     r.shippingDiscount = money(d);
                 } else {
-                    BigDecimal base = eligible.subtract(r.promoDiscount).max(BigDecimal.ZERO);   // không giảm chồng vượt giá trị hàng
+                    BigDecimal base = eligible.subtract(r.promoDiscount).subtract(r.comboDiscount).max(BigDecimal.ZERO);   // không giảm chồng vượt giá trị hàng
                     r.couponDiscount = money(discountOf(type, value, base, cap));
                 }
                 r.couponId = id; r.couponCode = code.toUpperCase();
                 return null;
             }
+        }
+    }
+
+    /** Có khuyến mãi/combo nào mang tên này không (để gợi ý khi nhập nhầm vào ô mã giảm giá). */
+    private boolean nameExists(Connection con, String name) throws SQLException {
+        String sql = "SELECT (SELECT COUNT(*) FROM promotions WHERE promotion_name = ?) + (SELECT COUNT(*) FROM combo_promotions WHERE combo_name = ?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, name); ps.setString(2, name);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() && rs.getInt(1) > 0; }
         }
     }
 
@@ -288,7 +349,7 @@ public class PromotionService {
             BigDecimal max = blank(maxS) ? BigDecimal.ZERO : new BigDecimal(maxS.trim());
             int limit = blank(limitS) ? 0 : Integer.parseInt(limitS.trim()), perUser = blank(perUserS) ? 0 : Integer.parseInt(perUserS.trim());
             if (min.signum() < 0 || max.signum() < 0 || limit < 0 || perUser < 0) return "Các giá trị không được âm!";
-            Date start = blank(startS) ? null : Date.valueOf(startS.trim()), end = blank(endS) ? null : Date.valueOf(endS.trim());
+            Date start = blank(startS) ? new Date(System.currentTimeMillis()) : Date.valueOf(startS.trim()), end = blank(endS) ? Date.valueOf("2099-12-31") : Date.valueOf(endS.trim());   // DB: start_date/end_date NOT NULL
             if (start != null && end != null && end.before(start)) return "Ngày kết thúc phải sau ngày bắt đầu!";
             Integer cat = blank(catS) ? null : Integer.valueOf(catS.trim()), brand = blank(brandS) ? null : Integer.valueOf(brandS.trim());
 
@@ -370,7 +431,7 @@ public class PromotionService {
         try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 PromoRow p = new PromoRow();
-                p.id = rs.getInt("promotion_id"); p.name = rs.getString("promotion_name"); p.type = rs.getString("promotion_type"); p.discountType = rs.getString("discount_type");
+                p.id = rs.getInt("promotion_id"); p.name = rs.getString("promotion_name"); p.type = rs.getString("part_name") != null ? "Linh kiện" : rs.getString("category_name") != null ? "Danh mục" : "Thương hiệu"; p.discountType = rs.getString("discount_type");
                 p.value = rs.getDouble("discount_value"); p.minOrder = rs.getDouble("min_order_value"); p.startDate = rs.getDate("start_date"); p.endDate = rs.getDate("end_date");
                 p.status = rs.getString("status");
                 String t = rs.getString("part_name"); if (t == null) t = rs.getString("category_name"); if (t == null) t = rs.getString("brand_name");
@@ -412,12 +473,12 @@ public class PromotionService {
             int target = Integer.parseInt(targetIdS.trim());
             String col, ptype;
             switch (targetKind == null ? "" : targetKind) {
-                case "PART": col = "target_part_id"; ptype = PROMO_PART; break;
-                case "CATEGORY": col = "target_category_id"; ptype = PROMO_CATEGORY; break;
-                case "BRAND": col = "target_brand_id"; ptype = PROMO_BRAND; break;
+                case "PART": col = "target_part_id"; ptype = PROMO_DISCOUNT; break;
+                case "CATEGORY": col = "target_category_id"; ptype = PROMO_DISCOUNT; break;
+                case "BRAND": col = "target_brand_id"; ptype = PROMO_DISCOUNT; break;
                 default: return "Đối tượng khuyến mãi không hợp lệ!";
             }
-            Date start = blank(startS) ? null : Date.valueOf(startS.trim()), end = blank(endS) ? null : Date.valueOf(endS.trim());
+            Date start = blank(startS) ? new Date(System.currentTimeMillis()) : Date.valueOf(startS.trim()), end = blank(endS) ? Date.valueOf("2099-12-31") : Date.valueOf(endS.trim());   // DB: start_date/end_date NOT NULL
             if (start != null && end != null && end.before(start)) return "Ngày kết thúc phải sau ngày bắt đầu!";
             String sql = "INSERT INTO promotions (promotion_name, promotion_type, discount_type, discount_value, min_order_value, " + col + ", start_date, end_date, status, created_by, created_at) "
                        + "VALUES (?,?,?,?,?,?,?,?,?,?,SYSDATETIME())";
@@ -463,7 +524,7 @@ public class PromotionService {
             if (pct.signum() <= 0 || pct.compareTo(BigDecimal.valueOf(100)) > 0) return "Phần trăm giảm phải từ 0 đến 100!";
             int minParts = Integer.parseInt(minPartsS.trim());
             if (minParts < 2) return "Combo cần tối thiểu 2 linh kiện!";
-            Date start = blank(startS) ? null : Date.valueOf(startS.trim()), end = blank(endS) ? null : Date.valueOf(endS.trim());
+            Date start = blank(startS) ? new Date(System.currentTimeMillis()) : Date.valueOf(startS.trim()), end = blank(endS) ? Date.valueOf("2099-12-31") : Date.valueOf(endS.trim());   // DB: start_date/end_date NOT NULL
             if (start != null && end != null && end.before(start)) return "Ngày kết thúc phải sau ngày bắt đầu!";
             try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(
                     "INSERT INTO combo_promotions (combo_name, discount_percentage, min_parts_count, combo_type, status, start_date, end_date) VALUES (?,?,?,?,?,?,?)")) {

@@ -67,7 +67,12 @@
         <div class="card h-100 border-0 shadow-sm rounded-4">
             <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="text-decoration-none text-dark">
                 <div class="card-body text-center p-4">
-                    <i class="fas fa-microchip fa-3x text-secondary mb-3"></i>
+                    <div class="d-flex align-items-center justify-content-center mb-3" style="height:150px;">
+                        <c:choose>
+                            <c:when test="${not empty p.imageUrl}"><img src="<c:out value='${p.imageUrl}'/>" alt="<c:out value='${p.partName}'/>" style="max-width:100%; max-height:150px; object-fit:contain;"></c:when>
+                            <c:otherwise><i class="fas fa-microchip fa-3x text-secondary"></i></c:otherwise>
+                        </c:choose>
+                    </div>
                     <h6 class="fw-bold" style="min-height:40px"><c:out value="${p.partName}"/></h6>
                     <div class="text-danger fw-bold">
                         <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
@@ -90,11 +95,51 @@
 <!-- KHUYẾN MÃI -->
 <div class="container my-5">
     <h3 class="fw-bold mb-4"><i class="fas fa-tags text-warning me-2"></i>Khuyến mãi hấp dẫn</h3>
+    <c:if test="${empty homePromos and empty homeCoupons}">
+        <div class="text-center text-muted py-5"><p>Hiện chưa có chương trình khuyến mãi nào.</p></div>
+    </c:if>
     <div class="row">
-        <div class="col-12 text-center text-muted py-5">
-            <p>Các chương trình khuyến mãi sẽ được hiển thị tại đây.</p>
-        </div>
+        <c:forEach var="c" items="${homeCoupons}">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 border-start border-4 border-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="badge bg-warning text-dark fs-6"><c:out value="${c.code}"/></span>
+                            <c:if test="${not empty c.endDate}"><small class="text-muted">HSD: <fmt:formatDate value="${c.endDate}" pattern="dd/MM/yyyy"/></small></c:if>
+                        </div>
+                        <h6 class="fw-bold mt-2 mb-1"><c:out value="${c.name}"/></h6>
+                        <div class="text-danger fw-bold">
+                            <c:choose>
+                                <c:when test="${c.type == 'PERCENT'}"><fmt:formatNumber value="${c.value}" maxFractionDigits="0"/>%<c:if test="${c.maxDiscount > 0}"> (tối đa <fmt:formatNumber value="${c.maxDiscount}" maxFractionDigits="0"/> ₫)</c:if></c:when>
+                                <c:when test="${c.type == 'FREE_SHIP'}">Miễn phí vận chuyển</c:when>
+                                <c:otherwise>Giảm <fmt:formatNumber value="${c.value}" maxFractionDigits="0"/> ₫</c:otherwise>
+                            </c:choose>
+                        </div>
+                        <c:if test="${c.minOrder > 0}"><small class="text-muted">Đơn từ <fmt:formatNumber value="${c.minOrder}" maxFractionDigits="0"/> ₫</small></c:if>
+                    </div>
+                </div>
+            </div>
+        </c:forEach>
+        <c:forEach var="p" items="${homePromos}">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 border-start border-4 border-danger">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-1"><i class="fas fa-fire text-danger me-1"></i><c:out value="${p.name}"/></h6>
+                        <c:if test="${not empty p.targetName}"><div class="small text-muted">Áp dụng: <c:out value="${p.targetName}"/></div></c:if>
+                        <div class="text-danger fw-bold">
+                            Giảm <c:choose>
+                                <c:when test="${p.discountType == 'PERCENT'}"><fmt:formatNumber value="${p.value}" maxFractionDigits="0"/>%</c:when>
+                                <c:otherwise><fmt:formatNumber value="${p.value}" maxFractionDigits="0"/> ₫</c:otherwise>
+                            </c:choose>
+                        </div>
+                        <c:if test="${not empty p.endDate}"><small class="text-muted">Đến <fmt:formatDate value="${p.endDate}" pattern="dd/MM/yyyy"/></small></c:if>
+                    </div>
+                </div>
+            </div>
+        </c:forEach>
     </div>
+    <div class="text-center"><a href="${pageContext.request.contextPath}/promotion" class="btn btn-outline-warning">Xem tất cả khuyến mãi</a></div>
+</div>
 </div>
 
 <jsp:include page="/views/components/footer.jsp" />

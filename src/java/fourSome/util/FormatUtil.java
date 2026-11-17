@@ -18,6 +18,25 @@ public class FormatUtil {
     }
 
     /** 15990000 -> "15.990.000 ₫" */
+    /** Ghép địa chỉ từ các phần, bỏ phần trống, gộp dấu phẩy thừa (",," -> ","), bỏ dấu phẩy ở đầu/cuối mỗi phần. */
+    public static String joinAddress(String... parts) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            String t = cleanAddress(part);
+            if (t.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(t);
+        }
+        return sb.toString();
+    }
+
+    /** Làm sạch 1 chuỗi địa chỉ: gộp dấu phẩy/khoảng trắng liên tiếp, bỏ dấu phẩy thừa ở đầu/cuối. */
+    public static String cleanAddress(String s) {
+        if (s == null) return "";
+        String t = s.trim().replaceAll("\\s*,(\\s*,)+", ",").replaceAll("\\s*,\\s*", ", ").replaceAll("\\s{2,}", " ");
+        return t.replaceAll("^[,\\s]+|[,\\s]+$", "");
+    }
+
     public static String formatVND(long amount) {
         return vndFormat().format(amount) + " ₫";
     }

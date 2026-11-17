@@ -10,6 +10,7 @@ public class ShippingAddresses {
     private String province;
     private String ward;
     private String detailedAddress;
+    private String streetName;
     private Boolean isDefault;
     private String status;
 
@@ -35,6 +36,9 @@ public class ShippingAddresses {
 
     public String getDetailedAddress() { return detailedAddress; }
     public void setDetailedAddress(String detailedAddress) { this.detailedAddress = detailedAddress; }
+
+    public String getStreetName() { return streetName; }
+    public void setStreetName(String streetName) { this.streetName = streetName; }
 
     public Boolean getIsDefault() { return isDefault; }
     public void setIsDefault(Boolean isDefault) { this.isDefault = isDefault; }

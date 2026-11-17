@@ -47,6 +47,7 @@
     }
     function decorate(el) {
         if (el.dataset.iconDone || el.classList.contains('no-icon')) return;
+        if (el.classList.contains('otp-box') || el.closest('#otp-container, .otp-group')) return;   // ô OTP: không gắn icon
         if (el.closest('.input-group, .form-floating, table, .navbar, .no-icon, .pagination')) return;
         if (el.classList.contains('form-control-sm') || el.classList.contains('form-select-sm')) return;
         if (el.type === 'hidden' || el.type === 'checkbox' || el.type === 'radio' || el.type === 'file'

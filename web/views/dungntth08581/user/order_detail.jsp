@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="fw-bold mb-0"><i class="fas fa-receipt text-primary me-2"></i>Đơn hàng #<c:out value="${order.orderCode}"/></h3>
         <div class="d-flex gap-2">
-            <c:if test="${order.status != 'CANCELLED'}"><a href="${pageContext.request.contextPath}/order?id=${order.orderId}&action=invoice" target="_blank" class="btn btn-outline-primary"><i class="fas fa-print me-1"></i>Hóa đơn</a></c:if>
+            <c:if test="${order.status != 'CANCELLED' && !(payMethod == 'PAYOS' && payStatus != 'PAID')}"><a href="${pageContext.request.contextPath}/order?id=${order.orderId}&action=invoice" target="_blank" class="btn btn-outline-primary"><i class="fas fa-print me-1"></i>Hóa đơn</a></c:if>
             <a href="${pageContext.request.contextPath}/user/order-history" class="btn btn-outline-secondary">Lịch sử mua hàng</a>
         </div>
     </div>
@@ -33,7 +33,19 @@
         <c:if test="${not empty order.trackingCode}"><div><strong>Mã vận đơn:</strong> <c:out value="${order.trackingCode}"/></div></c:if>
         <c:if test="${not empty order.note}"><div><strong>Ghi chú:</strong> <c:out value="${order.note}"/></div></c:if>
         <c:if test="${not empty order.cancelReason}"><div class="text-danger"><strong>Lý do hủy:</strong> <c:out value="${order.cancelReason}"/></div></c:if>
-        <div><strong>Thanh toán:</strong> Khi nhận hàng (COD)</div>
+        <div><strong>Thanh toán:</strong>
+            <c:choose>
+                <c:when test="${payMethod == 'PAYOS' && payStatus == 'PAID'}"><span class="badge bg-success">PayOS - đã thanh toán</span></c:when>
+                <c:when test="${payMethod == 'PAYOS'}"><span class="badge bg-warning text-dark">PayOS - chờ thanh toán</span></c:when>
+                <c:otherwise>Khi nhận hàng (COD)</c:otherwise>
+            </c:choose>
+        </div>
+        <c:if test="${payMethod == 'PAYOS' && payStatus != 'PAID' && order.status == 'PENDING'}">
+            <form action="${pageContext.request.contextPath}/order" method="POST" class="mt-2">
+                <input type="hidden" name="id" value="${order.orderId}"><input type="hidden" name="action" value="pay">
+                <button type="submit" class="btn btn-success"><i class="fas fa-credit-card me-1"></i>Thanh toán lại</button>
+            </form>
+        </c:if>
     </div></div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
@@ -56,6 +68,13 @@
         </div>
     </div></div>
 
+    <c:if test="${order.status == 'SHIPPING'}">
+        <form action="${pageContext.request.contextPath}/order" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng?');" class="mb-3">
+            <input type="hidden" name="action" value="received">
+            <input type="hidden" name="id" value="${order.orderId}">
+            <button type="submit" class="btn btn-success text-nowrap"><i class="fas fa-check me-1"></i> Đã nhận hàng</button>
+        </form>
+    </c:if>
     <c:if test="${order.status == 'PENDING' || order.status == 'CONFIRMED'}">
         <form action="${pageContext.request.contextPath}/order" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');" class="d-flex gap-2">
             <input type="hidden" name="action" value="cancel">

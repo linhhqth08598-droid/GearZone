@@ -29,7 +29,8 @@
     <%-- ================= MÃ GIẢM GIÁ ================= --%>
     <c:if test="${tab == 'coupons'}">
         <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
-            <h5 class="fw-bold mb-3" id="couponFormTitle">Tạo mã giảm giá</h5>
+            <h5 class="fw-bold mb-2" id="couponFormTitle">Tạo mã giảm giá</h5>
+            <div class="small text-muted mb-2"><i class="fas fa-keyboard me-1"></i>Chỉ <b>mã giảm giá</b> mới được khách <b>nhập tay</b> ở ô \"Mã giảm giá\" khi đặt hàng. Khuyến mãi và combo thì tự áp dụng.</div>
             <form action="${base}" method="POST" id="couponForm" class="row g-2">
                 <input type="hidden" name="action" value="saveCoupon">
                 <input type="hidden" name="id" id="cId" value="">
@@ -117,16 +118,17 @@
     <%-- ================= KHUYẾN MÃI ================= --%>
     <c:if test="${tab == 'promotions'}">
         <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
-            <h5 class="fw-bold mb-3">Tạo khuyến mãi (giảm tự động)</h5>
+            <h5 class="fw-bold mb-2">Tạo khuyến mãi (giảm tự động)</h5>
+            <div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-1"></i>Khuyến mãi <b>không có mã để nhập</b>: khi còn hạn và giỏ hàng có đúng đối tượng, hệ thống <b>tự trừ</b> vào đơn ở bước thanh toán. Cột <b>Mã</b> (KM-số) chỉ để quản trị nhận biết. Muốn khách nhập mã, hãy tạo ở tab <a href="${base}?tab=coupons">Mã giảm giá</a>.</div>
             <form action="${base}" method="POST" class="row g-2">
                 <input type="hidden" name="action" value="savePromotion">
                 <div class="col-md-4"><label class="form-label small mb-1">Tên khuyến mãi *</label><input name="name" class="form-control" maxlength="150" required></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Áp dụng cho *</label>
                     <select name="targetKind" id="pKind" class="form-select"><option value="CATEGORY">Danh mục</option><option value="BRAND">Thương hiệu</option><option value="PART">Linh kiện (nhập mã)</option></select></div>
                 <div class="col-md-3"><label class="form-label small mb-1">Đối tượng *</label>
-                    <select id="pCat" class="form-select pTarget"><c:forEach var="ca" items="${categories}"><option value="${ca.categoryId}"><c:out value="${ca.categoryName}"/></option></c:forEach></select>
-                    <select id="pBrand" class="form-select pTarget d-none"><c:forEach var="b" items="${brands}"><option value="${b.brandId}"><c:out value="${b.brandName}"/></option></c:forEach></select>
-                    <input id="pPart" type="number" min="1" class="form-control pTarget d-none" placeholder="part_id của linh kiện">
+                    <div class="pTarget" id="pCatBox"><select id="pCat" class="form-select"><c:forEach var="ca" items="${categories}"><option value="${ca.categoryId}"><c:out value="${ca.categoryName}"/></option></c:forEach></select></div>
+                    <div class="pTarget d-none" id="pBrandBox"><select id="pBrand" class="form-select"><c:forEach var="b" items="${brands}"><option value="${b.brandId}"><c:out value="${b.brandName}"/></option></c:forEach></select></div>
+                    <div class="pTarget d-none" id="pPartBox"><input id="pPart" type="number" min="1" class="form-control" placeholder="part_id của linh kiện"></div>
                     <input type="hidden" name="targetId" id="pTargetId"></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Loại *</label>
                     <select name="type" class="form-select"><option value="PERCENT">Giảm %</option><option value="FIXED">Giảm tiền</option></select></div>
@@ -139,10 +141,10 @@
         </div></div>
         <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-3"><div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead class="table-light"><tr><th>Tên</th><th>Đối tượng</th><th>Giảm</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
+                <thead class="table-light"><tr><th>Mã</th><th>Tên</th><th>Đối tượng</th><th>Giảm</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
                 <tbody>
                 <c:forEach var="p" items="${promotions}">
-                    <tr><td class="fw-semibold"><c:out value="${p.name}"/></td>
+                    <tr><td class="fw-bold text-nowrap">KM-${p.id}<div><span class="badge bg-info text-dark fw-normal">Tự động</span></div></td><td class="fw-semibold"><c:out value="${p.name}"/></td>
                         <td><span class="badge bg-light text-dark border"><c:out value="${p.type}"/></span> <c:out value="${p.targetName}"/></td>
                         <td><c:choose><c:when test="${p.discountType == 'PERCENT'}">${p.value}%</c:when><c:otherwise><fmt:formatNumber value="${p.value}" maxFractionDigits="0"/> ₫</c:otherwise></c:choose></td>
                         <td class="small"><fmt:formatDate value="${p.startDate}" pattern="dd/MM/yyyy"/> - <fmt:formatDate value="${p.endDate}" pattern="dd/MM/yyyy"/></td>
@@ -150,7 +152,7 @@
                         <td><form action="${base}" method="POST" class="m-0"><input type="hidden" name="action" value="togglePromotion"><input type="hidden" name="id" value="${p.id}">
                             <button class="btn btn-sm ${p.status == 'ACTIVE' ? 'btn-outline-danger' : 'btn-outline-success'}" type="submit">${p.status == 'ACTIVE' ? 'Tắt' : 'Bật'}</button></form></td></tr>
                 </c:forEach>
-                <c:if test="${empty promotions}"><tr><td colspan="6" class="text-center text-muted py-4">Chưa có khuyến mãi nào.</td></tr></c:if>
+                <c:if test="${empty promotions}"><tr><td colspan="7" class="text-center text-muted py-4">Chưa có khuyến mãi nào.</td></tr></c:if>
                 </tbody>
             </table>
         </div></div></div>
@@ -159,33 +161,34 @@
     <%-- ================= COMBO ================= --%>
     <c:if test="${tab == 'combos'}">
         <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
-            <h5 class="fw-bold mb-3">Tạo combo / ưu đãi trọn bộ PC</h5>
+            <h5 class="fw-bold mb-2">Tạo combo / ưu đãi trọn bộ PC</h5>
+            <div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-1"></i>Combo <b>không có mã để nhập</b>: khi giỏ đủ điều kiện (đủ số món; \"Trọn bộ PC\" cần thêm CPU + Mainboard + RAM + Nguồn) hệ thống <b>tự trừ</b> vào đơn, lấy combo giảm nhiều nhất. Cột <b>Mã</b> (CB-số) chỉ để quản trị nhận biết.</div>
             <form action="${base}" method="POST" class="row g-2">
                 <input type="hidden" name="action" value="saveCombo">
                 <div class="col-md-4"><label class="form-label small mb-1">Tên combo *</label><input name="name" class="form-control" maxlength="150" required></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Loại *</label>
-                    <select name="type" class="form-select"><option value="COMBO">Combo linh kiện</option><option value="FULL_PC">Trọn bộ PC</option></select></div>
+                    <select name="type" class="form-select"><option value="PART_COMBO">Combo linh kiện</option><option value="FULL_BUILD">Trọn bộ PC</option></select></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Giảm (%) *</label><input name="percent" type="number" step="any" min="0" max="100" class="form-control" required></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Tối thiểu (món) *</label><input name="minParts" type="number" min="2" value="2" class="form-control" required></div>
                 <div class="col-md-2"></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Bắt đầu</label><input name="startDate" type="date" class="form-control"></div>
                 <div class="col-md-2"><label class="form-label small mb-1">Kết thúc</label><input name="endDate" type="date" class="form-control"></div>
                 <div class="col-12"><button class="btn btn-primary" type="submit"><i class="fas fa-save me-1"></i>Tạo combo</button>
-                    <span class="small text-muted ms-2">Combo hiện mới được quản lý, chưa tự trừ vào đơn hàng.</span></div>
+                    <span class="small text-muted ms-2">Combo được tự trừ vào đơn khi khách thanh toán.</span></div>
             </form>
         </div></div>
         <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-3"><div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead class="table-light"><tr><th>Tên</th><th>Loại</th><th>Giảm</th><th>Tối thiểu</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
+                <thead class="table-light"><tr><th>Mã</th><th>Tên</th><th>Loại</th><th>Giảm</th><th>Tối thiểu</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
                 <tbody>
                 <c:forEach var="cb" items="${combos}">
-                    <tr><td class="fw-semibold"><c:out value="${cb.name}"/></td><td><c:out value="${cb.type}"/></td><td>${cb.percent}%</td><td>${cb.minParts} món</td>
+                    <tr><td class="fw-bold text-nowrap">CB-${cb.id}<div><span class="badge bg-info text-dark fw-normal">Tự động</span></div></td><td class="fw-semibold"><c:out value="${cb.name}"/></td><td><c:out value="${cb.type == 'FULL_BUILD' ? 'Trọn bộ PC' : 'Combo linh kiện'}"/></td><td>${cb.percent}%</td><td>${cb.minParts} món</td>
                         <td class="small"><fmt:formatDate value="${cb.startDate}" pattern="dd/MM/yyyy"/> - <fmt:formatDate value="${cb.endDate}" pattern="dd/MM/yyyy"/></td>
                         <td><span class="badge ${cb.status == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">${cb.status == 'ACTIVE' ? 'Đang bật' : 'Đã tắt'}</span></td>
                         <td><form action="${base}" method="POST" class="m-0"><input type="hidden" name="action" value="toggleCombo"><input type="hidden" name="id" value="${cb.id}">
                             <button class="btn btn-sm ${cb.status == 'ACTIVE' ? 'btn-outline-danger' : 'btn-outline-success'}" type="submit">${cb.status == 'ACTIVE' ? 'Tắt' : 'Bật'}</button></form></td></tr>
                 </c:forEach>
-                <c:if test="${empty combos}"><tr><td colspan="7" class="text-center text-muted py-4">Chưa có combo nào.</td></tr></c:if>
+                <c:if test="${empty combos}"><tr><td colspan="8" class="text-center text-muted py-4">Chưa có combo nào.</td></tr></c:if>
                 </tbody>
             </table>
         </div></div></div>
@@ -225,9 +228,9 @@
     var kind = $('pKind');
     if (kind) {
         var sync = function () {
-            var map = {CATEGORY: 'pCat', BRAND: 'pBrand', PART: 'pPart'};
+            var map = {CATEGORY: 'pCat', BRAND: 'pBrand', PART: 'pPart'}, box = {CATEGORY: 'pCatBox', BRAND: 'pBrandBox', PART: 'pPartBox'};
             document.querySelectorAll('.pTarget').forEach(function (e) { e.classList.add('d-none'); });
-            var cur = $(map[kind.value]); cur.classList.remove('d-none');
+            var cur = $(map[kind.value]); $(box[kind.value]).classList.remove('d-none');
             $('pTargetId').value = cur.value;
             cur.oninput = cur.onchange = function () { $('pTargetId').value = cur.value; };
         };

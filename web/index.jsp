@@ -5,12 +5,12 @@
     <title>Đang chuyển hướng...</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=${pageContext.request.contextPath}/admin/dashboard">
+    <meta http-equiv="refresh" content="0; url=https://gearzonevn.buru-wezen.ts.net/gearzone/admin/dashboard">
     <script type="text/javascript">
-        window.location.replace("${pageContext.request.contextPath}/admin/dashboard");
+        window.location.replace("https://gearzonevn.buru-wezen.ts.net/gearzone/admin/dashboard");
     </script>
 </head>
 <body>
-    <p>Đang chuyển hướng đến trang quản trị. Nếu trình duyệt không tự động chuyển, vui lòng <a href="${pageContext.request.contextPath}/admin/dashboard">nhấn vào đây</a>.</p>
+    <p>Đang chuyển hướng đến trang quản trị. Nếu trình duyệt không tự động chuyển, vui lòng <a href="https://gearzonevn.buru-wezen.ts.net/gearzone/admin/dashboard">nhấn vào đây</a>.</p>
 </body>
 </html>

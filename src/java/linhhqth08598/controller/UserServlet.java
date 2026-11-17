@@ -114,6 +114,8 @@ public class UserServlet extends HttpServlet {
                 // Cấp Quận/Huyện đã bãi bỏ từ 01/07/2025: không nhận tham số district (UserService lưu chuỗi rỗng)
                 addr.setWard(request.getParameter("ward"));
                 addr.setDetailedAddress(request.getParameter("detailedAddress"));
+                String st = request.getParameter("streetName");
+                addr.setStreetName(st == null || st.trim().isEmpty() ? null : st.trim());
                 addr.setIsDefault(request.getParameter("isDefault") != null);
 
                 boolean isNew = addr.getAddressId() == null;

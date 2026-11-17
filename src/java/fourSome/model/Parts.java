@@ -75,4 +75,8 @@ public class Parts {
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
 
+    // Ảnh chính (lấy từ part_media, không phải cột của bảng parts)
+    private String imageUrl;
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

@@ -47,6 +47,8 @@ public class AdminDashboardServlet extends HttpServlet {
         if (partNames.length() > 1) { partNames.setLength(partNames.length() - 1); partQtys.setLength(partQtys.length() - 1); }
         partNames.append("]"); partQtys.append("]");
 
+        request.setAttribute("recentOrders", reportService.getRecentOrders(5));
+        request.setAttribute("topSellingPartsDetail", reportService.getTopSellingPartsDetail(5));
         request.setAttribute("categoryLabels", categories.toString());
         request.setAttribute("categoryData", revenues.toString());
         request.setAttribute("partLabels", partNames.toString());

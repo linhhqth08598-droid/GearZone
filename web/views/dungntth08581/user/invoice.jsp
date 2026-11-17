@@ -28,7 +28,7 @@
 
     <p><strong>Người nhận:</strong> <c:out value="${order.recipient}"/> - <c:out value="${order.phone}"/><br>
        <strong>Địa chỉ:</strong> <c:out value="${order.address}"/><br>
-       <strong>Thanh toán:</strong> Khi nhận hàng (COD)</p>
+       <strong>Thanh toán:</strong> <c:choose><c:when test="${payMethod == 'PAYOS'}">PayOS - đã thanh toán</c:when><c:otherwise>Khi nhận hàng (COD)</c:otherwise></c:choose></p>
 
     <table>
         <thead><tr><th>#</th><th>Sản phẩm</th><th class="r">Đơn giá</th><th class="r">SL</th><th class="r">Thành tiền</th></tr></thead>
