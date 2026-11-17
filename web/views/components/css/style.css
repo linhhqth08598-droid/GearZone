@@ -462,12 +462,15 @@ body.modal-open { padding-right: 0 !important; overflow: hidden; }
     background-color: #ffffff;
     border-right: 1px solid #e2e8f0;
     z-index: 100;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    /* thanh cuộn mảnh để biết sidebar còn mục phía dưới */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
     transition: margin-left .25s ease, visibility 0s;
 }
-.app-sidebar::-webkit-scrollbar { display: none; }
-.app-sidebar .nav { padding: 8px 0 16px; flex-wrap: nowrap; }
+.app-sidebar::-webkit-scrollbar { width: 6px; }
+.app-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.app-sidebar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.app-sidebar .nav { padding: 4px 0 16px; flex-wrap: nowrap; }
 
 /* Thu gọn trên máy tính: đẩy sidebar ra khỏi màn hình, nội dung tự giãn rộng */
 html.sb-collapsed .app-sidebar {
@@ -481,7 +484,7 @@ html.sb-collapsed .app-sidebar {
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 46px;
+    height: 42px;
     padding: 0 18px;
     font-size: 15px;
     font-weight: 500;
@@ -518,7 +521,7 @@ html.sb-collapsed .app-sidebar {
 
 .sb-group-label {
     display: block;
-    padding: 16px 21px 6px;
+    padding: 12px 21px 4px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;

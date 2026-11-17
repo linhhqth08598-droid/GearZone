@@ -142,6 +142,5 @@
     </div>
     <div class="text-center"><a href="${pageContext.request.contextPath}/promotion" class="btn btn-outline-warning">Xem tất cả khuyến mãi</a></div>
 </div>
-</div>
 
 <jsp:include page="/views/components/footer.jsp" />
