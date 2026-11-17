@@ -1,6 +1,8 @@
 package linhhqth08598.controller;
 
 import fourSome.model.Users;
+import linhhqth08598.dao.RolePermissionsDAO;
+import linhhqth08598.dao.UserRolesDAO;
 import linhhqth08598.service.AuthService;
 
 import jakarta.servlet.ServletException;
@@ -145,6 +147,10 @@ public class AuthServlet extends HttpServlet {
             // Đăng nhập thành công
             HttpSession session = request.getSession();
             session.setAttribute("loggedUser", user);
+            // Lưu vai trò + quyền ngay khi đăng nhập để header/sidebar biết tài khoản nào là admin
+            // (trước đây chỉ được nạp khi vào /admin/*)
+            session.setAttribute("userRoles", new UserRolesDAO().getRoleCodesByUserId(user.getUserId()));
+            session.setAttribute("userPermissions", new RolePermissionsDAO().getPermissionCodesByUserId(user.getUserId()));
 
             String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {

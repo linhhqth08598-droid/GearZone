@@ -3,6 +3,7 @@
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <jsp:include page="/views/components/header.jsp" />
+<jsp:include page="/views/components/sidebar.jsp" />
 
 <div class="container mt-4">
     <c:if test="${not empty sessionScope.message}">

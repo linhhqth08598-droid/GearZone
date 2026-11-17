@@ -3,6 +3,7 @@
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <jsp:include page="/views/components/header.jsp" />
+<jsp:include page="/views/components/sidebar.jsp" />
 
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">

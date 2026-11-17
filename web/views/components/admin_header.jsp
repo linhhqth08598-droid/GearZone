@@ -11,6 +11,16 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/components/css/style.css">
+        <script>
+            /* Mặc định sidebar ẩn (chỉ mở khi bấm nút 3 gạch); nhớ lựa chọn lần trước trên máy tính */
+            (function () {
+                try {
+                    var mobile = window.matchMedia('(max-width: 991.98px)').matches;
+                    var saved = localStorage.getItem('gz_sidebar_open');
+                    if (mobile || saved !== '1') document.documentElement.classList.add('sb-collapsed');
+                } catch (e) { document.documentElement.classList.add('sb-collapsed'); }
+            })();
+        </script>
 
         <style>
             /* chống lệch trang khi mở modal */
@@ -20,7 +30,6 @@
             html {
                 scrollbar-gutter: stable;
             }
-            :root { --admin-nav-h: 64px; --admin-sidebar-w: 250px; }
             body {
                 background-color: #f1f5f9;
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -66,20 +75,6 @@
                 flex: 1;
                 width: 100%;
             }
-            .sidebar-admin {
-                flex: 0 0 var(--admin-sidebar-w);
-                width: var(--admin-sidebar-w);
-                position: sticky;
-                top: var(--admin-nav-h);
-                align-self: flex-start;
-                height: calc(100vh - var(--admin-nav-h));
-                overflow-y: auto;
-                background-color: #ffffff;
-                border-right: 1px solid #e2e8f0;
-                z-index: 100;
-            }
-            .sidebar-admin { scrollbar-width: none; -ms-overflow-style: none; }
-            .sidebar-admin::-webkit-scrollbar { display: none; }
             .admin-main {
                 flex: 1;
                 min-width: 0;
@@ -106,36 +101,18 @@
                 padding: 15px 0;
                 text-align: center;
             }
-            .sidebar-admin .nav-link {
-                color: #475569;
-                font-weight: 500;
-                padding: 12px 20px;
-                border-left: 3px solid transparent;
-                transition: all 0.2s ease;
-            }
-            .sidebar-admin .nav-link:hover {
-                background-color: #f8fafc;
-                color: #3b82f6;
-                border-left-color: #3b82f6;
-            }
-            .sidebar-admin .nav-link.active {
-                background-color: #eff6ff;
-                color: #3b82f6;
-                border-left-color: #3b82f6;
-                font-weight: 600;
-            }
-            .sidebar-admin .nav-link i {
-                width: 25px;
-                text-align: center;
-                margin-right: 8px;
-            }
         </style>
     </head>
     <body>
         <!-- Navbar Admin: Dùng container để căn giữa giống User -->
         <nav class="navbar navbar-expand-lg navbar-admin">
             <div class="container">
-                <a class="navbar-brand" href="${pageContext.request.contextPath}/admin/dashboard">GEAR<span>ZONE</span> ADMIN</a>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="sb-toggle" id="sidebarToggle" aria-label="Ẩn/hiện menu" aria-controls="appSidebar" title="Ẩn/hiện menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="${pageContext.request.contextPath}/admin/dashboard">GEAR<span>ZONE</span> ADMIN</a>
+                </div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -181,14 +158,4 @@
             </div>
         </nav>
 
-        <script>
-    /* Đo chiều cao thật của navbar để sidebar dính đúng dưới navbar, không gây tràn trang */
-    (function () {
-        var nav = document.querySelector('.navbar-admin');
-        function setH() { if (nav) document.documentElement.style.setProperty('--admin-nav-h', nav.offsetHeight + 'px'); }
-        setH();
-        window.addEventListener('resize', setH);
-        window.addEventListener('load', setH);
-    })();
-</script>
 <div class="admin-wrapper">

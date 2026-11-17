@@ -10,6 +10,16 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/views/components/css/style.css">
+        <script>
+            /* Mặc định sidebar ẩn (chỉ mở khi bấm nút 3 gạch); nhớ lựa chọn lần trước trên máy tính */
+            (function () {
+                try {
+                    var mobile = window.matchMedia('(max-width: 991.98px)').matches;
+                    var saved = localStorage.getItem('gz_sidebar_open');
+                    if (mobile || saved !== '1') document.documentElement.classList.add('sb-collapsed');
+                } catch (e) { document.documentElement.classList.add('sb-collapsed'); }
+            })();
+        </script>
 
         <style>
             /* chống lệch trang khi mở modal */
@@ -81,7 +91,13 @@
     <body>
         <nav class="navbar navbar-expand-lg navbar-custom">
             <div class="container">
-                <a class="navbar-brand" href="${pageContext.request.contextPath}/home">GEAR<span>ZONE</span></a>
+                <div class="d-flex align-items-center">
+                    <%-- Nút 3 gạch: mặc định ẩn, sidebar.jsp sẽ hiện nó ở những trang có sidebar --%>
+                    <button type="button" class="sb-toggle" id="sidebarToggle" aria-label="Ẩn/hiện menu" aria-controls="appSidebar" title="Ẩn/hiện menu" hidden>
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="${pageContext.request.contextPath}/home">GEAR<span>ZONE</span></a>
+                </div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -93,7 +109,26 @@
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/promotion">Khuyến mãi</a></li>
                     </ul>
                     <ul class="navbar-nav align-items-center">
+                        <%-- Tài khoản quản trị (ADMIN / OWNER / STAFF) mới thấy nút chuyển sang trang quản trị --%>
+                        <c:if test="${not empty sessionScope.loggedUser and not empty sessionScope.userRoles and (sessionScope.userRoles.contains('ADMIN') or sessionScope.userRoles.contains('OWNER') or sessionScope.userRoles.contains('STAFF'))}">
+                            <li class="nav-item">
+                                <a class="nav-link btn-to-admin" href="${pageContext.request.contextPath}/admin/dashboard" title="Đi tới trang quản trị">
+                                    <i class="fas fa-user-shield"></i>Trang quản trị
+                                </a>
+                            </li>
+                        </c:if>
+                        <%-- Giỏ hàng: số món lấy từ session "cartCount" (UnreadCountFilter cập nhật mỗi lần mở trang) --%>
                         <c:if test="${not empty sessionScope.loggedUser}">
+                            <li class="nav-item me-2">
+                                <a class="nav-link position-relative" href="${pageContext.request.contextPath}/cart" title="Giỏ hàng">
+                                    <i class="fas fa-shopping-cart fs-5"></i>
+                                    <c:if test="${sessionScope.cartCount > 0}">
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
+                                            ${sessionScope.cartCount}
+                                        </span>
+                                    </c:if>
+                                </a>
+                            </li>
                             <li class="nav-item me-2">
                                 <a class="nav-link position-relative" href="${pageContext.request.contextPath}/user/notifications" title="Thông báo">
                                     <i class="fas fa-bell fs-5"></i>

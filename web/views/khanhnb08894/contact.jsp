@@ -2,6 +2,7 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
 <jsp:include page="/views/components/header.jsp" />
+<jsp:include page="/views/components/sidebar.jsp" />
 
 <div class="container my-5">
     <div class="row">

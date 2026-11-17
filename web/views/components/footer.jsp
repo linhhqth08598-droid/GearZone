@@ -39,6 +39,6 @@
 
 <!-- Scripts: Bootstrap chỉ nạp 1 lần duy nhất ở đây -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/views/components/script/script.js?v=3"></script>
+<script src="${pageContext.request.contextPath}/views/components/script/script.js?v=4"></script>
 </body>
 </html>

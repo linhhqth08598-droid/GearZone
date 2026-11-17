@@ -73,3 +73,80 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
 })();
+
+
+/* =========================================================
+   SIDEBAR ẨN/HIỆN BẰNG NÚT 3 GẠCH (dùng chung admin + user)
+   - Trạng thái = class "sb-collapsed" trên <html> (đặt sớm trong <head> để không nhấp nháy)
+   - Máy tính: nhớ lựa chọn bằng localStorage (gz_sidebar_open)
+   - Điện thoại: sidebar trượt đè lên nội dung, bấm nền mờ / chọn 1 mục để đóng
+   ========================================================= */
+(function () {
+    var root = document.documentElement;
+    var KEY = 'gz_sidebar_open';
+    var mq = window.matchMedia('(max-width: 991.98px)');
+
+    function isMobile() { return mq.matches; }
+
+    /* Đo chiều cao thật của navbar để sidebar dính đúng dưới navbar */
+    function setNavH() {
+        var nav = document.querySelector('.navbar-custom, .navbar-admin');
+        if (nav) root.style.setProperty('--app-nav-h', nav.offsetHeight + 'px');
+    }
+
+    function syncUi() {
+        var open = !root.classList.contains('sb-collapsed');
+        var btn = document.getElementById('sidebarToggle');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function setCollapsed(collapsed) {
+        root.classList.toggle('sb-collapsed', collapsed);
+        if (!isMobile()) {
+            try { localStorage.setItem(KEY, collapsed ? '0' : '1'); } catch (e) { }
+        }
+        syncUi();
+    }
+
+    function init() {
+        setNavH();
+        syncUi();
+        if (!document.getElementById('appSidebar')) return;   // trang không có sidebar
+        if (!document.getElementById('sbBackdrop')) {
+            var bd = document.createElement('div');
+            bd.id = 'sbBackdrop';
+            bd.className = 'sb-backdrop';
+            document.body.appendChild(bd);
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('#sidebarToggle')) {
+            setCollapsed(!root.classList.contains('sb-collapsed'));
+        } else if (e.target.closest('#sbBackdrop')) {
+            setCollapsed(true);
+        } else if (isMobile() && e.target.closest('#appSidebar a')) {
+            root.classList.add('sb-collapsed');   // chọn mục xong tự đóng (không lưu)
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && isMobile() && !root.classList.contains('sb-collapsed')) setCollapsed(true);
+    });
+
+    /* Đổi kích thước qua mốc điện thoại <-> máy tính: áp lại trạng thái phù hợp */
+    function onBreakpoint() {
+        var saved = null;
+        try { saved = localStorage.getItem(KEY); } catch (e) { }
+        root.classList.toggle('sb-collapsed', isMobile() || saved !== '1');
+        setNavH();
+        syncUi();
+    }
+    if (mq.addEventListener) mq.addEventListener('change', onBreakpoint);
+    else if (mq.addListener) mq.addListener(onBreakpoint);
+
+    window.addEventListener('resize', setNavH);
+    window.addEventListener('load', setNavH);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();

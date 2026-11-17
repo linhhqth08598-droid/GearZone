@@ -3,6 +3,8 @@
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <jsp:include page="/views/components/header.jsp" />
+<c:set var="sidebarFlush" value="true" scope="request" />
+<jsp:include page="/views/components/sidebar.jsp" />
 
 <style>
     .carousel-item img {
