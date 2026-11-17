@@ -79,7 +79,7 @@
             <!-- ================= KHU VỰC THÔNG SỐ KỸ THUẬT ĐỘNG ================= -->
             
             <!-- 1. Thông số CPU -->
-            <div id="cpuSpecs" class="spec-section card p-3 border bg-light mb-3">
+            <div id="cpuSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-microchip me-1"></i> Thông số CPU</h5>
                 <div class="row g-2">
                     <div class="col-md-4"><input type="number" name="socketId" placeholder="Socket ID (VD: 1700)" class="form-control"/></div>
@@ -179,10 +179,10 @@
             </div>
             <!-- ================= KẾT THÚC KHU VỰC THÔNG SỐ ================= -->
 
+            <!-- Đã chỉnh sửa phần tải ảnh tại đây -->
             <div class="mb-3 mt-3">
-                <label class="form-label fw-semibold">Hình ảnh chính & Video giới thiệu:</label>
+                <label class="form-label fw-semibold">Hình ảnh chính:</label>
                 <input type="file" name="productImage" class="form-control mb-2"/>
-                <input type="text" name="videoUrl" placeholder="Link video YouTube giới thiệu" class="form-control"/>
             </div>
 
             <div class="d-flex gap-2">

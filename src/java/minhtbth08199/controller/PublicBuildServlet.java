@@ -1,25 +1,3 @@
 package minhtbth08199.controller;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-/**
- * /shared-build?token=... -> chuyển sang trang xem chia sẻ công khai /build-share (UC 17, linhhqth08598.SharedBuildServlet)
- * để chỉ có MỘT nơi xử lý link chia sẻ.
- */
-@WebServlet(name = "PublicBuildServlet", urlPatterns = {"/shared-build"})
-public class PublicBuildServlet extends HttpServlet {
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String token = request.getParameter("token");
-        response.sendRedirect(request.getContextPath() + "/build-share"
-                + (token == null ? "" : "?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8)));
-    }
-}
+import jakarta.servlet.*;import jakarta.servlet.annotation.WebServlet;import jakarta.servlet.http.*;import java.io.*;import minhtbth08199.service.BuildPCService;
+@WebServlet("/shared-build") public class PublicBuildServlet extends HttpServlet {private final BuildPCService service=new BuildPCService();protected void doGet(HttpServletRequest q,HttpServletResponse s)throws ServletException,IOException{String token=q.getParameter("token");if(token==null||service.getShared(token)==null){s.sendError(404,"Cấu hình chia sẻ không tồn tại");return;}q.setAttribute("build",service.getShared(token));q.setAttribute("details",service.getDetails(service.getShared(token).getBuildId()));q.getRequestDispatcher("/views/minhtbth08199/buildpc/public_view.jsp").forward(q,s);}}

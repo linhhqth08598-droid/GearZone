@@ -1,17 +1,17 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Recommend | GearZone</title>
-        <!-- Link CSS chuẩn theo cấu trúc views/components/css/style.css -->
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/views/components/css/style.css"/>
-    </head>
-    <body>
-        <h1>Giao diện trang: Recommend</h1>
-        <!-- Viết code giao diện ở đây -->
-        
-        <!-- Script JS (Nếu cần) -->
-        <script src="${pageContext.request.contextPath}/views/components/script/script.js"></script>
-    </body>
-</html>
+<%@taglib prefix="c" uri="jakarta.tags.core"%>
+<%@taglib prefix="fmt" uri="jakarta.tags.fmt"%>
+<jsp:include page="/views/components/header.jsp" />
+<div class="container py-5"><div class="row justify-content-center"><div class="col-lg-9"><div class="p-4 p-md-5 rounded-4 text-white mb-4" style="background:linear-gradient(125deg,#151d2e,#29446c)"><span class="badge text-bg-danger mb-2">GEARZONE PC BUILDER</span><h1 class="fw-bold">Tìm cấu hình phù hợp</h1><p class="mb-0 text-white-50">Cho GearZone biết ngân sách và nhu cầu của bạn để bắt đầu tư vấn cấu hình.</p></div>
+<c:if test="${not empty error}"><div class="alert alert-danger"><c:out value="${error}"/></div></c:if>
+<c:if test="${not empty recommendedParts}"><div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-4"><h3 class="fw-bold">Cấu hình GearZone đề xuất</h3><p class="text-muted">Ngân sách của bạn: <fmt:formatNumber value="${recommendationBudget}" type="number" maxFractionDigits="0"/> ₫. Đây là cấu hình tham khảo thực tế từ linh kiện đang còn hàng.</p><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Nhóm</th><th>Linh kiện</th><th class="text-end">Giá</th></tr></thead><tbody><c:set var="recommendTotal" value="0"/><c:forEach var="part" items="${recommendedParts}"><tr><td><c:out value="${part.categoryId}"/></td><td><c:out value="${part.partName}"/></td><td class="text-end text-danger fw-bold"><fmt:formatNumber value="${not empty part.salePrice ? part.salePrice : part.basePrice}" type="number" maxFractionDigits="0"/> ₫</td><c:set var="recommendTotal" value="${recommendTotal + (not empty part.salePrice ? part.salePrice : part.basePrice)}"/></tr></c:forEach></tbody></table></div><div class="d-flex justify-content-between fs-5 fw-bold"><span>Tổng cấu hình</span><span class="text-danger"><fmt:formatNumber value="${recommendTotal}" type="number" maxFractionDigits="0"/> ₫</span></div><p class="small text-muted mt-2">Bạn có thể xem danh sách và tự chọn các linh kiện này trong Build PC.</p><a class="btn btn-danger mt-2" href="${pageContext.request.contextPath}/build-pc">Mở Build PC để chọn</a></div></div></c:if>
+<div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 p-md-5"><h3 class="fw-bold mb-1">Nhu cầu sử dụng</h3><p class="text-muted mb-4">Các mục có dấu * là bắt buộc.</p><form method="post" action="${pageContext.request.contextPath}/recommend-pc"><div class="row g-3">
+<div class="col-md-6"><label class="form-label fw-semibold">Mục đích chính *</label><select class="form-select" name="purpose" required><option value="gaming">Gaming</option><option value="design">Đồ họa / thiết kế</option><option value="office">Văn phòng</option><option value="streaming">Livestream</option><option value="video">Dựng phim / video</option></select></div>
+<div class="col-md-6"><label class="form-label fw-semibold">Ngân sách (₫) *</label><input class="form-control" type="number" name="budget" min="3000000" max="500000000" step="500000" placeholder="VD: 20000000" required><div class="form-text">Từ 3 triệu đến 500 triệu đồng.</div></div>
+<div class="col-md-6"><label class="form-label fw-semibold">Độ phân giải mục tiêu</label><select class="form-select" name="resolution"><option>1080p</option><option>1440p</option><option>4K</option></select></div>
+<div class="col-md-6"><label class="form-label fw-semibold">FPS mong muốn</label><select class="form-select" name="fps" required><c:forEach var="hz" items="${fpsOptions}"><option value="${hz}"><c:out value="${hz}"/> Hz</option></c:forEach></select><div class="form-text">Chỉ hiện tần số quét màn hình đang còn hàng.</div></div>
+<div class="col-md-6"><label class="form-label fw-semibold">RAM mong muốn</label><select class="form-select" name="ram" required><c:forEach var="ramSize" items="${ramOptions}"><option value="${ramSize}"><c:out value="${ramSize}"/> GB</option></c:forEach></select><div class="form-text">Cấu hình gợi ý sẽ chọn đúng dung lượng RAM này.</div></div>
+<div class="col-md-6"><label class="form-label fw-semibold">Ưu tiên</label><select class="form-select" name="priority"><option value="balanced">Cân bằng</option><option value="gpu">Hiệu năng đồ họa</option><option value="cpu">Hiệu năng CPU</option><option value="cost">Tối ưu chi phí</option></select></div>
+<div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="rgb" value="true" id="rgb"><label class="form-check-label" for="rgb">Ưu tiên linh kiện có RGB</label></div></div>
+<div class="col-12 d-flex justify-content-end mt-4"><button class="btn btn-danger btn-lg px-4" type="submit"><i class="fas fa-wand-magic-sparkles me-2"></i>Nhận gợi ý cấu hình</button></div></div></form></div></div></div></div></div>
+<jsp:include page="/views/components/footer.jsp" />
