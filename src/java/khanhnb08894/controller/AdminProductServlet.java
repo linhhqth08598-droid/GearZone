@@ -8,7 +8,7 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.math.BigDecimal;
+import java.util.List;
 
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 5 * 1024 * 1024, maxRequestSize = 10 * 1024 * 1024)
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/products", "/admin/product-form"})
@@ -23,37 +23,81 @@ public class AdminProductServlet extends HttpServlet {
     private SpecPsuDAO psuDAO = new SpecPsuDAO();
     private SpecCaseDAO caseDAO = new SpecCaseDAO();
     private SpecCoolerDAO coolerDAO = new SpecCoolerDAO();
-    private PartMediaDAO mediaDAO = new PartMediaDAO();
+    private khanhnb08894.dao.PartMediaDAO mediaDAO = new khanhnb08894.dao.PartMediaDAO();
     private SpecMonitorDAO monitorDAO = new SpecMonitorDAO();
     private SpecPeripheralDAO peripheralDAO = new SpecPeripheralDAO();
 
     private CategoriesDAO categoriesDAO = new CategoriesDAO();
     private BrandsDAO brandsDAO = new BrandsDAO();
 
+    private String saveImage(HttpServletRequest request, int partId) throws IOException, ServletException {
+        String url = null;
+        Part filePart = request.getPart("imageFile");
+        if (filePart == null || filePart.getSize() == 0) {
+            filePart = request.getPart("productImage");
+        }
+
+        if (filePart != null && filePart.getSize() > 0) {
+            String ct = filePart.getContentType() == null ? "" : filePart.getContentType().toLowerCase();
+            if (!java.util.Arrays.asList("image/jpeg", "image/png", "image/webp", "image/gif").contains(ct)) {
+                return "Ảnh phải là jpg, png, webp hoặc gif!";
+            }
+            if (filePart.getSize() > 2 * 1024 * 1024) {
+                return "Ảnh tối đa 2MB!";
+            }
+
+            byte[] bytes = filePart.getInputStream().readAllBytes();
+            url = "data:" + ct + ";base64," + java.util.Base64.getEncoder().encodeToString(bytes);
+        }
+
+        if (url == null) {
+            return null;
+        }
+        return mediaDAO.setPrimary(partId, url) ? null : "Không lưu được ảnh!";
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getServletPath();
 
-        // Nạp sẵn danh mục và thương hiệu dùng chung cho cả danh sách (để hiển thị trong Modal Thêm/Sửa)
         request.setAttribute("categories", categoriesDAO.getAll());
         request.setAttribute("brands", brandsDAO.getAll());
 
         if ("/admin/products".equals(action)) {
-            // Đảm bảo tên attribute là "parts" để khớp với vòng cờ lặp trong products.jsp của nhóm
-            request.setAttribute("parts", partsDAO.getAll());
-            request.getRequestDispatcher("/views/khanhnb08894/admin/products.jsp").forward(request, response);
+            // Nhận dữ liệu từ form tìm kiếm/lọc
+            String keyword = request.getParameter("keyword");
+            String catStr = request.getParameter("categoryId");
+            String brandStr = request.getParameter("brandId");
 
-        } else if ("/admin/product-form".equals(action)) {
-            String idStr = request.getParameter("id");
-            if (idStr != null && !idStr.trim().isEmpty()) {
-                try {
-                    int partId = Integer.parseInt(idStr);
-                    // Nếu DAO của bạn có hàm findById thì gọi findById(partId), nếu dùng mã sản phẩm thì giữ nguyên getPartByProductCode
-                    request.setAttribute("part", partsDAO.findById(partId));
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
+            Integer categoryId = (catStr != null && !catStr.trim().isEmpty()) ? Integer.parseInt(catStr) : null;
+            Integer brandId = (brandStr != null && !brandStr.trim().isEmpty()) ? Integer.parseInt(brandStr) : null;
+
+            List<Parts> partsList;
+            
+            // Nếu có nhập từ khóa hoặc chọn danh mục/thương hiệu thì gọi hàm Lọc
+            if ((keyword != null && !keyword.trim().isEmpty()) || categoryId != null || brandId != null) {
+                partsList = partsDAO.filterAdminParts(categoryId, brandId, keyword);
+            } else {
+                // Nếu không lọc thì lấy toàn bộ
+                partsList = partsDAO.getAllWithImages();
             }
+
+            request.setAttribute("parts", partsList);
+            
+            // Giữ lại giá trị trên form để hiển thị không bị mất sau khi ấn Lọc
+            request.setAttribute("paramKeyword", keyword);
+            request.setAttribute("paramCategoryId", categoryId);
+            request.setAttribute("paramBrandId", brandId);
+
+            request.getRequestDispatcher("/views/khanhnb08894/admin/products.jsp").forward(request, response);
+            
+        } else if ("/admin/product-form".equals(action)) {
+            // THÊM ĐOẠN NÀY ĐỂ XỬ LÝ KHI TRUY CẬP /admin/product-form
+            // Lấy thêm danh sách Series (dòng sản phẩm) để hiển thị trong form nếu cần
+            ProductSeriesDAO seriesDAO = new ProductSeriesDAO();
+            request.setAttribute("seriesList", seriesDAO.getAll());
+            
+            // Chuyển hướng tới file JSP chứa form thêm mới linh kiện
             request.getRequestDispatcher("/views/khanhnb08894/admin/product_form.jsp").forward(request, response);
         }
     }
@@ -66,7 +110,7 @@ public class AdminProductServlet extends HttpServlet {
         Users adminUser = (Users) session.getAttribute("loggedUser");
 
         try {
-            // 1. CHỨC NĂNG THÊM MỚI (Hỗ trợ cả "save" từ form riêng và "saveProduct" từ modal)
+            // 1. CHỨC NĂNG THÊM MỚI
             if ("save".equals(action) || "saveProduct".equals(action)) {
                 int categoryId = Integer.parseInt(request.getParameter("categoryId"));
                 int brandId = Integer.parseInt(request.getParameter("brandId"));
@@ -95,83 +139,64 @@ public class AdminProductServlet extends HttpServlet {
 
                 int partId = partsDAO.insertAndReturnId(part);
 
-                // =========================================================================
-                // LƯU THÔNG SỐ CHUYÊN SÂU AN TOÀN (Tránh lỗi văng ngoại lệ khi dùng Modal thêm nhanh)
-                // =========================================================================
                 if (partId > 0) {
-                    if (categoryId == 1) { // 1. CPU
+                    String imageError = saveImage(request, partId);
+                    if (imageError != null) {
+                        session.setAttribute("error", imageError);
+                    }
+
+                    if (categoryId == 1) {
                         String socketStr = request.getParameter("socketId");
                         if (socketStr != null && !socketStr.trim().isEmpty()) {
-                            int socketId = Integer.parseInt(socketStr);
-                            int cores = Integer.parseInt(request.getParameter("cores"));
-                            int threads = Integer.parseInt(request.getParameter("threads"));
-                            double baseClock = Double.parseDouble(request.getParameter("baseClock"));
-                            double boostClock = Double.parseDouble(request.getParameter("boostClock"));
-                            int tdp = Integer.parseInt(request.getParameter("tdp"));
-                            cpuDAO.insert(partId, socketId, cores, threads, baseClock, boostClock, tdp);
+                            cpuDAO.insert(partId, Integer.parseInt(socketStr), Integer.parseInt(request.getParameter("cores")),
+                                    Integer.parseInt(request.getParameter("threads")), Double.parseDouble(request.getParameter("baseClock")),
+                                    Double.parseDouble(request.getParameter("boostClock")), Integer.parseInt(request.getParameter("tdp")));
                         }
-                    } else if (categoryId == 2) { // 2. Mainboard
+                    } else if (categoryId == 2) {
                         String socketStr = request.getParameter("socketId");
                         if (socketStr != null && !socketStr.trim().isEmpty()) {
-                            int socketId = Integer.parseInt(socketStr);
-                            String chipset = request.getParameter("chipset");
-                            String ramStandard = request.getParameter("ramStandard");
-                            int ramSlots = Integer.parseInt(request.getParameter("ramSlots"));
-                            mbDAO.insert(partId, socketId, chipset, ramStandard, ramSlots);
+                            mbDAO.insert(partId, Integer.parseInt(socketStr), request.getParameter("chipset"),
+                                    request.getParameter("ramStandard"), Integer.parseInt(request.getParameter("ramSlots")));
                         }
-                    } else if (categoryId == 3) { // 3. RAM
+                    } else if (categoryId == 3) {
                         String ddrType = request.getParameter("ddrType");
                         if (ddrType != null && !ddrType.trim().isEmpty()) {
-                            int capacityGb = Integer.parseInt(request.getParameter("capacityGb"));
-                            int busSpeedMhz = Integer.parseInt(request.getParameter("busSpeedMhz"));
-                            ramDAO.insert(partId, ddrType, capacityGb, busSpeedMhz);
+                            ramDAO.insert(partId, ddrType, Integer.parseInt(request.getParameter("capacityGb")), Integer.parseInt(request.getParameter("busSpeedMhz")));
                         }
-                    } else if (categoryId == 4) { // 4. VGA
+                    } else if (categoryId == 4) {
                         String gpuChipset = request.getParameter("gpuChipset");
                         if (gpuChipset != null && !gpuChipset.trim().isEmpty()) {
-                            int vramCapacityGb = Integer.parseInt(request.getParameter("vramCapacityGb"));
-                            int recommendedPsuWatts = Integer.parseInt(request.getParameter("recommendedPsuWatts"));
-                            vgaDAO.insert(partId, gpuChipset, vramCapacityGb, recommendedPsuWatts);
+                            vgaDAO.insert(partId, gpuChipset, Integer.parseInt(request.getParameter("vramCapacityGb")), Integer.parseInt(request.getParameter("recommendedPsuWatts")));
                         }
-                    } else if (categoryId == 5) { // 5. SSD / HDD
+                    } else if (categoryId == 5) {
                         String storageType = request.getParameter("storageType");
                         if (storageType != null && !storageType.trim().isEmpty()) {
-                            int capacityGb = Integer.parseInt(request.getParameter("capacityGb"));
-                            storageDAO.insert(partId, storageType, capacityGb);
+                            storageDAO.insert(partId, storageType, Integer.parseInt(request.getParameter("capacityGb")));
                         }
-                    } else if (categoryId == 6) { // 6. PSU (Nguồn)
+                    } else if (categoryId == 6) {
                         String wattageStr = request.getParameter("wattage");
                         if (wattageStr != null && !wattageStr.trim().isEmpty()) {
-                            int wattage = Integer.parseInt(wattageStr);
-                            String efficiencyRating = request.getParameter("efficiencyRating");
-                            String modularType = request.getParameter("modularType");
-                            psuDAO.insert(partId, wattage, efficiencyRating, modularType);
+                            psuDAO.insert(partId, Integer.parseInt(wattageStr), request.getParameter("efficiencyRating"), request.getParameter("modularType"));
                         }
-                    } else if (categoryId == 7) { // 7. Case
+                    } else if (categoryId == 7) {
                         String caseFormFactor = request.getParameter("caseFormFactor");
                         if (caseFormFactor != null && !caseFormFactor.trim().isEmpty()) {
                             caseDAO.insert(partId, caseFormFactor);
                         }
-                    } else if (categoryId == 8) { // 8. Cooler
+                    } else if (categoryId == 8) {
                         String coolerType = request.getParameter("coolerType");
                         if (coolerType != null && !coolerType.trim().isEmpty()) {
-                            int maxTdp = Integer.parseInt(request.getParameter("maxTdp"));
-                            coolerDAO.insert(partId, coolerType, maxTdp);
+                            coolerDAO.insert(partId, coolerType, Integer.parseInt(request.getParameter("maxTdp")));
                         }
-                    } else if (categoryId == 9) { // 9. Màn hình
+                    } else if (categoryId == 9) {
                         String screenSize = request.getParameter("screenSize");
                         if (screenSize != null && !screenSize.trim().isEmpty()) {
-                            String resolution = request.getParameter("resolution");
-                            int refreshRate = Integer.parseInt(request.getParameter("refreshRate"));
-                            String panelType = request.getParameter("panelType");
-                            monitorDAO.insert(partId, screenSize, resolution, refreshRate, panelType);
+                            monitorDAO.insert(partId, screenSize, request.getParameter("resolution"), Integer.parseInt(request.getParameter("refreshRate")), request.getParameter("panelType"));
                         }
-                    } else if (categoryId == 10) { // 10. Gaming Gear
+                    } else if (categoryId == 10) {
                         String gearType = request.getParameter("gearType");
                         if (gearType != null && !gearType.trim().isEmpty()) {
-                            String connectivity = request.getParameter("connectivity");
-                            String switchOrDpi = request.getParameter("switchOrDpi");
-                            peripheralDAO.insert(partId, gearType, connectivity, switchOrDpi);
+                            peripheralDAO.insert(partId, gearType, request.getParameter("connectivity"), request.getParameter("switchOrDpi"));
                         }
                     }
                 }
@@ -179,7 +204,7 @@ public class AdminProductServlet extends HttpServlet {
                 session.setAttribute("message", "Thêm linh kiện thành công!");
                 response.sendRedirect(request.getContextPath() + "/admin/products");
 
-                // 2. CHỨC NĂNG CẬP NHẬT (SỬA)
+            // 2. CHỨC NĂNG CẬP NHẬT (SỬA)
             } else if ("updateProduct".equals(action)) {
                 int partId = Integer.parseInt(request.getParameter("partId"));
                 int categoryId = Integer.parseInt(request.getParameter("categoryId"));
@@ -206,13 +231,14 @@ public class AdminProductServlet extends HttpServlet {
                 part.setDescription(description);
 
                 if (partsDAO.update(part)) {
+                    saveImage(request, partId);
                     session.setAttribute("message", "Cập nhật linh kiện thành công!");
                 } else {
-                    session.setAttribute("error", "Không cập nhật được (mã sản phẩm có thể bị trùng).");
+                    session.setAttribute("error", "Không cập nhật được.");
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/products");
 
-                // 3. CHỨC NĂNG ẨN (SOFT DELETE)
+            // 3. CHỨC NĂNG ẨN (SOFT DELETE)
             } else if ("deleteProduct".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("partId"));
                 if (partsDAO.softDelete(id)) {
@@ -222,7 +248,7 @@ public class AdminProductServlet extends HttpServlet {
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/products");
 
-                // 4. CHỨC NĂNG HIỆN LẠI (RESTORE)
+            // 4. CHỨC NĂNG HIỆN LẠI (RESTORE)
             } else if ("restoreProduct".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("partId"));
                 if (partsDAO.setStatus(id, "ACTIVE")) {
@@ -231,12 +257,25 @@ public class AdminProductServlet extends HttpServlet {
                     session.setAttribute("error", "Không thể thay đổi trạng thái.");
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/products");
+
+            // 5. CHỨC NĂNG XÓA VĨNH VIỄN (HARD DELETE)
+            } else if ("hardDeleteProduct".equals(action)) {
+                String idParam = request.getParameter("partId");
+                if (idParam != null && !idParam.trim().isEmpty()) {
+                    int id = Integer.parseInt(idParam);
+                    if (partsDAO.delete(id)) {
+                        session.setAttribute("message", "Đã xóa vĩnh viễn linh kiện thành công!");
+                    } else {
+                        session.setAttribute("error", "Không thể xóa vĩnh viễn (đang có dữ liệu liên quan ở đơn hàng/giỏ hàng).");
+                    }
+                }
+                response.sendRedirect(request.getContextPath() + "/admin/products");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             session = request.getSession();
-            session.setAttribute("error", "Lỗi lưu linh kiện: " + e.getMessage());
+            session.setAttribute("error", "Lỗi xử lý linh kiện: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/products");
         }
     }

@@ -21,13 +21,57 @@
 
 <c:if test="${not empty sessionScope.message}">
     <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-1"></i> ${sessionScope.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-    <c:remove var="message" scope="session"/>
-</c:if>
-<c:if test="${not empty sessionScope.error}">
+        <c:remove var="message" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.error}">
     <div class="alert alert-danger alert-dismissible fade show"><i class="fas fa-exclamation-circle me-1"></i> ${sessionScope.error}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-    <c:remove var="error" scope="session"/>
-</c:if>
+        <c:remove var="error" scope="session"/>
+    </c:if>
+<!-- Form Tìm kiếm & Lọc -->
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body p-3">
+        <form action="${pageContext.request.contextPath}/admin/products" method="GET" class="row g-3 align-items-center">
 
+            <!-- Ô tìm kiếm Tên / Mã SKU -->
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="keyword" value="${paramKeyword}" class="form-control" placeholder="Tìm tên linh kiện, mã SKU...">
+                </div>
+            </div>
+
+            <!-- Lọc theo Danh mục -->
+            <div class="col-md-3">
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Tất cả danh mục --</option>
+                    <c:forEach var="cat" items="${categories}">
+                        <option value="${cat.categoryId}" ${paramCategoryId == cat.categoryId ? 'selected' : ''}>
+                            ${cat.categoryName}
+                        </option>
+                    </c:forEach>
+                </select>
+            </div>
+
+            <!-- Lọc theo Thương hiệu -->
+            <div class="col-md-3">
+                <select name="brandId" class="form-select">
+                    <option value="">-- Tất cả thương hiệu --</option>
+                    <c:forEach var="brand" items="${brands}">
+                        <option value="${brand.brandId}" ${paramBrandId == brand.brandId ? 'selected' : ''}>
+                            ${brand.brandName}
+                        </option>
+                    </c:forEach>
+                </select>
+            </div>
+
+            <!-- Nút Action -->
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Lọc</button>
+                <a href="${pageContext.request.contextPath}/admin/products" class="btn btn-outline-secondary" title="Hủy lọc"><i class="fas fa-sync-alt"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
 <div class="card shadow-sm border-0 rounded-4">
     <div class="card-body p-4">
         <div class="table-responsive">
@@ -35,6 +79,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>ID</th>
+                        <th class="text-center">Ảnh</th>
                         <th>Mã SP</th>
                         <th>Tên Linh Kiện</th>
                         <th>Giá Bán</th>
@@ -47,6 +92,18 @@
                     <c:forEach var="p" items="${parts}">
                         <tr>
                             <td>#${p.partId}</td>
+                            <td class="text-center">
+                                <c:choose>
+                                    <c:when test="${not empty p.imageUrl}">
+                                        <img src="${p.imageUrl}" alt="img" class="rounded border" style="width: 45px; height: 45px; object-fit: contain;">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center text-secondary mx-auto" style="width: 45px; height: 45px;">
+                                            <i class="fas fa-microchip"></i>
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                             <td><code>${p.productCode}</code></td>
                             <td class="fw-bold">${p.partName}</td>
                             <td class="text-danger fw-semibold">
@@ -61,6 +118,7 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex gap-2 justify-content-center">
+                                    <!-- Nút Sửa -->
                                     <button type="button" class="btn btn-sm btn-outline-primary btn-edit-part"
                                             data-bs-toggle="modal" data-bs-target="#editProductModal"
                                             data-id="${p.partId}"
@@ -74,22 +132,33 @@
                                             data-desc="<c:out value='${p.description}'/>">
                                         <i class="fas fa-edit"></i> Sửa
                                     </button>
+
+                                    <!-- Form Ẩn / Hiện -->
                                     <form action="${pageContext.request.contextPath}/admin/products" method="POST" class="m-0">
                                         <input type="hidden" name="partId" value="${p.partId}">
                                         <c:choose>
                                             <c:when test="${p.status == 'ACTIVE'}">
                                                 <input type="hidden" name="action" value="deleteProduct">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn ẩn linh kiện này?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Bạn có chắc muốn ẩn linh kiện này?');" title="Ẩn linh kiện">
                                                     <i class="fas fa-eye-slash"></i> Ẩn
                                                 </button>
                                             </c:when>
                                             <c:otherwise>
                                                 <input type="hidden" name="action" value="restoreProduct">
-                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Hiện lại linh kiện">
                                                     <i class="fas fa-eye"></i> Hiện
                                                 </button>
                                             </c:otherwise>
                                         </c:choose>
+                                    </form>
+
+                                    <!-- Nút Xóa vĩnh viễn (nếu Servlet của bạn có hỗ trợ action delete cứng) -->
+                                    <form action="${pageContext.request.contextPath}/admin/products" method="POST" class="m-0">
+                                        <input type="hidden" name="partId" value="${p.partId}">
+                                        <input type="hidden" name="action" value="hardDeleteProduct">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('CẢNH BÁO: Thao tác này sẽ xóa vĩnh viễn linh kiện và không thể khôi phục. Bạn có chắc chắn muốn xóa?');" title="Xóa vĩnh viễn">
+                                            <i class="fas fa-trash-alt"></i> Xóa
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -155,10 +224,9 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Ảnh sản phẩm</label>
-                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/png,image/jpeg,image/webp,image/gif">
-                        <input type="text" name="imageUrl" class="form-control" placeholder="hoặc dán đường dẫn ảnh (https://...)">
-                        <div class="form-text">Để trống nếu không đổi ảnh.</div>
+                        <label class="form-label fw-semibold">Ảnh sản phẩm (Tải lên)</label>
+                        <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif">
+                        <div class="form-text">Hỗ trợ định dạng: jpg, png, webp, gif (Tối đa 2MB).</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mô tả</label>
@@ -227,10 +295,9 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Ảnh sản phẩm</label>
-                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/png,image/jpeg,image/webp,image/gif">
-                        <input type="text" name="imageUrl" class="form-control" placeholder="hoặc dán đường dẫn ảnh (https://...)">
-                        <div class="form-text">Để trống nếu không đổi ảnh.</div>
+                        <label class="form-label fw-semibold">Ảnh sản phẩm mới (Tải lên)</label>
+                        <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif">
+                        <div class="form-text">Để trống nếu không muốn thay đổi ảnh cũ.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mô tả</label>
