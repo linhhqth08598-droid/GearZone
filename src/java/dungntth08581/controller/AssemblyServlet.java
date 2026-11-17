@@ -39,6 +39,19 @@ public class AssemblyServlet extends HttpServlet {
             request.getRequestDispatcher("/views/dungntth08581/user/assembly_register.jsp").forward(request, response);
             return;
         }
+        String idParam = request.getParameter("id");
+        if (idParam != null) {   // chi tiết đơn của chính khách: linh kiện, kết quả kiểm tra, ảnh (D3)
+            AssemblyService.Row row = null;
+            try { row = service.getRowOfUser(user.getUserId(), Integer.parseInt(idParam)); } catch (NumberFormatException ignored) { }
+            if (row == null) { request.getSession().setAttribute("error", "Không tìm thấy đơn lắp ráp!"); response.sendRedirect(request.getContextPath() + "/assembly"); return; }
+            request.setAttribute("a", row);
+            request.setAttribute("isService", AssemblyService.isServiceType(row.type));
+            request.setAttribute("used", service.usedParts(row.assemblyId));
+            request.setAttribute("report", service.getReport(row.assemblyId));
+            request.setAttribute("photos", service.photos(row.assemblyId));
+            request.getRequestDispatcher("/views/dungntth08581/user/assembly_detail.jsp").forward(request, response);
+            return;
+        }
         request.setAttribute("assemblies", reviewService.getAssemblies(user.getUserId()));
         request.getRequestDispatcher("/views/dungntth08581/user/assembly.jsp").forward(request, response);
     }

@@ -1,9 +1,12 @@
 package dungntth08581.controller;
 
+import fourSome.url.DBConnect;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Base64;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,28 +14,31 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Phục vụ ảnh PC hoàn thiện (UC 267). File lưu ngoài thư mục deploy: ~/gearzone-uploads/assembly/.
- * URL: /media/assembly/{tên-file}. Cần đăng nhập; tên file là UUID nên không đoán được.
+ * Phục vụ ảnh PC hoàn thiện (UC 267). Ảnh lưu trong DB dưới dạng base64 (data URI) ở assembly_photos.photo_url.
+ * URL: /media/assembly/{photo_id}. Cần đăng nhập.
  */
 @WebServlet(name = "AssemblyMediaServlet", urlPatterns = {"/media/assembly/*"})
 public class AssemblyMediaServlet extends HttpServlet {
 
-    public static Path root() {
-        return Paths.get(System.getProperty("user.home"), "gearzone-uploads");
-    }
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         if (req.getSession().getAttribute("loggedUser") == null) { res.sendError(403); return; }
-        String name = req.getPathInfo();
-        if (name == null || name.length() < 2 || !name.substring(1).matches("[A-Za-z0-9._-]+")) { res.sendError(404); return; }
-        Path dir = root().resolve("assembly").normalize();
-        Path f = dir.resolve(name.substring(1)).normalize();
-        if (!f.startsWith(dir) || !Files.isRegularFile(f)) { res.sendError(404); return; }
-        String n = f.getFileName().toString().toLowerCase();
-        res.setContentType(n.endsWith(".png") ? "image/png" : n.endsWith(".webp") ? "image/webp" : n.endsWith(".gif") ? "image/gif" : "image/jpeg");
+        String p = req.getPathInfo();
+        if (p == null || !p.substring(1).matches("\\d{1,9}")) { res.sendError(404); return; }
+        String data = null;
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT photo_url FROM assembly_photos WHERE photo_id = ? AND status = 'ACTIVE'")) {
+            ps.setInt(1, Integer.parseInt(p.substring(1)));
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) data = rs.getString(1); }
+        } catch (Exception e) { e.printStackTrace(); res.sendError(500); return; }
+        int comma = data == null ? -1 : data.indexOf(',');
+        if (comma < 0 || !data.startsWith("data:") || !data.substring(0, comma).endsWith(";base64")) { res.sendError(404); return; }
+        String mime = data.substring(5, comma - 7);
+        if (!mime.matches("image/(jpeg|png|webp|gif)")) { res.sendError(404); return; }
+        byte[] bytes = Base64.getDecoder().decode(data.substring(comma + 1));
+        res.setContentType(mime);
         res.setHeader("Cache-Control", "private, max-age=86400");
-        res.setContentLengthLong(Files.size(f));
-        Files.copy(f, res.getOutputStream());
+        res.setContentLength(bytes.length);
+        res.getOutputStream().write(bytes);
     }
 }

@@ -27,9 +27,15 @@
                 <div class="col-md-6"><label class="border rounded-3 p-3 d-block h-100">
                     <input type="radio" name="type" value="DELIVER_ASSEMBLED" ${type == 'DELIVER_ASSEMBLED' ? 'checked' : ''}> <strong>Lắp xong, giao PC tận nơi</strong> – 250.000 ₫
                     <div class="small text-muted">Lắp, kiểm tra xong rồi giao PC về địa chỉ của bạn.</div></label></div>
+                <div class="col-md-6"><label class="border rounded-3 p-3 d-block h-100">
+                    <input type="radio" name="type" value="PC_CLEANING" ${type == 'PC_CLEANING' ? 'checked' : ''}> <strong>Vệ sinh PC</strong> – 100.000 ₫
+                    <div class="small text-muted">Vệ sinh bụi, quạt, tản nhiệt cho PC đang dùng. Không cần chọn đơn/cấu hình ở bước 2.</div></label></div>
+                <div class="col-md-6"><label class="border rounded-3 p-3 d-block h-100">
+                    <input type="radio" name="type" value="THERMAL_PASTE_REPLACEMENT" ${type == 'THERMAL_PASTE_REPLACEMENT' ? 'checked' : ''}> <strong>Thay keo tản nhiệt</strong> – 120.000 ₫
+                    <div class="small text-muted">Thay keo tản nhiệt CPU/GPU để giảm nhiệt. Không cần chọn đơn/cấu hình ở bước 2.</div></label></div>
             </div>
 
-            <h6 class="fw-bold">2. Chọn PC cần lắp <span class="text-muted fw-normal small">(chọn ít nhất 1)</span></h6>
+            <h6 class="fw-bold">2. Chọn PC cần lắp <span class="text-muted fw-normal small">(chọn ít nhất 1 khi lắp PC; vệ sinh/thay keo thì bỏ qua)</span></h6>
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <label class="form-label small text-muted">Từ đơn hàng đã đặt</label>

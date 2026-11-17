@@ -1,6 +1,15 @@
 package dungntth08581.service;
 
 import fourSome.url.DBConnect;
+import fourSome.util.Constants;
+import javax.imageio.*;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import jakarta.servlet.http.Part;
 import linhhqth08598.service.NotificationService;
 
 import java.sql.*;
@@ -75,7 +84,7 @@ public class AssemblyService {
     /** Trả null nếu thành công, ngược lại là thông báo lỗi. */
     public String register(int userId, String type, Integer orderId, Integer buildId, String when, String note) {
         if (feeOf(type) < 0) return "Hình thức lắp ráp không hợp lệ!";
-        if (orderId == null && buildId == null) return "Vui lòng chọn đơn hàng hoặc cấu hình PC cần lắp!";
+        if (!isServiceType(type) && orderId == null && buildId == null) return "Vui lòng chọn đơn hàng hoặc cấu hình PC cần lắp!";
         LocalDateTime t;
         try { t = LocalDateTime.parse(when, FORM); } catch (Exception e) { return "Vui lòng chọn ngày giờ hẹn!"; }
         LocalDateTime now = LocalDateTime.now();
@@ -93,6 +102,13 @@ public class AssemblyService {
                 ps.setInt(1, userId); ps.setString(2, type);
                 setInt(ps, 3, orderId); setInt(ps, 4, orderId); setInt(ps, 5, buildId); setInt(ps, 6, buildId);
                 try (ResultSet rs = ps.executeQuery()) { if (rs.next() && rs.getInt(1) > 0) return "Bạn đã đăng ký dịch vụ này rồi, đang chờ xử lý!"; }
+            }
+            if (isServiceType(type)) {
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT COUNT(*) FROM assembly_orders WHERE user_id = ? AND assembly_type = ? AND status NOT IN ('CANCELLED','HANDED_OVER','COMPLETED')")) {
+                    ps.setInt(1, userId); ps.setString(2, type);
+                    try (ResultSet rs = ps.executeQuery()) { if (rs.next() && rs.getInt(1) > 0) return "Bạn đã đăng ký dịch vụ này rồi, đang chờ xử lý!"; }
+                }
             }
             try (PreparedStatement ps = c.prepareStatement(
                     "INSERT INTO assembly_orders (user_id, order_id, build_id, assembly_type, assembly_fee, status, scheduled_date, note, created_at) "
@@ -328,6 +344,7 @@ public class AssemblyService {
                 if (tech == null) return "Hãy phân công kỹ thuật viên trước khi bắt đầu lắp!";
                 msg = "Kỹ thuật viên đã bắt đầu lắp PC của bạn.";
             } else if ("TESTING".equals(next) && "IN_PROGRESS".equals(cur)) {
+                if (isServiceOnly(c, assemblyId)) return "Dịch vụ vệ sinh/thay keo không cần kiểm tra – bấm \"Hoàn tất\" luôn!";
                 if (usedParts(assemblyId).isEmpty()) return "Hãy ghi linh kiện đã dùng trước khi chuyển sang kiểm tra!";
                 msg = "PC của bạn đã lắp xong và đang được kiểm tra.";
             } else return "Không thể chuyển từ " + cur + " sang " + next + "!";
@@ -336,6 +353,277 @@ public class AssemblyService {
                 if (ps.executeUpdate() == 0) return "Đơn vừa được cập nhật bởi người khác, vui lòng tải lại!";
             }
             notify.send(uid, "SYSTEM", "Lắp ráp #" + assemblyId, msg, "ASSEMBLY", assemblyId);
+            return null;
+        } catch (Exception e) { e.printStackTrace(); return "Lỗi hệ thống, vui lòng thử lại!"; }
+    }
+
+    // =====================================================================
+    // ĐỢT D3: UC 259–266 báo cáo kiểm tra · 267 ảnh PC · 268 hoàn tất & bàn giao · 269–270 vệ sinh / thay keo
+    // =====================================================================
+
+    public static final int MAX_PHOTOS = 10;
+
+    public static boolean isServiceType(String type) { return CLEANING.equals(type) || PASTE.equals(type); }
+
+    private boolean isServiceOnly(Connection c, int assemblyId) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement("SELECT assembly_type FROM assembly_orders WHERE assembly_id = ?")) {
+            ps.setInt(1, assemblyId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() && isServiceType(rs.getString(1)); }
+        }
+    }
+
+    /** Báo cáo kiểm tra (đọc từ assembly_test_reports). Tên getter khớp user/assembly_detail.jsp. */
+    public static class Report {
+        public boolean bootPassed, stabilityPassed;
+        public Integer cpuIdle, cpuLoad, gpuIdle, gpuLoad, cinebench, dmark, stabilityMinutes;
+        public String note, finalResult; public Timestamp completedAt;
+        public boolean isBootPassed() { return bootPassed; } public boolean isStabilityPassed() { return stabilityPassed; }
+        public Integer getCpuIdle() { return cpuIdle; } public Integer getCpuLoad() { return cpuLoad; }
+        public Integer getGpuIdle() { return gpuIdle; } public Integer getGpuLoad() { return gpuLoad; }
+        public Integer getCinebench() { return cinebench; } public Integer getDmark() { return dmark; }
+        public Integer getStabilityMinutes() { return stabilityMinutes; }
+        public String getNote() { return note; } public String getFinalResult() { return finalResult; }
+        public Timestamp getCompletedAt() { return completedAt; }
+    }
+
+    public static class Photo {
+        public int photoId; public String url;
+        public int getPhotoId() { return photoId; } public String getUrl() { return url; }
+    }
+
+    public Report getReport(int assemblyId) {
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT TOP 1 boot_test_passed, cpu_idle_temp_c, cpu_load_temp_c, gpu_idle_temp_c, gpu_load_temp_c, cinebench_score, [3dmark_score], "
+              + "stability_test_passed, stability_test_minutes, note, final_result, completed_at FROM assembly_test_reports WHERE assembly_id = ? AND status = 'ACTIVE' ORDER BY report_id DESC")) {
+            ps.setInt(1, assemblyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                Report r = new Report();
+                r.bootPassed = rs.getBoolean(1);
+                r.cpuIdle = rs.getObject(2, Integer.class); r.cpuLoad = rs.getObject(3, Integer.class);
+                r.gpuIdle = rs.getObject(4, Integer.class); r.gpuLoad = rs.getObject(5, Integer.class);
+                r.cinebench = rs.getObject(6, Integer.class); r.dmark = rs.getObject(7, Integer.class);
+                r.stabilityPassed = rs.getBoolean(8); r.stabilityMinutes = rs.getObject(9, Integer.class);
+                r.note = rs.getString(10); r.finalResult = rs.getString(11); r.completedAt = rs.getTimestamp(12);
+                return r;
+            }
+        } catch (Exception e) { e.printStackTrace(); return null; }
+    }
+
+    /** Danh sách ảnh: chỉ lấy id (không kéo base64 về); url = "assembly/{id}" → trang hiển thị qua /media/assembly/{id}. */
+    public List<Photo> photos(int assemblyId) {
+        List<Photo> l = new ArrayList<>();
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT photo_id FROM assembly_photos WHERE assembly_id = ? AND status = 'ACTIVE' ORDER BY photo_id")) {
+            ps.setInt(1, assemblyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) { Photo p = new Photo(); p.photoId = rs.getInt(1); p.url = "assembly/" + p.photoId; l.add(p); }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return l;
+    }
+
+    /** Khách xem chi tiết đơn của chính mình (null nếu không phải chủ đơn). */
+    public Row getRowOfUser(int userId, int assemblyId) {
+        Row r = getRow(assemblyId);
+        return r != null && r.userId == userId ? r : null;
+    }
+
+    private static Integer parseTemp(String s, String label, StringBuilder err) {
+        if (s == null || s.trim().isEmpty()) { err.append("Vui lòng nhập ").append(label).append("! "); return null; }
+        try {
+            int v = Integer.parseInt(s.trim());
+            if (v < 0 || v > 150) { err.append(label).append(" phải từ 0 đến 150°C! "); return null; }
+            return v;
+        } catch (NumberFormatException e) { err.append(label).append(" không hợp lệ! "); return null; }
+    }
+
+    private static Integer parseScore(String s, String label, StringBuilder err) {
+        if (s == null || s.trim().isEmpty()) return null;
+        try {
+            int v = Integer.parseInt(s.trim());
+            if (v < 0 || v > 1000000) { err.append(label).append(" không hợp lệ! "); return null; }
+            return v;
+        } catch (NumberFormatException e) { err.append(label).append(" không hợp lệ! "); return null; }
+    }
+
+    /**
+     * UC 259–266: ghi kết quả lắp ráp + 7 hạng mục kiểm tra. Chỉ khi đơn đang TESTING (và không phải dịch vụ vệ sinh/thay keo).
+     * Lưu lại nhiều lần thì ghi đè báo cáo cũ. Kết luận Đạt bị chặn nếu khởi động hoặc ổn định chưa đạt.
+     */
+    public String saveReport(int assemblyId, boolean boot, String cpuIdle, String cpuLoad, String gpuIdle, String gpuLoad,
+                             boolean stable, String stableMin, String cinebench, String dmark, String note, String finalResult) {
+        if (!"PASSED".equals(finalResult) && !"FAILED".equals(finalResult)) return "Vui lòng chọn kết luận Đạt / Không đạt!";
+        if (note != null && note.trim().length() > 500) return "Ghi chú tối đa 500 ký tự!";
+        StringBuilder err = new StringBuilder();
+        Integer ci = parseTemp(cpuIdle, "Nhiệt độ CPU lúc nghỉ", err), cl = parseTemp(cpuLoad, "Nhiệt độ CPU khi tải", err);
+        Integer gi = parseTemp(gpuIdle, "Nhiệt độ GPU lúc nghỉ", err), gl = parseTemp(gpuLoad, "Nhiệt độ GPU khi tải", err);
+        Integer cb = parseScore(cinebench, "Điểm Cinebench", err), dm = parseScore(dmark, "Điểm 3DMark", err);
+        Integer sm = null;
+        try {
+            sm = Integer.parseInt(stableMin == null ? "" : stableMin.trim());
+            if (sm < 0 || sm > 1440) err.append("Số phút test ổn định phải từ 0 đến 1440! ");
+        } catch (NumberFormatException e) { err.append("Vui lòng nhập số phút test ổn định! "); }
+        if (err.length() > 0) return err.toString().trim();
+        if ("PASSED".equals(finalResult) && (!boot || !stable)) return "Không thể kết luận Đạt khi khởi động hoặc test ổn định chưa đạt!";
+        if (ci != null && cl != null && cl < ci) return "Nhiệt độ CPU khi tải không thể thấp hơn lúc nghỉ!";
+        if (gi != null && gl != null && gl < gi) return "Nhiệt độ GPU khi tải không thể thấp hơn lúc nghỉ!";
+
+        try (Connection c = DBConnect.getConnection()) {
+            String st = currentStatus(c, assemblyId);
+            if (st == null) return "Không tìm thấy đơn lắp ráp!";
+            if (isServiceOnly(c, assemblyId)) return "Dịch vụ vệ sinh/thay keo không cần báo cáo kiểm tra!";
+            if (!"TESTING".equals(st)) return "Chỉ ghi báo cáo khi đơn đang ở bước kiểm tra!";
+            String n = note == null || note.trim().isEmpty() ? null : note.trim();
+            int exist = 0;
+            try (PreparedStatement ps = c.prepareStatement("SELECT TOP 1 report_id FROM assembly_test_reports WHERE assembly_id = ? ORDER BY report_id DESC")) {
+                ps.setInt(1, assemblyId);
+                try (ResultSet rs = ps.executeQuery()) { if (rs.next()) exist = rs.getInt(1); }
+            }
+            String sql = exist > 0
+                ? "UPDATE assembly_test_reports SET boot_test_passed = ?, cpu_idle_temp_c = ?, cpu_load_temp_c = ?, gpu_idle_temp_c = ?, gpu_load_temp_c = ?, "
+                + "cinebench_score = ?, [3dmark_score] = ?, stability_test_passed = ?, stability_test_minutes = ?, note = ?, final_result = ?, completed_at = SYSDATETIME(), status = 'ACTIVE' WHERE report_id = ?"
+                : "INSERT INTO assembly_test_reports (boot_test_passed, cpu_idle_temp_c, cpu_load_temp_c, gpu_idle_temp_c, gpu_load_temp_c, cinebench_score, [3dmark_score], "
+                + "stability_test_passed, stability_test_minutes, note, final_result, completed_at, status, assembly_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), 'ACTIVE', ?)";
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setBoolean(1, boot); setInt(ps, 2, ci); setInt(ps, 3, cl); setInt(ps, 4, gi); setInt(ps, 5, gl);
+                setInt(ps, 6, cb); setInt(ps, 7, dm); ps.setBoolean(8, stable); setInt(ps, 9, sm);
+                ps.setString(10, n); ps.setString(11, finalResult);
+                ps.setInt(12, exist > 0 ? exist : assemblyId);
+                ps.executeUpdate();
+            }
+            return null;
+        } catch (Exception e) { e.printStackTrace(); return "Không lưu được báo cáo, vui lòng thử lại!"; }
+    }
+
+    /** Nén ảnh: thu nhỏ cạnh dài ≤ 1280px, xuất JPEG chất lượng 0.8. Trả null nếu ImageIO không đọc được định dạng (vd webp). */
+    private static byte[] compress(byte[] raw) throws java.io.IOException {
+        BufferedImage src = ImageIO.read(new ByteArrayInputStream(raw));
+        if (src == null) return null;
+        int w = src.getWidth(), h = src.getHeight(), max = 1280;
+        double k = Math.min(1.0, (double) max / Math.max(w, h));
+        int nw = Math.max(1, (int) Math.round(w * k)), nh = Math.max(1, (int) Math.round(h * k));
+        BufferedImage out = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = out.createGraphics();
+        g.setColor(Color.WHITE); g.fillRect(0, 0, nw, nh);
+        g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(src, 0, 0, nw, nh, null);
+        g.dispose();
+        ImageWriter wr = ImageIO.getImageWritersByFormatName("jpeg").next();
+        ImageWriteParam prm = wr.getDefaultWriteParam();
+        prm.setCompressionMode(ImageWriteParam.MODE_EXPLICIT); prm.setCompressionQuality(0.8f);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (MemoryCacheImageOutputStream ios = new MemoryCacheImageOutputStream(bos)) {
+            wr.setOutput(ios); wr.write(null, new IIOImage(out, null, null), prm);
+        } finally { wr.dispose(); }
+        return bos.toByteArray();
+    }
+
+    /**
+     * UC 267: tải 1 ảnh PC hoàn thiện, nén rồi mã hóa base64 lưu thẳng vào assembly_photos.photo_url
+     * (dạng data URI, cột NVARCHAR(MAX) – xem file sql/assembly_photos_base64.sql). ≤ 10 ảnh/đơn, ≤ 10 MB/ảnh gốc.
+     */
+    public String addPhoto(int assemblyId, Part part) {
+        if (part == null || part.getSize() == 0) return "Vui lòng chọn ảnh!";
+        if (part.getSize() > Constants.MAX_IMAGE_SIZE) return "Ảnh vượt quá " + (Constants.MAX_IMAGE_SIZE / 1024 / 1024) + "MB!";
+        String name = part.getSubmittedFileName() == null ? "" : part.getSubmittedFileName().toLowerCase();
+        String ext = name.contains(".") ? name.substring(name.lastIndexOf('.') + 1) : "";
+        if (!Arrays.asList(Constants.IMAGE_EXTENSIONS).contains(ext)) return "Định dạng ảnh không được hỗ trợ: ." + ext;
+        try (Connection c = DBConnect.getConnection()) {
+            String st = currentStatus(c, assemblyId);
+            if (st == null) return "Không tìm thấy đơn lắp ráp!";
+            if (isServiceOnly(c, assemblyId)) return "Dịch vụ vệ sinh/thay keo không cần ảnh PC hoàn thiện!";
+            if (!"TESTING".equals(st) && !"COMPLETED".equals(st)) return "Chỉ thêm ảnh khi đơn đang kiểm tra hoặc đã hoàn tất!";
+            if (photos(assemblyId).size() >= MAX_PHOTOS) return "Mỗi đơn tối đa " + MAX_PHOTOS + " ảnh!";
+            byte[] raw;
+            try (java.io.InputStream in = part.getInputStream()) { raw = in.readAllBytes(); }
+            byte[] jpg = compress(raw);
+            String mime = "image/jpeg";
+            if (jpg == null) {   // định dạng ImageIO không đọc được: giữ nguyên nếu nhỏ
+                if (raw.length > 1536 * 1024) return "Không xử lý được định dạng ảnh này, hãy dùng jpg/png (hoặc ảnh ≤ 1,5 MB)!";
+                jpg = raw; mime = "webp".equals(ext) ? "image/webp" : ("gif".equals(ext) ? "image/gif" : "image/" + ext);
+            }
+            ensurePhotoColumn(c);   // tự mở rộng cột photo_url sang NVARCHAR(MAX) nếu chưa chạy file sql
+            String data = "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(jpg);
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO assembly_photos (assembly_id, photo_url, status) VALUES (?, ?, 'ACTIVE')")) {
+                ps.setInt(1, assemblyId); ps.setString(2, data); ps.executeUpdate();
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            String m = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage().replaceAll("\\s+", " ");
+            return "Không tải được ảnh: " + (m.length() > 160 ? m.substring(0, 160) + "…" : m);
+        }
+    }
+
+    private static volatile boolean photoColReady = false;
+
+    /** assembly_photos.photo_url gốc là NVARCHAR(500) – quá nhỏ cho base64. Kiểm tra 1 lần, nếu chưa phải MAX thì ALTER. */
+    private static void ensurePhotoColumn(Connection c) throws SQLException {
+        if (photoColReady) return;
+        int len = 0;
+        try (PreparedStatement ps = c.prepareStatement("SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'assembly_photos' AND COLUMN_NAME = 'photo_url'");
+             ResultSet rs = ps.executeQuery()) { if (rs.next()) len = rs.getInt(1); }
+        if (len != -1) {
+            try (Statement st = c.createStatement()) { st.executeUpdate("ALTER TABLE dbo.assembly_photos ALTER COLUMN photo_url NVARCHAR(MAX) NOT NULL"); }
+        }
+        photoColReady = true;
+    }
+
+    public String removePhoto(int assemblyId, int photoId) {
+        try (Connection c = DBConnect.getConnection()) {
+            String st = currentStatus(c, assemblyId);
+            if (!"TESTING".equals(st) && !"COMPLETED".equals(st)) return "Chỉ xóa ảnh khi đơn đang kiểm tra hoặc đã hoàn tất!";
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM assembly_photos WHERE photo_id = ? AND assembly_id = ?")) {
+                ps.setInt(1, photoId); ps.setInt(2, assemblyId);
+                return ps.executeUpdate() == 0 ? "Không tìm thấy ảnh!" : null;
+            }
+        } catch (Exception e) { e.printStackTrace(); return "Lỗi hệ thống, vui lòng thử lại!"; }
+    }
+
+    /**
+     * Hoàn tất: TESTING → COMPLETED (cần báo cáo kết luận Đạt) · với vệ sinh/thay keo: IN_PROGRESS → COMPLETED (đi tắt, UC 269–270).
+     */
+    public String complete(int assemblyId) {
+        try (Connection c = DBConnect.getConnection()) {
+            String cur = null; Integer tech = null; int uid = 0; String type = null;
+            try (PreparedStatement ps = c.prepareStatement("SELECT status, technician_id, user_id, assembly_type FROM assembly_orders WHERE assembly_id = ?")) {
+                ps.setInt(1, assemblyId);
+                try (ResultSet rs = ps.executeQuery()) { if (!rs.next()) return "Không tìm thấy đơn lắp ráp!"; cur = rs.getString(1); tech = rs.getObject(2, Integer.class); uid = rs.getInt(3); type = rs.getString(4); }
+            }
+            if (isServiceType(type)) {
+                if (!"IN_PROGRESS".equals(cur)) return "Đơn phải đang thực hiện mới hoàn tất được (hiện: " + cur + ")!";
+            } else {
+                if (!"TESTING".equals(cur)) return "Chỉ hoàn tất khi đơn đang ở bước kiểm tra!";
+                Report r = getReport(assemblyId);
+                if (r == null) return "Hãy ghi báo cáo kiểm tra trước khi hoàn tất!";
+                if (!"PASSED".equals(r.finalResult)) return "Báo cáo kiểm tra chưa đạt – không thể hoàn tất!";
+            }
+            try (PreparedStatement ps = c.prepareStatement("UPDATE assembly_orders SET status = 'COMPLETED' WHERE assembly_id = ? AND status = ?")) {
+                ps.setInt(1, assemblyId); ps.setString(2, cur);
+                if (ps.executeUpdate() == 0) return "Đơn vừa được cập nhật bởi người khác, vui lòng tải lại!";
+            }
+            notify.send(uid, "SYSTEM", "Lắp ráp #" + assemblyId,
+                    isServiceType(type) ? "Dịch vụ \"" + typeLabel(type) + "\" đã hoàn tất, cửa hàng sẽ bàn giao PC cho bạn." : "PC của bạn đã lắp xong và kiểm tra đạt. Cửa hàng sẽ bàn giao cho bạn.", "ASSEMBLY", assemblyId);
+            return null;
+        } catch (Exception e) { e.printStackTrace(); return "Lỗi hệ thống, vui lòng thử lại!"; }
+    }
+
+    /** UC 268: COMPLETED → HANDED_OVER, ghi handed_over_at. Lắp PC cần ≥ 1 ảnh; vệ sinh/thay keo không cần. */
+    public String handOver(int assemblyId) {
+        try (Connection c = DBConnect.getConnection()) {
+            String cur = null; int uid = 0; String type = null;
+            try (PreparedStatement ps = c.prepareStatement("SELECT status, user_id, assembly_type FROM assembly_orders WHERE assembly_id = ?")) {
+                ps.setInt(1, assemblyId);
+                try (ResultSet rs = ps.executeQuery()) { if (!rs.next()) return "Không tìm thấy đơn lắp ráp!"; cur = rs.getString(1); uid = rs.getInt(2); type = rs.getString(3); }
+            }
+            if (!"COMPLETED".equals(cur)) return "Chỉ bàn giao khi đơn đã hoàn tất!";
+            if (!isServiceType(type) && photos(assemblyId).isEmpty()) return "Hãy tải ít nhất 1 ảnh PC hoàn thiện trước khi bàn giao!";
+            try (PreparedStatement ps = c.prepareStatement("UPDATE assembly_orders SET status = 'HANDED_OVER', handed_over_at = SYSDATETIME() WHERE assembly_id = ? AND status = 'COMPLETED'")) {
+                ps.setInt(1, assemblyId);
+                if (ps.executeUpdate() == 0) return "Đơn vừa được cập nhật bởi người khác, vui lòng tải lại!";
+            }
+            notify.send(uid, "SYSTEM", "Lắp ráp #" + assemblyId, "Cửa hàng đã bàn giao PC cho bạn. Cảm ơn bạn đã sử dụng dịch vụ – hãy để lại đánh giá nhé!", "ASSEMBLY", assemblyId);
             return null;
         } catch (Exception e) { e.printStackTrace(); return "Lỗi hệ thống, vui lòng thử lại!"; }
     }

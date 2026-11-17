@@ -34,10 +34,11 @@
                             <div class="d-flex justify-content-between flex-wrap gap-2">
                                 <div>
                                     <h6 class="fw-bold mb-1">Đơn lắp ráp #${a.assemblyId}
-                                        <span class="badge bg-secondary ms-2"><c:out value="${a.status == 'SCHEDULED' ? 'Chờ xác nhận lịch' : (a.status == 'CONFIRMED' ? 'Đã xác nhận lịch' : (a.status == 'CANCELLED' ? 'Đã hủy' : a.status))}"/></span></h6>
+                                        <span class="badge bg-secondary ms-2"><c:out value="${a.status == 'SCHEDULED' ? 'Chờ xác nhận lịch' : (a.status == 'CONFIRMED' ? 'Đã xác nhận lịch' : (a.status == 'IN_PROGRESS' ? 'Đang thực hiện' : (a.status == 'TESTING' ? 'Đang kiểm tra' : (a.status == 'COMPLETED' ? 'Đã hoàn tất' : (a.status == 'HANDED_OVER' ? 'Đã bàn giao' : (a.status == 'CANCELLED' ? 'Đã hủy' : a.status))))))}"/></span></h6>
                                     <div class="text-muted small">Loại: <c:out value="${a.type == 'AT_STORE' ? 'Lắp tại cửa hàng' : (a.type == 'DELIVER_ASSEMBLED' ? 'Lắp xong, giao PC tận nơi' : (a.type == 'PC_CLEANING' ? 'Vệ sinh PC' : (a.type == 'THERMAL_PASTE_REPLACEMENT' ? 'Thay keo tản nhiệt' : a.type)))}"/> ·
                                         Ngày hẹn: <fmt:formatDate value="${a.scheduledDate}" pattern="dd/MM/yyyy HH:mm"/></div>
                                 </div>
+                                <a href="${pageContext.request.contextPath}/assembly?id=${a.assemblyId}" class="btn btn-sm btn-outline-primary align-self-start">Xem chi tiết</a>
                                 <c:if test="${a.status == 'SCHEDULED' or a.status == 'CONFIRMED'}">
                                     <form action="${pageContext.request.contextPath}/assembly" method="POST" class="m-0" onsubmit="return confirm('Hủy lịch lắp ráp này?');">
                                         <input type="hidden" name="action" value="cancel"><input type="hidden" name="id" value="${a.assemblyId}">
