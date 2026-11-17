@@ -37,4 +37,20 @@ public class SpecMainboardDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, int socketId, String chipset, String ramStandard, int ramSlots) {
+        String sql = "INSERT INTO spec_mainboard (part_id, socket_id, chipset, form_factor, ram_standard, ram_slots, max_ram_speed_mhz, max_ram_capacity_gb, m2_slots_count, supports_nvme, pcie_generation, sata_ports_count, status) "
+                   + "VALUES (?, ?, ?, 'ATX', ?, ?, 3200, 64, 2, 1, 'PCIe 4.0', 4, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setInt(2, socketId);
+            ps.setString(3, chipset);
+            ps.setString(4, ramStandard);
+            ps.setInt(5, ramSlots);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

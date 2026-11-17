@@ -34,4 +34,18 @@ public class SpecVgaDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, String gpuChipset, int vramCapacityGb, int recommendedPsuWatts) {
+    String sql = "INSERT INTO spec_vga (part_id, gpu_chipset, vram_capacity_gb, recommended_psu_watts) VALUES (?, ?, ?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setString(2, gpuChipset);
+        ps.setInt(3, vramCapacityGb);
+        ps.setInt(4, recommendedPsuWatts);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

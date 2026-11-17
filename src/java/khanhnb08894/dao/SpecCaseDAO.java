@@ -28,4 +28,16 @@ public class SpecCaseDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, String caseFormFactor) {
+    String sql = "INSERT INTO spec_case (part_id, case_form_factor) VALUES (?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setString(2, caseFormFactor);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

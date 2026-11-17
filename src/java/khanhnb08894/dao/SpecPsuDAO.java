@@ -31,4 +31,18 @@ public class SpecPsuDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, int wattage, String efficiencyRating, String modularType) {
+    String sql = "INSERT INTO spec_psu (part_id, wattage, efficiency_rating, modular_type) VALUES (?, ?, ?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setInt(2, wattage);
+        ps.setString(3, efficiencyRating);
+        ps.setString(4, modularType);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

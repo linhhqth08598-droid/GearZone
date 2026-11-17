@@ -30,4 +30,17 @@ public class SpecStorageDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, String storageType, int capacityGb) {
+    String sql = "INSERT INTO spec_storage (part_id, storage_type, capacity_gb) VALUES (?, ?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setString(2, storageType);
+        ps.setInt(3, capacityGb);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

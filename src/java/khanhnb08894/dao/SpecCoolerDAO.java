@@ -29,4 +29,17 @@ public class SpecCoolerDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, String coolerType, int maxTdp) {
+    String sql = "INSERT INTO spec_cooler (part_id, cooler_type, max_tdp) VALUES (?, ?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setString(2, coolerType);
+        ps.setInt(3, maxTdp);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

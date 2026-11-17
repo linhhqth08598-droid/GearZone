@@ -7,9 +7,16 @@
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2"><i class="fas fa-box-open me-2"></i>Quản lý Linh kiện</h1>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-        <i class="fas fa-plus me-1"></i> Thêm Linh kiện
-    </button>
+    <div class="d-flex gap-2">
+        <!-- Nút thêm bằng form riêng mới -->
+        <a href="${pageContext.request.contextPath}/admin/product-form" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i> Thêm chi tiết (Form riêng)
+        </a>
+        <!-- Nút mở modal cũ -->
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <i class="fas fa-plus me-1"></i> Thêm Nhanh (Modal)
+        </button>
+    </div>
 </div>
 
 <c:if test="${not empty sessionScope.message}">

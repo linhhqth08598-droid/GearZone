@@ -34,4 +34,19 @@ public class SpecMonitorDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, String screenSize, String resolution, int refreshRate, String panelType) {
+    String sql = "INSERT INTO spec_monitor (part_id, screen_size, resolution, refresh_rate, panel_type) VALUES (?, ?, ?, ?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setString(2, screenSize);
+        ps.setString(3, resolution);
+        ps.setInt(4, refreshRate);
+        ps.setString(5, panelType);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

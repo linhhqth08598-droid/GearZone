@@ -31,4 +31,18 @@ public class SpecPeripheralDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, String gearType, String connectivity, String switchOrDpi) {
+    String sql = "INSERT INTO spec_gear (part_id, gear_type, connectivity, switch_or_dpi) VALUES (?, ?, ?, ?)";
+    try (Connection conn = new DBConnect().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        ps.setString(2, gearType);
+        ps.setString(3, connectivity);
+        ps.setString(4, switchOrDpi);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }

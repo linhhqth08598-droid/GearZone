@@ -33,4 +33,22 @@ public class SpecCpuDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean insert(int partId, int socketId, int cores, int threads, double baseClock, double boostClock, int tdp) {
+        String sql = "INSERT INTO spec_cpu (part_id, socket_id, cores, threads, base_clock_ghz, boost_clock_ghz, tdp_watts, has_integrated_gpu, supported_ram_type, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'DDR4', 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setInt(2, socketId);
+            ps.setInt(3, cores);
+            ps.setInt(4, threads);
+            ps.setDouble(5, baseClock);
+            ps.setDouble(6, boostClock);
+            ps.setInt(7, tdp);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
