@@ -36,6 +36,18 @@ public class AssemblyService {
         return -1;
     }
 
+    /** Từ ngữ hiển thị theo loại dịch vụ: lắp ráp / vệ sinh PC / thay keo tản nhiệt. */
+    public static String orderName(String type) {
+        if (CLEANING.equals(type)) return "Vệ sinh PC";
+        if (PASTE.equals(type)) return "Thay keo tản nhiệt";
+        return "Lắp ráp";
+    }
+    public static String actionVerb(String type) {
+        if (CLEANING.equals(type)) return "vệ sinh";
+        if (PASTE.equals(type)) return "thay keo";
+        return "lắp";
+    }
+
     public static String typeLabel(String type) {
         if (AT_STORE.equals(type)) return "Lắp tại cửa hàng";
         if (DELIVER.equals(type)) return "Lắp xong, giao PC tận nơi";
@@ -334,15 +346,16 @@ public class AssemblyService {
     /** UC 258: CONFIRMED→IN_PROGRESS (cần đã có kỹ thuật viên) · IN_PROGRESS→TESTING (cần đã ghi ít nhất 1 linh kiện). */
     public String advance(int assemblyId, String next) {
         try (Connection c = DBConnect.getConnection()) {
-            String cur = null; Integer tech = null; int uid = 0;
-            try (PreparedStatement ps = c.prepareStatement("SELECT status, technician_id, user_id FROM assembly_orders WHERE assembly_id = ?")) {
+            String cur = null; Integer tech = null; int uid = 0; String ty = null;
+            try (PreparedStatement ps = c.prepareStatement("SELECT status, technician_id, user_id, assembly_type FROM assembly_orders WHERE assembly_id = ?")) {
                 ps.setInt(1, assemblyId);
-                try (ResultSet rs = ps.executeQuery()) { if (!rs.next()) return "Không tìm thấy đơn lắp ráp!"; cur = rs.getString(1); tech = rs.getObject(2, Integer.class); uid = rs.getInt(3); }
+                try (ResultSet rs = ps.executeQuery()) { if (!rs.next()) return "Không tìm thấy đơn lắp ráp!"; cur = rs.getString(1); tech = rs.getObject(2, Integer.class); uid = rs.getInt(3); ty = rs.getString(4); }
             }
+            String verb = actionVerb(ty);
             String msg;
             if ("IN_PROGRESS".equals(next) && "CONFIRMED".equals(cur)) {
-                if (tech == null) return "Hãy phân công kỹ thuật viên trước khi bắt đầu lắp!";
-                msg = "Kỹ thuật viên đã bắt đầu lắp PC của bạn.";
+                if (tech == null) return "Hãy phân công kỹ thuật viên trước khi bắt đầu " + verb + "!";
+                msg = "Kỹ thuật viên đã bắt đầu " + verb + " PC của bạn.";
             } else if ("TESTING".equals(next) && "IN_PROGRESS".equals(cur)) {
                 if (isServiceOnly(c, assemblyId)) return "Dịch vụ vệ sinh/thay keo không cần kiểm tra – bấm \"Hoàn tất\" luôn!";
                 if (usedParts(assemblyId).isEmpty()) return "Hãy ghi linh kiện đã dùng trước khi chuyển sang kiểm tra!";
@@ -352,7 +365,7 @@ public class AssemblyService {
                 ps.setString(1, next); ps.setInt(2, assemblyId); ps.setString(3, cur);
                 if (ps.executeUpdate() == 0) return "Đơn vừa được cập nhật bởi người khác, vui lòng tải lại!";
             }
-            notify.send(uid, "SYSTEM", "Lắp ráp #" + assemblyId, msg, "ASSEMBLY", assemblyId);
+            notify.send(uid, "SYSTEM", orderName(ty) + " #" + assemblyId, msg, "ASSEMBLY", assemblyId);
             return null;
         } catch (Exception e) { e.printStackTrace(); return "Lỗi hệ thống, vui lòng thử lại!"; }
     }

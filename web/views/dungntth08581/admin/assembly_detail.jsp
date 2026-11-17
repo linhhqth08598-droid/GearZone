@@ -5,9 +5,31 @@
 <jsp:include page="/views/components/admin_header.jsp" />
 <jsp:include page="/views/components/admin_sidebar.jsp" />
 
+<%-- Từ ngữ theo loại dịch vụ: lắp ráp / vệ sinh PC / thay keo tản nhiệt --%>
+<c:choose>
+    <c:when test="${a.type == 'PC_CLEANING'}">
+        <c:set var="tTitle" value="Đơn vệ sinh PC"/><c:set var="tStart" value="Bắt đầu vệ sinh"/><c:set var="tDone" value="Hoàn tất vệ sinh"/>
+        <c:set var="tFlow" value="Đã xác nhận lịch → Đang vệ sinh → Hoàn tất → Bàn giao (không cần kiểm tra/ảnh)"/>
+        <c:set var="tNeed" value="Linh kiện của PC cần vệ sinh"/><c:set var="tUsed" value="Linh kiện đã vệ sinh"/>
+        <c:set var="tConfirm" value="Xác nhận đã vệ sinh xong PC?"/>
+    </c:when>
+    <c:when test="${a.type == 'THERMAL_PASTE_REPLACEMENT'}">
+        <c:set var="tTitle" value="Đơn thay keo tản nhiệt"/><c:set var="tStart" value="Bắt đầu thay keo"/><c:set var="tDone" value="Hoàn tất thay keo"/>
+        <c:set var="tFlow" value="Đã xác nhận lịch → Đang thay keo → Hoàn tất → Bàn giao (không cần kiểm tra/ảnh)"/>
+        <c:set var="tNeed" value="Linh kiện của PC cần thay keo"/><c:set var="tUsed" value="Linh kiện đã thay keo"/>
+        <c:set var="tConfirm" value="Xác nhận đã thay keo tản nhiệt xong?"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="tTitle" value="Đơn lắp ráp"/><c:set var="tStart" value="Bắt đầu lắp"/><c:set var="tDone" value="Hoàn tất"/>
+        <c:set var="tFlow" value="Đã xác nhận lịch → Đang lắp → Đang kiểm tra → Hoàn tất → Bàn giao"/>
+        <c:set var="tNeed" value="Linh kiện cần lắp"/><c:set var="tUsed" value="Linh kiện đã lắp"/>
+        <c:set var="tConfirm" value="Hoàn tất đơn lắp ráp này?"/>
+    </c:otherwise>
+</c:choose>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h3 class="fw-bold mb-0"><i class="fas fa-tools text-primary me-2"></i>Đơn lắp ráp #${a.assemblyId}
+        <h3 class="fw-bold mb-0"><i class="fas fa-tools text-primary me-2"></i>${tTitle} #${a.assemblyId}
             <span class="badge ${a.status == 'CANCELLED' ? 'bg-danger' : 'bg-info text-dark'} fs-6 ms-2"><c:out value="${a.status}"/></span></h3>
         <a href="${pageContext.request.contextPath}/admin/assembly" class="btn btn-outline-secondary">Quay lại danh sách</a>
     </div>
@@ -50,19 +72,19 @@
             <!-- UC 258: cập nhật tiến độ -->
             <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-3">
                 <h6 class="fw-bold">Tiến độ</h6>
-                <div class="small text-muted mb-2"><c:choose><c:when test="${isService}">Đã xác nhận lịch → Đang thực hiện → Hoàn tất → Bàn giao (không cần kiểm tra/linh kiện)</c:when><c:otherwise>Đã xác nhận lịch → Đang lắp → Đang kiểm tra → Hoàn tất → Bàn giao</c:otherwise></c:choose></div>
+                <div class="small text-muted mb-2"><c:out value="${tFlow}"/></div>
                 <c:if test="${a.status == 'CONFIRMED'}">
                     <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" class="m-0">
                         <input type="hidden" name="id" value="${a.assemblyId}"><input type="hidden" name="action" value="advance"><input type="hidden" name="next" value="IN_PROGRESS"><input type="hidden" name="detail" value="1">
-                        <button type="submit" class="btn btn-success">Bắt đầu lắp</button>
+                        <button type="submit" class="btn btn-success">${tStart}</button>
                     </form>
                 </c:if>
                 <c:if test="${a.status == 'IN_PROGRESS'}">
                     <c:choose>
                         <c:when test="${isService}">
-                            <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" class="m-0" onsubmit="return confirm('Xác nhận đã làm xong dịch vụ?');">
+                            <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" class="m-0" onsubmit="return confirm('${tConfirm}');">
                                 <input type="hidden" name="id" value="${a.assemblyId}"><input type="hidden" name="action" value="complete"><input type="hidden" name="detail" value="1">
-                                <button type="submit" class="btn btn-success">Hoàn tất dịch vụ</button>
+                                <button type="submit" class="btn btn-success">${tDone}</button>
                             </form>
                         </c:when>
                         <c:otherwise>
@@ -95,7 +117,7 @@
         <!-- UC 257: linh kiện sử dụng -->
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
-                <h6 class="fw-bold">Linh kiện cần lắp</h6>
+                <h6 class="fw-bold">${tNeed}</h6>
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light"><tr><th>Linh kiện</th><th class="text-center">Cần</th></tr></thead>
                     <tbody>
@@ -106,7 +128,7 @@
             </div></div>
 
             <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-3">
-                <h6 class="fw-bold">Linh kiện đã dùng</h6>
+                <h6 class="fw-bold">${tUsed}</h6>
                 <table class="table table-sm align-middle">
                     <thead class="table-light"><tr><th>Linh kiện</th><th class="text-center">SL</th><th>Serial</th><th></th></tr></thead>
                     <tbody>
@@ -125,15 +147,15 @@
                     </tbody>
                 </table>
                 <c:if test="${a.status == 'IN_PROGRESS' || a.status == 'TESTING'}">
-                    <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" class="row g-2 m-0">
+                    <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" class="row g-2 m-0" id="partForm">
                         <input type="hidden" name="id" value="${a.assemblyId}"><input type="hidden" name="action" value="addPart"><input type="hidden" name="detail" value="1">
-                        <div class="col-md-5"><select name="partId" class="form-select" required>
-                            <option value="">-- Chọn linh kiện --</option>
+                        <div class="col-md-6"><select name="partId" id="partSelect" class="form-select" required>
+                            <option value="">-- Chọn linh kiện để ghi --</option>
                             <c:forEach var="p" items="${source}"><option value="${p.partId}"><c:out value="${p.partName}"/></option></c:forEach>
                         </select></div>
-                        <div class="col-md-2"><input type="number" name="qty" value="1" min="1" class="form-control" required></div>
-                        <div class="col-md-3"><input type="text" name="serial" maxlength="100" class="form-control" placeholder="Số serial (nếu có)"></div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Ghi</button></div>
+                        <div class="col-md-2"><input type="number" name="qty" value="1" min="1" class="form-control" title="Số lượng" required></div>
+                        <div class="col-md-4"><input type="text" name="serial" maxlength="100" class="form-control" placeholder="Số serial (nếu có)"></div>
+                        <div class="col-12 small text-muted">Nhập số lượng/serial (nếu cần) rồi chọn linh kiện – hệ thống tự ghi luôn, không cần bấm nút.</div>
                     </form>
                 </c:if>
             </div></div>
@@ -195,12 +217,11 @@
                     <c:if test="${empty photos}"><div class="col-12 text-muted small">Chưa có ảnh nào.</div></c:if>
                 </div>
                 <c:if test="${a.status == 'TESTING' || a.status == 'COMPLETED'}">
-                    <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" enctype="multipart/form-data" class="d-flex gap-2 m-0" id="photoForm">
+                    <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" enctype="multipart/form-data" class="m-0" id="photoForm">
                         <input type="hidden" name="id" value="${a.assemblyId}"><input type="hidden" name="action" value="addPhoto"><input type="hidden" name="detail" value="1">
                         <input type="file" id="photoInput" name="photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="form-control" required>
-                        <button type="submit" class="btn btn-primary text-nowrap">Tải lên</button>
                     </form>
-                    <div class="small text-muted mt-1">Tối đa 10 ảnh/đơn, mỗi ảnh ≤ 10 MB (jpg, png, webp, gif).</div>
+                    <div class="small text-muted mt-1" id="photoHint">Chọn ảnh là tự động tải lên. Tối đa 10 ảnh/đơn, mỗi ảnh ≤ 10 MB (jpg, png, webp, gif).</div>
                 </c:if>
             </div></div>
             </c:if>
@@ -210,19 +231,49 @@
 
 
 <script>
+    // Ô số: chỉ cho nhập chữ số (chặn e, E, +, -, . mà ô type=number mặc định cho phép)
+    (function () {
+        var nums = document.querySelectorAll('input[type=number]');
+        nums.forEach(function (n) {
+            n.setAttribute('inputmode', 'numeric');
+            n.addEventListener('keydown', function (e) {
+                if (['e', 'E', '+', '-', '.', ','].indexOf(e.key) !== -1) e.preventDefault();
+            });
+            n.addEventListener('paste', function (e) {
+                var t = (e.clipboardData || window.clipboardData).getData('text');
+                if (!/^\d+$/.test(t.trim())) e.preventDefault();
+            });
+        });
+    })();
+    // Chọn linh kiện là ghi luôn
+    (function () {
+        var f = document.getElementById('partForm'), sel = document.getElementById('partSelect');
+        if (!f || !sel) return;
+        sel.addEventListener('change', function () {
+            if (!sel.value) return;
+            var q = parseInt(f.elements['qty'].value, 10);
+            if (isNaN(q) || q < 1) { alert('Số lượng phải từ 1 trở lên!'); sel.value = ''; return; }
+            sel.disabled = false;
+            f.submit();
+        });
+    })();
     (function () {
         var f = document.getElementById('photoForm'), inp = document.getElementById('photoInput');
         if (!f || !inp) return;
-        f.addEventListener('submit', function (e) {
+        // Chọn tệp xong là tự tải lên luôn (không cần bấm nút "Tải lên")
+        inp.addEventListener('change', function () {
             var files = inp.files, total = 0, maxLeft = 10 - ${photos.size()};
+            if (!files.length) return;
             for (var i = 0; i < files.length; i++) {
-                if (files[i].size > 10 * 1024 * 1024) { alert('Ảnh "' + files[i].name + '" lớn hơn 10 MB!'); e.preventDefault(); return; }
+                if (files[i].size > 10 * 1024 * 1024) { alert('Ảnh "' + files[i].name + '" lớn hơn 10 MB!'); inp.value = ''; return; }
                 total += files[i].size;
             }
-            if (files.length > maxLeft) { alert('Chỉ còn thêm được ' + maxLeft + ' ảnh (tối đa 10 ảnh/đơn)!'); e.preventDefault(); return; }
-            if (total > 30 * 1024 * 1024) { alert('Tổng dung lượng ' + (total / 1048576).toFixed(1) + ' MB quá lớn, hãy tải thành vài lần (mỗi lần ≤ 30 MB)!'); e.preventDefault(); return; }
-            f.querySelector('button[type=submit]').disabled = true;
-            f.querySelector('button[type=submit]').textContent = 'Đang tải...';
+            if (files.length > maxLeft) { alert('Chỉ còn thêm được ' + maxLeft + ' ảnh (tối đa 10 ảnh/đơn)!'); inp.value = ''; return; }
+            if (total > 30 * 1024 * 1024) { alert('Tổng dung lượng ' + (total / 1048576).toFixed(1) + ' MB quá lớn, hãy chọn ít ảnh hơn mỗi lần (≤ 30 MB)!'); inp.value = ''; return; }
+            inp.disabled = false;
+            var hint = document.getElementById('photoHint');
+            if (hint) hint.textContent = 'Đang tải ' + files.length + ' ảnh lên...';
+            f.submit();
         });
     })();
 </script>

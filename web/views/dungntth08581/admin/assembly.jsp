@@ -7,13 +7,13 @@
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h3 class="fw-bold mb-0"><i class="fas fa-tools text-primary me-2"></i>Quản lý lắp ráp PC</h3>
+        <h3 class="fw-bold mb-0"><i class="fas fa-tools text-primary me-2"></i>Quản lý lắp ráp & bảo dưỡng PC</h3>
         <form method="GET" action="${pageContext.request.contextPath}/admin/assembly" class="d-flex gap-2">
             <select name="status" class="form-select" onchange="this.form.submit()">
                 <option value="">Tất cả trạng thái</option>
                 <option value="SCHEDULED" ${status == 'SCHEDULED' ? 'selected' : ''}>Chờ xác nhận lịch</option>
                 <option value="CONFIRMED" ${status == 'CONFIRMED' ? 'selected' : ''}>Đã xác nhận lịch</option>
-                <option value="IN_PROGRESS" ${status == 'IN_PROGRESS' ? 'selected' : ''}>Đang lắp</option>
+                <option value="IN_PROGRESS" ${status == 'IN_PROGRESS' ? 'selected' : ''}>Đang thực hiện</option>
                 <option value="TESTING" ${status == 'TESTING' ? 'selected' : ''}>Đang kiểm tra</option>
                 <option value="COMPLETED" ${status == 'COMPLETED' ? 'selected' : ''}>Hoàn tất</option>
                 <option value="HANDED_OVER" ${status == 'HANDED_OVER' ? 'selected' : ''}>Đã bàn giao</option>
@@ -65,7 +65,7 @@
                             </td>
                         </tr>
                     </c:forEach>
-                    <c:if test="${empty rows}"><tr><td colspan="9" class="text-center text-muted py-4">Chưa có đơn lắp ráp nào.</td></tr></c:if>
+                    <c:if test="${empty rows}"><tr><td colspan="9" class="text-center text-muted py-4">Chưa có đơn dịch vụ nào.</td></tr></c:if>
                 </tbody>
             </table>
         </div>

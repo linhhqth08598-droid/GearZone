@@ -7,9 +7,9 @@
 
 <div>
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h4 class="fw-bold mb-0"><i class="fas fa-tools text-danger me-2"></i>Đơn lắp ráp #${a.assemblyId}
+        <h4 class="fw-bold mb-0"><i class="fas fa-tools text-danger me-2"></i>${a.type == 'PC_CLEANING' ? 'Đơn vệ sinh PC' : (a.type == 'THERMAL_PASTE_REPLACEMENT' ? 'Đơn thay keo tản nhiệt' : 'Đơn lắp ráp')} #${a.assemblyId}
             <span class="badge bg-secondary ms-2"><c:out value="${a.status == 'SCHEDULED' ? 'Chờ xác nhận lịch' : (a.status == 'CONFIRMED' ? 'Đã xác nhận lịch' : (a.status == 'IN_PROGRESS' ? 'Đang thực hiện' : (a.status == 'TESTING' ? 'Đang kiểm tra' : (a.status == 'COMPLETED' ? 'Đã hoàn tất' : (a.status == 'HANDED_OVER' ? 'Đã bàn giao' : (a.status == 'CANCELLED' ? 'Đã hủy' : a.status))))))}"/></span></h4>
-        <a href="${pageContext.request.contextPath}/assembly" class="btn btn-outline-secondary">Đơn lắp ráp của tôi</a>
+        <a href="${pageContext.request.contextPath}/assembly" class="btn btn-outline-secondary">Dịch vụ của tôi</a>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-4">
@@ -21,7 +21,7 @@
 
     <c:if test="${not empty used}">
         <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-4">
-            <h6 class="fw-bold">Linh kiện đã lắp</h6>
+            <h6 class="fw-bold">${a.type == 'PC_CLEANING' ? 'Linh kiện đã vệ sinh' : (a.type == 'THERMAL_PASTE_REPLACEMENT' ? 'Linh kiện đã thay keo' : 'Linh kiện đã lắp')}</h6>
             <table class="table table-sm mb-0">
                 <thead class="table-light"><tr><th>Linh kiện</th><th class="text-center">SL</th><th>Serial</th></tr></thead>
                 <tbody><c:forEach var="u" items="${used}"><tr><td><c:out value="${u.partName}"/></td><td class="text-center">${u.quantity}</td><td><c:out value="${u.serial}"/></td></tr></c:forEach></tbody>

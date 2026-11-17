@@ -173,6 +173,9 @@
         const ratingText = document.getElementById('rating-text');
         const hiddenRating = document.getElementById('selectedRating');
 
+        // Người dùng chưa đủ điều kiện đánh giá -> không có thanh trượt, bỏ qua
+        if (!slider || !starsFg || !ratingText || !hiddenRating) return;
+
         // Hàm cập nhật giao diện khi kéo thanh trượt
         function updateStars(value) {
             // Tính toán phần trăm che phủ của lớp sao vàng
@@ -201,6 +204,6 @@
     function prepareRating() {
         const hiddenRating = document.getElementById('selectedRating');
         const slider = document.getElementById('rating-slider');
-        hiddenRating.value = slider.value;
+        if (hiddenRating && slider) hiddenRating.value = slider.value;
     }
 </script>

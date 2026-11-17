@@ -93,7 +93,7 @@
 <div class="modal fade" id="priceAlertModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <form action="${pageContext.request.contextPath}/user/price-alert" method="POST">
+            <form id="priceAlertForm" action="${pageContext.request.contextPath}/user/price-alert" method="POST">
                 <div class="modal-header bg-white border-bottom border-primary border-3 rounded-top-4 py-3">
                     <h5 class="modal-title fw-bold text-primary"><i class="fas fa-bell me-2"></i>Theo dõi giá sản phẩm</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -151,6 +151,49 @@
             bootstrap.Modal.getOrCreateInstance(document.getElementById('priceAlertModal')).show();
         }
     }
+
+    // Gửi form đăng ký theo dõi giá bằng AJAX (không chuyển trang)
+    document.getElementById('priceAlertForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const form = this;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        // Lưu ý: form có <input name="action"> nên form.action trả về phần tử input, phải dùng getAttribute
+        fetch(form.getAttribute('action'), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+            body: new URLSearchParams(new FormData(form)).toString()
+        })
+        .then(res => res.text().then(text => ({ status: res.status, url: res.url, text: text })))
+        .then(r => {
+            let data;
+            try {
+                data = JSON.parse(r.text);
+            } catch (err) {
+                // Server không trả về JSON -> in ra để biết lỗi thật
+                console.error('Price-alert response not JSON:', r);
+                alert('Server trả về dữ liệu không hợp lệ (HTTP ' + r.status + '). Mở F12 > Console để xem chi tiết.');
+                return;
+            }
+            if (data.success) {
+                const modalEl = document.getElementById('priceAlertModal');
+                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                const btn = document.getElementById('priceAlertBtn');
+                btn.classList.add('active');
+                document.getElementById('priceAlertText').innerText = 'Hủy theo dõi';
+                form.reset();
+                alert(data.message || 'Đăng ký thành công');
+            } else {
+                alert(data.message || 'Đăng ký thất bại');
+            }
+        })
+        .catch(err => {
+            console.error('Price-alert error:', err);
+            alert('Lỗi: ' + err);
+        })
+        .finally(() => { submitBtn.disabled = false; });
+    });
 </script>
 
 <jsp:include page="/views/components/footer.jsp" />

@@ -58,14 +58,18 @@ public class PriceAlertServlet extends HttpServlet {
                     response.getWriter().write("{\"success\": false, \"message\": \"" + error + "\"}");
                 }
             } else if ("delete".equals(action)) {
+                // Form ở trang "Theo dõi giá" gửi POST thường (không AJAX):
+                // lưu thông báo vào session rồi chuyển hướng về danh sách.
                 int notificationId = Integer.parseInt(request.getParameter("notificationId"));
                 String error = service.deleteAlert(notificationId, user.getUserId());
-                
+
                 if (error == null) {
-                    response.getWriter().write("{\"success\": true, \"message\": \"Đã hủy theo dõi\", \"isAlerted\": false}");
+                    session.setAttribute("message", "Đã hủy theo dõi sản phẩm.");
                 } else {
-                    response.getWriter().write("{\"success\": false, \"message\": \"" + error + "\"}");
+                    session.setAttribute("error", error);
                 }
+                response.sendRedirect(request.getContextPath() + "/user/price-alert");
+                return;
             } else if ("cancel".equals(action)) {
                 // Hủy theo dõi dành riêng cho AJAX
                 int partId = Integer.parseInt(request.getParameter("partId"));
