@@ -13,14 +13,23 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import minhtbth08199.service.BuildPCService;
 import dungntth08581.service.CartService;
+import minhtbth08199.service.RecommendPCService;
 
 @WebServlet(name = "BuildPCServlet", urlPatterns = {"/build-pc"})
 public class BuildPCServlet extends HttpServlet {
     private final BuildPCService service = new BuildPCService();
     private final CartService cartService = new CartService();
+    private final RecommendPCService recommendService = new RecommendPCService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setAttribute("fpsOptions", recommendService.availableMonitorRefreshRates());
+        request.setAttribute("ramOptions", recommendService.availableRamSizes());
+        Object gameBuildError = request.getSession().getAttribute("gameBuildError");
+        if (gameBuildError != null) {
+            request.setAttribute("gameBuildError", gameBuildError);
+            request.getSession().removeAttribute("gameBuildError");
+        }
         String raw = request.getParameter("buildId");
         if (raw != null) {
             try {

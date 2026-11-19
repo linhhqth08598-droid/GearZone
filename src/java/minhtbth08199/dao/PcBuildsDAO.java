@@ -64,6 +64,17 @@ public class PcBuildsDAO {
         try (PreparedStatement ps = con.prepareStatement(sql)) { ps.setInt(1, buildId); ps.setInt(2, buildId); return ps.executeUpdate() == 1; }
     }
 
+    public boolean updateCompatibility(int buildId, boolean compatible) {
+        String sql = "UPDATE pc_builds SET is_compatible = ? WHERE build_id = ? AND status <> 'DELETED'";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setBoolean(1, compatible);
+            ps.setInt(2, buildId);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể cập nhật trạng thái tương thích", e);
+        }
+    }
+
     public boolean softDelete(int buildId, Integer userId) {
         String sql = "UPDATE pc_builds SET status = 'DELETED' WHERE build_id = ? AND ((user_id = ?) OR (? IS NULL AND user_id IS NULL))";
         try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {

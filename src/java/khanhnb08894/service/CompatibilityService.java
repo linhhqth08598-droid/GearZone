@@ -237,7 +237,6 @@ public class CompatibilityService {
         String sql = "SELECT m.socket_id, s.socket_name, m.chipset, m.form_factor, m.ram_standard, "
                    + "m.ram_slots, m.max_ram_speed_mhz, m.max_ram_capacity_gb, m.m2_slots_count, "
                    + "m.supports_nvme, m.pcie_generation, m.cpu_power_connectors, m.supported_cpu_generations "
-                   + "FROM spec_mainboard m LEFT JOIN socket_types s ON m.socket_id = s.socket_id WHERE m.part_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
