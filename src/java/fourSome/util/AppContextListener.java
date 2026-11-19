@@ -10,10 +10,12 @@ import java.util.Enumeration;
 
 @WebListener
 public class AppContextListener implements ServletContextListener {
+
     private PriceAlertJob job;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+        EmailUtil.warmUp();
         job = new PriceAlertJob();
         job.start();
     }
@@ -24,7 +26,13 @@ public class AppContextListener implements ServletContextListener {
             job.stop();
         }
 
-        // Hủy đăng ký JDBC driver của webapp để tránh cảnh báo memory leak khi redeploy
+        // Tắt thread pool của EmailUtil
+        EmailUtil.shutdown();
+
+        // Đóng bể kết nối HikariCP trước khi hủy đăng ký JDBC driver
+        fourSome.url.DBConnect.closePool();
+
+        // Hủy đăng ký JDBC driver của webapp
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         Enumeration<Driver> drivers = DriverManager.getDrivers();
         while (drivers.hasMoreElements()) {

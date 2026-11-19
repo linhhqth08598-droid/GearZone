@@ -38,7 +38,7 @@ public class NotificationsDAO {
         // Lấy danh sách thông báo của user (mới nhất xếp trước)
     public List<Notifications> getByUserId(int userId) {
         List<Notifications> list = new ArrayList<>();
-        String sql = "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC";
+        String sql = "SELECT TOP 20 * FROM notifications WHERE user_id = ? ORDER BY created_at DESC";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
