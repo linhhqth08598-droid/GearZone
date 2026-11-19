@@ -44,16 +44,23 @@ public class CompatibilityService {
 
             // 2. Kiểm tra RAM và Mainboard (Chuẩn RAM DDR4/DDR5)
             if (ramId > 0 && mainId > 0) {
-                String sql = "SELECT r.ddr_type as ram_type, m.ram_standard as main_type " +
-                             "FROM spec_ram r, spec_mainboard m " +
-                             "WHERE r.part_id = ? AND m.part_id = ?";
+                String sql = "SELECT r.ddr_type AS ram_type, m.ram_standard AS main_type, " +
+                             "pr.part_name AS ram_name, pm.part_name AS main_name " +
+                             "FROM parts pr CROSS JOIN parts pm " +
+                             "LEFT JOIN spec_ram r ON r.part_id=pr.part_id " +
+                             "LEFT JOIN spec_mainboard m ON m.part_id=pm.part_id " +
+                             "WHERE pr.part_id=? AND pm.part_id=?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, ramId);
                     ps.setInt(2, mainId);
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
-                        if (!rs.getString("ram_type").equals(rs.getString("main_type"))) {
-                            result.addError("Mainboard không hỗ trợ chuẩn RAM " + rs.getString("ram_type") + "!");
+                        String ramType = ddrGeneration(rs.getString("ram_type"), rs.getString("ram_name"));
+                        String mainType = ddrGeneration(rs.getString("main_type"), rs.getString("main_name"));
+                        if (ramType != null && mainType != null && !ramType.equals(mainType)) {
+                            result.addError("Không tương thích: RAM " + ramType + " không dùng được với Mainboard " + mainType + ". Hãy đổi RAM hoặc Mainboard để cùng chuẩn.");
+                        } else if (ramType == null || mainType == null) {
+                            result.addWarning("Chưa đủ dữ liệu DDR của RAM hoặc Mainboard để xác nhận tương thích.");
                         }
                     }
                 }
@@ -109,4 +116,13 @@ public class CompatibilityService {
 
         return result;
     }
+
+    private String ddrGeneration(String specification, String productName) {
+        String value = ((specification == null ? "" : specification) + " " + (productName == null ? "" : productName))
+                .toUpperCase(java.util.Locale.ROOT).replaceAll("\\s+", "");
+        if (value.contains("DDR5")) return "DDR5";
+        if (value.contains("DDR4")) return "DDR4";
+        return null;
+    }
+
 }

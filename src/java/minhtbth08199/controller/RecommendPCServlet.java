@@ -29,16 +29,28 @@ public class RecommendPCServlet extends HttpServlet {
 
     @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         setOptions(request);
+        boolean preset = "true".equals(request.getParameter("preset"));
         try {
             double budget = Double.parseDouble(request.getParameter("budget"));
             if (!Double.isFinite(budget) || budget < 3_000_000 || budget > 500_000_000) throw new IllegalArgumentException("Ngân sách phải từ 3 triệu đến 500 triệu đồng.");
-            String resolution = allowed(request.getParameter("resolution"), "1080p", "1440p", "4K");
-            String fps = allowedNumber(request.getParameter("fps"), recommend.availableMonitorRefreshRates());
+            String gameValue = request.getParameter("gameProfile");
+            String game = gameValue == null && !preset ? "general" : allowed(gameValue, "valorant", "lol", "cs2");
+            String resolution = allowed(request.getParameter("resolution") == null && preset ? "1080p" : request.getParameter("resolution"), "1080p", "1440p", "4K");
+            List<Integer> refreshRates = recommend.availableMonitorRefreshRates();
+            List<Integer> ramSizes = recommend.availableRamSizes();
+            String fpsValue = request.getParameter("fps");
+            if (preset && fpsValue == null) fpsValue = preferredOption(refreshRates, 144);
+            String fps = allowedNumber(fpsValue, refreshRates);
             String purpose = allowed(request.getParameter("purpose"), "gaming", "design", "office", "streaming", "video");
-            int ram = Integer.parseInt(allowedNumber(request.getParameter("ram"), recommend.availableRamSizes()));
+            String ramValue = request.getParameter("ram");
+            if (preset && ramValue == null) ramValue = preferredOption(ramSizes, 16);
+            int ram = Integer.parseInt(allowedNumber(ramValue, ramSizes));
             String priority = allowed(request.getParameter("priority"), "balanced", "gpu", "cpu", "cost");
 
             Users user = (Users) request.getSession().getAttribute("loggedUser");
+            // Do not persist a requirement or an empty build until a complete
+            // recommendation has been assembled successfully.
+            var suggestedParts = recommend.recommend(budget, purpose, priority, game, ram, Integer.parseInt(fps));
             int id = dao.create(user == null ? null : user.getUserId());
             dao.updateField(id, "budget", budget);
             dao.updateField(id, "target_resolution", resolution);
@@ -48,10 +60,10 @@ public class RecommendPCServlet extends HttpServlet {
             dao.updateField(id, "optimize_cost", "cost".equals(priority));
             dao.updateField(id, "cpu_priority", "cpu".equals(priority) ? 5 : "gpu".equals(priority) ? 2 : 3);
             dao.updateField(id, "gpu_priority", "gpu".equals(priority) ? 5 : "cpu".equals(priority) ? 2 : 3);
-            dao.complete(id, "Nhu cầu: " + purpose + "; " + resolution + " ở " + fps + " FPS; ưu tiên " + priority + ".");
+            dao.complete(id, ("general".equals(game) ? "Nhu cầu: " + purpose : "Game: " + game) + "; " + resolution + " ở " + fps + " Hz; ưu tiên " + priority + ".");
 
-            var suggestedParts = recommend.recommend(budget, purpose, priority, ram, Integer.parseInt(fps));
-            PcBuilds build = buildService.create(user == null ? null : user.getUserId(), "Cấu hình gợi ý trong ngân sách");
+            String buildLabel = "general".equals(game) ? purposeLabel(purpose) : switch (game) { case "valorant" -> "Valorant"; case "lol" -> "Liên Minh Huyền Thoại"; default -> "CS2"; };
+            PcBuilds build = buildService.create(user == null ? null : user.getUserId(), "Build " + buildLabel + " - " + (int)(budget / 1_000_000) + " triệu");
             for (var part : suggestedParts) buildService.setPart(build.getBuildId(), part.getPartId(), 1);
             if (user == null) {
                 HttpSession session = request.getSession();
@@ -62,12 +74,24 @@ public class RecommendPCServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/build-pc?buildId=" + build.getBuildId());
             return;
         } catch (IllegalArgumentException ex) {
-            request.setAttribute("error", ex.getMessage());
-            request.getRequestDispatcher("/views/minhtbth08199/buildpc/recommend.jsp").forward(request, response);
+            showError(request, response, preset, ex.getMessage());
         } catch (RuntimeException ex) {
-            request.setAttribute("error", "Chưa lưu được nhu cầu. Vui lòng thử lại sau.");
+            showError(request, response, preset, "Chưa tạo được cấu hình. Vui lòng kiểm tra kho linh kiện và thử lại.");
+        }
+    }
+
+    private void showError(HttpServletRequest request, HttpServletResponse response, boolean preset, String message) throws ServletException, IOException {
+        if (preset) {
+            request.getSession().setAttribute("gameBuildError", message);
+            response.sendRedirect(request.getContextPath() + "/build-pc#game-builder");
+        } else {
+            request.setAttribute("error", message);
             request.getRequestDispatcher("/views/minhtbth08199/buildpc/recommend.jsp").forward(request, response);
         }
+    }
+
+    private String purposeLabel(String purpose) {
+        return switch (purpose) { case "gaming" -> "Gaming"; case "design" -> "Đồ họa"; case "office" -> "Văn phòng"; case "streaming" -> "Livestream"; default -> "Dựng video"; };
     }
 
     private String allowed(String value, String... choices) {
@@ -78,6 +102,12 @@ public class RecommendPCServlet extends HttpServlet {
     private String allowedNumber(String value, List<Integer> choices) {
         if (value != null) for (Integer choice : choices) if (choice.toString().equals(value)) return value;
         throw new IllegalArgumentException("Mức Hz hoặc dung lượng RAM không còn trong kho. Vui lòng chọn lại.");
+    }
+
+    private String preferredOption(List<Integer> options, int preferred) {
+        if (options.contains(preferred)) return Integer.toString(preferred);
+        if (options.isEmpty()) throw new IllegalArgumentException("Kho chưa có RAM hoặc màn hình phù hợp để gợi ý.");
+        return Integer.toString(options.get(0));
     }
 
     private void setOptions(HttpServletRequest request) {

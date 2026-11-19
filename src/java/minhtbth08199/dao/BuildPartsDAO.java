@@ -19,7 +19,7 @@ public class BuildPartsDAO {
                 + "AND i.stock_quantity-i.reserved_quantity>0 AND (?='' OR p.part_name LIKE ?) "
                 + "ORDER BY COALESCE(p.sale_price,p.base_price), p.part_name";
         try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, Math.max(1, Math.min(limit, 100)));
+            ps.setInt(1, Math.max(1, Math.min(limit, 5000)));
             ps.setInt(2, categoryId);
             String q = keyword == null ? "" : keyword.trim();
             ps.setString(3, q);
@@ -44,6 +44,65 @@ public class BuildPartsDAO {
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể kiểm tra linh kiện", e);
         }
+    }
+
+    public boolean isCpuMainboardCompatible(int cpuId, int mainboardId) {
+        return exists("SELECT 1 FROM spec_cpu c JOIN spec_mainboard m ON m.socket_id=c.socket_id WHERE c.part_id=? AND m.part_id=?", cpuId, mainboardId);
+    }
+
+    public boolean isRamMainboardCompatible(int ramId, int mainboardId) {
+        return exists("SELECT 1 FROM spec_ram r JOIN spec_mainboard m ON UPPER(LTRIM(RTRIM(m.ram_standard)))=UPPER(LTRIM(RTRIM(r.ddr_type))) WHERE r.part_id=? AND m.part_id=?", ramId, mainboardId);
+    }
+
+    /** True when this CPU and RAM have at least one in-stock motherboard platform in common. */
+    public boolean hasCompatibleMainboardFor(int cpuId, int ramId) {
+        String boardDdr = "COALESCE(NULLIF(UPPER(LTRIM(RTRIM(m.ram_standard))),''), CASE "
+                + "WHEN UPPER(mp.part_name) LIKE '%DDR5%' THEN 'DDR5' WHEN UPPER(mp.part_name) LIKE '%DDR4%' THEN 'DDR4' END)";
+        String memoryDdr = "COALESCE(NULLIF(UPPER(LTRIM(RTRIM(r.ddr_type))),''), CASE "
+                + "WHEN UPPER(rp.part_name) LIKE '%DDR5%' THEN 'DDR5' WHEN UPPER(rp.part_name) LIKE '%DDR4%' THEN 'DDR4' END)";
+        String sql = "SELECT TOP 1 1 FROM spec_cpu cpu "
+                + "JOIN parts mp ON mp.category_id=2 AND mp.status='ACTIVE' "
+                + "JOIN categories mc ON mc.category_id=mp.category_id AND mc.status='ACTIVE' "
+                + "JOIN inventory mi ON mi.part_id=mp.part_id AND mi.status='ACTIVE' AND mi.stock_quantity-mi.reserved_quantity>0 "
+                + "LEFT JOIN spec_mainboard m ON m.part_id=mp.part_id "
+                + "LEFT JOIN spec_ram r ON r.part_id=? JOIN parts rp ON rp.part_id=? "
+                + "WHERE cpu.part_id=? AND (m.part_id IS NULL OR m.socket_id IS NULL OR cpu.socket_id IS NULL OR m.socket_id=cpu.socket_id) "
+                + "AND (m.part_id IS NULL OR " + boardDdr + " IS NULL OR " + memoryDdr + " IS NULL OR " + boardDdr + "=" + memoryDdr + ")";
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, ramId); ps.setInt(2, ramId); ps.setInt(3, cpuId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra nền tảng CPU/RAM", e);
+        }
+    }
+
+    public boolean isPsuEnough(int psuId, int cpuId, int vgaId) {
+        String sql = "SELECT p.wattage, COALESCE(c.tdp_watts,0)+COALESCE(v.tgp_watts,0) AS system_watts "
+                + "FROM spec_psu p LEFT JOIN spec_cpu c ON c.part_id=? LEFT JOIN spec_vga v ON v.part_id=? WHERE p.part_id=?";
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, cpuId); ps.setInt(2, vgaId); ps.setInt(3, psuId);
+            try (ResultSet rs = ps.executeQuery()) { return !rs.next() || rs.getInt("wattage") >= Math.ceil(rs.getInt("system_watts") * 1.2); }
+        } catch (SQLException e) { throw new IllegalStateException("Không thể kiểm tra công suất PSU", e); }
+    }
+
+    public boolean hasCompatibilitySpecs(int categoryId, int partId) {
+        String table = switch (categoryId) {
+            case 1 -> "spec_cpu"; case 2 -> "spec_mainboard"; case 3 -> "spec_ram";
+            case 4 -> "spec_vga"; case 7 -> "spec_psu"; case 8 -> "spec_case";
+            case 9 -> "spec_cooler"; default -> null;
+        };
+        if (table == null) return true;
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement("SELECT 1 FROM " + table + " WHERE part_id=?")) {
+            ps.setInt(1, partId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) { throw new IllegalStateException("Không thể đọc thông số tương thích", e); }
+    }
+
+    private boolean exists(String sql, int firstId, int secondId) {
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, firstId); ps.setInt(2, secondId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) { throw new IllegalStateException("Không thể kiểm tra tương thích linh kiện", e); }
     }
 
     public List<BuildPartItem> findSelectedByBuildId(int buildId) {
