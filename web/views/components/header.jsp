@@ -1,11 +1,35 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>GearZone - Chuyên linh kiện PC & Gaming</title>
+
+        <%-- ===== MÔ TẢ TRANG WEB KHI GỬI LINK (Discord / Zalo / Facebook / Google) =====
+             Trang nào muốn preview riêng thì set request attribute ogTitle / ogDescription / ogImage
+             trước khi forward (ProductServlet đã làm cho trang chi tiết sản phẩm). --%>
+        <c:set var="ogProto" value="${not empty header['X-Forwarded-Proto'] ? header['X-Forwarded-Proto'] : pageContext.request.scheme}" />
+        <c:set var="ogHost" value="${not empty header['X-Forwarded-Host'] ? header['X-Forwarded-Host'] : header['host']}" />
+        <c:set var="ogBase" value="${ogProto}://${ogHost}${pageContext.request.contextPath}" />
+        <c:set var="ogT" value="${not empty requestScope.ogTitle ? requestScope.ogTitle : 'GearZone - Chuyên linh kiện PC & Phụ kiện Gaming'}" />
+        <c:set var="ogD" value="${not empty requestScope.ogDescription ? requestScope.ogDescription : 'Cửa hàng linh kiện PC & phụ kiện gaming chính hãng: CPU, VGA, RAM, mainboard, màn hình, bàn phím, chuột... Build PC theo yêu cầu, bảo hành rõ ràng, nhiều khuyến mãi hấp dẫn.'}" />
+        <c:set var="ogI" value="${not empty requestScope.ogImage ? requestScope.ogImage : '/views/components/image/GearZone.png'}" />
+        <c:if test="${not fn:startsWith(ogI, 'http')}"><c:set var="ogI" value="${ogBase}${fn:startsWith(ogI, '/') ? '' : '/'}${ogI}" /></c:if>
+        <meta name="description" content="<c:out value='${ogD}'/>">
+        <meta property="og:site_name" content="GearZone">
+        <meta property="og:type" content="website">
+        <meta property="og:locale" content="vi_VN">
+        <meta property="og:title" content="<c:out value='${ogT}'/>">
+        <meta property="og:description" content="<c:out value='${ogD}'/>">
+        <meta property="og:image" content="<c:out value='${ogI}'/>">
+        <meta property="og:url" content="<c:out value='${ogBase}${requestScope["jakarta.servlet.forward.servlet_path"]}'/>">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:title" content="<c:out value='${ogT}'/>">
+        <meta name="twitter:description" content="<c:out value='${ogD}'/>">
+        <meta name="twitter:image" content="<c:out value='${ogI}'/>">
         <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/views/components/image/GearZone.png">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">

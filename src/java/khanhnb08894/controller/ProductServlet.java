@@ -33,6 +33,18 @@ public class ProductServlet extends HttpServlet {
                     khanhnb08894.service.SpecService specService = new khanhnb08894.service.SpecService();
                     request.setAttribute("generalSpecs", specService.getGeneralInfo(partId));
                     request.setAttribute("techSpecs", specService.getTechSpecs(partId));
+
+                    // Mô tả khi gửi link sản phẩm (Discord / Zalo / Facebook...)
+                    String ogDesc = part.getDescription();
+                    if (ogDesc == null || ogDesc.trim().isEmpty()) {
+                        ogDesc = "Mua " + part.getPartName() + " chính hãng tại GearZone, bảo hành " + part.getWarrantyMonths() + " tháng.";
+                    } else if (ogDesc.length() > 180) {
+                        ogDesc = ogDesc.substring(0, 177) + "...";
+                    }
+                    request.setAttribute("ogTitle", part.getPartName() + " - GearZone");
+                    request.setAttribute("ogDescription", ogDesc);
+                    String ogImg = (String) request.getAttribute("primaryImage");
+                    if (ogImg != null && !ogImg.isEmpty()) request.setAttribute("ogImage", ogImg);
                     
                     // 1. Lấy danh sách đánh giá
                     linhhqth08598.service.ReviewService reviewService = new linhhqth08598.service.ReviewService();
