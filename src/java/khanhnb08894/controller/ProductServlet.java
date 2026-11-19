@@ -28,6 +28,11 @@ public class ProductServlet extends HttpServlet {
                 if (part != null) {
                     request.setAttribute("part", part);
                     request.setAttribute("primaryImage", new khanhnb08894.dao.PartMediaDAO().getPrimaryUrl(partId));
+
+                    // Thông số kỹ thuật (đọc từ các bảng spec_*)
+                    khanhnb08894.service.SpecService specService = new khanhnb08894.service.SpecService();
+                    request.setAttribute("generalSpecs", specService.getGeneralInfo(partId));
+                    request.setAttribute("techSpecs", specService.getTechSpecs(partId));
                     
                     // 1. Lấy danh sách đánh giá
                     linhhqth08598.service.ReviewService reviewService = new linhhqth08598.service.ReviewService();
@@ -87,6 +92,8 @@ public class ProductServlet extends HttpServlet {
                 active.add(p);
             }
             request.setAttribute("parts", active);
+            // Tóm tắt thông số 1 dòng hiện dưới tên sản phẩm
+            request.setAttribute("specSummaries", new khanhnb08894.service.SpecService().getSummaries());
             request.getRequestDispatcher("/views/khanhnb08894/product/list.jsp").forward(request, response);
         }
     }

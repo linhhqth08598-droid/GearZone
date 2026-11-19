@@ -687,3 +687,174 @@ textarea.form-control { align-self: stretch; }
     background-color: transparent !important;
     box-shadow: none !important;
 }
+
+
+/* =========================================================
+   GIAO DIỆN GỌN - ĐỒNG BỘ ADMIN + USER
+   - CHỈ áp dụng cho vùng NỘI DUNG (.user-content, .admin-content và trang khách không có sidebar)
+   - KHÔNG đụng tới Header / Sidebar / Footer
+   - Chữ nhỏ lại (14px), nút + ô nhập thấp lại (36px), khoảng trắng gọn hơn
+   - Muốn to/nhỏ hơn: chỉnh số trong khối "S { ... }" ngay bên dưới
+   ========================================================= */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) {
+    --ctl-h: 36px;
+    --ctl-h-sm: 29px;
+    --ctl-h-lg: 42px;
+    font-size: 14px;
+}
+
+/* Tiêu đề: user (h3) và admin (h1.h2) dùng chung 1 cỡ để nhìn đồng bộ */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h1, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .h1 { font-size: 1.5rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h2, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .h2 { font-size: 1.3rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h3, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .h3,
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h1.h2 { font-size: 1.25rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h4, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .h4 { font-size: 1.1rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h5, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .h5 { font-size: 1rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) h6, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .h6 { font-size: .92rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .fs-4 { font-size: 1.15rem !important; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .fs-5 { font-size: 1.05rem !important; }
+
+/* Nút + ô nhập */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .btn { font-size: 13px; padding: 0 14px; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .btn-sm { font-size: 12.5px; padding: 0 10px; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .btn-lg { font-size: 14.5px; padding: 0 18px; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .form-control, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .form-select { font-size: 13px; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .form-label { font-size: 13px; margin-bottom: 4px; }
+
+/* Bảng */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .table thead th { font-size: 12px; padding: 10px; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .table tbody td { font-size: 13px; padding: 9px 10px; }
+
+/* Nhãn, thông báo */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .badge { padding: 4px 8px; font-size: .72rem; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .alert { padding: .6rem 1rem; font-size: 13.5px; }
+
+/* Khoảng trắng: các class to của Bootstrap được thu nhỏ lại */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .p-5 { padding: 1.5rem !important; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .p-4 { padding: 1.1rem !important; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .py-5 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .my-5, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .my-4 { margin-top: 1.25rem !important; margin-bottom: 1.25rem !important; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .mt-5, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .mt-4 { margin-top: 1.25rem !important; }
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .mb-5, :is(.user-content, .admin-content, main > .container:not(.auth-container)) .mb-4 { margin-bottom: 1.1rem !important; }
+
+/* Trang user có sidebar: bỏ khung .container để nội dung full chiều rộng như bên admin */
+.user-content > .container,
+.user-content > .container-fluid {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+.user-content > .container { margin-top: 0 !important; margin-bottom: 0 !important; }
+.user-content > .container + .container { margin-top: 1.5rem !important; }
+/* Trang chủ (banner tràn viền): phần dưới banner vẫn căn giữa, tối đa 1400px */
+.user-content.p-0 > .container {
+    max-width: 1400px;
+    padding: 0 24px;
+    margin: 1.5rem auto !important;
+}
+/* Trang khách (chưa đăng nhập, không có sidebar) */
+main > .container:not(.auth-container) {
+    max-width: 1240px;
+    margin-top: 1.25rem !important;
+    margin-bottom: 1.25rem !important;
+}
+
+/* =========================================================
+   THẺ SẢN PHẨM (Trang chủ + Linh kiện PC) - 5 thẻ / hàng
+   ========================================================= */
+.pcard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border: 1px solid #eef0f4;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.pcard:hover {
+    transform: translateY(-3px);
+    border-color: #fecdd3;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+}
+.pcard .pcard-link {
+    flex: 1;
+    display: block;
+    padding: 12px 12px 6px;
+    color: inherit;
+    text-decoration: none;
+    text-align: center;
+}
+.pcard .pcard-img {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+.pcard .pcard-img img { max-width: 100%; max-height: 120px; object-fit: contain; }
+.pcard .pcard-name {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #1e293b;
+    min-height: 35px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.pcard .pcard-spec {
+    margin: 0 0 6px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: #64748b;
+    min-height: 31px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.pcard .pcard-price { font-size: 15px; font-weight: 700; color: #ff4757; }
+.pcard .pcard-old { display: block; min-height: 15px; font-size: 11.5px; color: #94a3b8; text-decoration: line-through; }
+.pcard .pcard-foot { padding: 0 12px 12px; }
+
+/* =========================================================
+   TRANG CHI TIẾT SẢN PHẨM
+   ========================================================= */
+.spec-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(15, 23, 42, .06); overflow: hidden; }
+.spec-card .spec-head {
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+.spec-table { width: 100%; margin: 0; border-collapse: collapse; }
+.spec-table th, .spec-table td { padding: 9px 16px; font-size: 13px; vertical-align: top; border-bottom: 1px solid #f1f5f9; }
+.spec-table tr:last-child th, .spec-table tr:last-child td { border-bottom: none; }
+.spec-table th { width: 38%; font-weight: 500; color: #64748b; background: #fcfcfd; }
+.spec-table td { color: #1e293b; font-weight: 500; }
+.spec-table tr:nth-child(even) td { background: #fafbfc; }
+
+/* =========================================================
+   THÔNG TIN LIÊN HỆ (gộp vào trang Hỗ trợ khách hàng)
+   ========================================================= */
+.contact-block { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+.contact-block:last-child { border-bottom: none; padding-bottom: 0; }
+.contact-block:first-child { padding-top: 0; }
+.contact-block h6 { font-weight: 700; margin-bottom: 6px; }
+.contact-block p { margin-bottom: 4px; font-size: 13px; }
+
+/* Icon minh hoạ cỡ lớn (fa-3x) thu nhỏ lại trong vùng nội dung */
+:is(.user-content, .admin-content, main > .container:not(.auth-container)) .fa-3x { font-size: 2.2em; }
+
+/* Bảng thông số: khung rõ ràng, cột nhãn cố định */
+.spec-table.table > :not(caption) > * > * { padding: 9px 16px; font-size: 13px; }
+.spec-table.table th { width: 38%; font-weight: 600; color: #475569; background: #f8fafc; }
+.spec-table.table td { color: #1e293b; font-weight: 500; }
+.spec-card { border: 1px solid #e2e8f0; }

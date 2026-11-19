@@ -18,7 +18,9 @@ public class HomeServlet extends HttpServlet {
             if ("ACTIVE".equals(p.getStatus())) featured.add(p);
         }
         featured.sort((a, b) -> Integer.compare(b.getSoldCount() == null ? 0 : b.getSoldCount(), a.getSoldCount() == null ? 0 : a.getSoldCount()));
-        request.setAttribute("featured", featured.size() > 8 ? featured.subList(0, 8) : featured);
+        // 10 sản phẩm = 2 hàng x 5 thẻ
+        request.setAttribute("featured", featured.size() > 10 ? featured.subList(0, 10) : featured);
+        request.setAttribute("specSummaries", new khanhnb08894.service.SpecService().getSummaries());
         // Khuyến mãi đang chạy + mã giảm giá còn dùng được (dữ liệu của Dũng)
         dungntth08581.service.PromotionService promoSv = new dungntth08581.service.PromotionService();
         java.util.List<dungntth08581.service.PromotionService.PromoRow> promos = promoSv.listPromotions(true);

@@ -8,14 +8,17 @@
 
 <style>
     .carousel-item img {
-        height: 500px;
+        height: 300px;
         object-fit: cover;
     }
     .carousel-caption {
         background: rgba(0,0,0,0.5);
-        padding: 20px;
-        border-radius: 12px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        bottom: 1.5rem;
     }
+    .carousel-caption h2 { font-size: 1.4rem; margin-bottom: 4px; }
+    .carousel-caption p { font-size: .9rem; margin-bottom: 0; }
 </style>
 
 <!-- SLIDESHOW -->
@@ -54,7 +57,7 @@
 
 <!-- SẢN PHẨM NỔI BẬT -->
 <div class="container my-5">
-    <h3 class="fw-bold mb-4"><i class="fas fa-fire text-danger me-2"></i>Sản phẩm nổi bật</h3>
+    <h3 class="fw-bold mb-3"><i class="fas fa-fire text-danger me-2"></i>Sản phẩm nổi bật</h3>
     <c:if test="${not empty sessionScope.message}">
         <div class="alert alert-success alert-dismissible fade show shadow-lg"
              style="position: fixed; top: 85px; right: 20px; z-index: 9999; min-width: 300px;">
@@ -66,29 +69,31 @@
     </c:if>
 
     <c:if test="${not empty sessionScope.error}"><div class="alert alert-danger"><c:out value="${sessionScope.error}"/></div><c:remove var="error" scope="session"/></c:if>
-        <div class="row">
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-5 g-3 mb-4">
         <c:if test="${empty featured}"><div class="col-12 text-center text-muted py-5"><p>Chưa có sản phẩm nào đang bán.</p></div></c:if>
         <c:forEach var="p" items="${featured}">
-            <div class="col-6 col-md-3 mb-4">
-                <div class="card h-100 border-0 shadow-sm rounded-4">
-                    <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="text-decoration-none text-dark">
-                        <div class="card-body text-center p-4">
-                            <div class="d-flex align-items-center justify-content-center mb-3" style="height:150px;">
-                                <c:choose>
-                                    <c:when test="${not empty p.imageUrl}"><img src="<c:out value='${p.imageUrl}'/>" alt="<c:out value='${p.partName}'/>" style="max-width:100%; max-height:150px; object-fit:contain;"></c:when>
-                                    <c:otherwise><i class="fas fa-microchip fa-3x text-secondary"></i></c:otherwise>
-                                </c:choose>
-                            </div>
-                            <h6 class="fw-bold" style="min-height:40px"><c:out value="${p.partName}"/></h6>
-                            <div class="text-danger fw-bold">
-                                <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                            </div>
+            <div class="col">
+                <div class="pcard">
+                    <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="pcard-link">
+                        <div class="pcard-img">
+                            <c:choose>
+                                <c:when test="${not empty p.imageUrl}"><img src="<c:out value='${p.imageUrl}'/>" alt="<c:out value='${p.partName}'/>" loading="lazy"></c:when>
+                                <c:otherwise><i class="fas fa-microchip fa-3x text-secondary"></i></c:otherwise>
+                            </c:choose>
                         </div>
+                        <h6 class="pcard-name"><c:out value="${p.partName}"/></h6>
+                        <p class="pcard-spec"><c:out value="${specSummaries[p.partId]}"/></p>
+                        <span class="pcard-price">
+                            <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                        </span>
+                        <span class="pcard-old">
+                            <c:if test="${not empty p.salePrice and p.salePrice > 0 and p.salePrice < p.basePrice}"><fmt:formatNumber value="${p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></c:if>
+                        </span>
                     </a>
-                    <div class="card-footer bg-white border-0 pb-3">
+                    <div class="pcard-foot">
                         <form action="${pageContext.request.contextPath}/cart" method="POST" class="m-0">
                             <input type="hidden" name="action" value="add"><input type="hidden" name="partId" value="${p.partId}">
-                            <button type="submit" class="btn btn-danger btn-sm w-100"><i class="fas fa-cart-plus me-1"></i> Thêm vào giỏ</button>
+                            <button type="submit" class="btn btn-danger btn-sm w-100"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
                         </form>
                     </div>
                 </div>
@@ -100,7 +105,7 @@
 
 <!-- KHUYẾN MÃI -->
 <div class="container my-5">
-    <h3 class="fw-bold mb-4"><i class="fas fa-tags text-warning me-2"></i>Khuyến mãi hấp dẫn</h3>
+    <h3 class="fw-bold mb-3"><i class="fas fa-tags text-warning me-2"></i>Khuyến mãi hấp dẫn</h3>
     <c:if test="${empty homePromos and empty homeCoupons}">
         <div class="text-center text-muted py-5"><p>Hiện chưa có chương trình khuyến mãi nào.</p></div>
     </c:if>

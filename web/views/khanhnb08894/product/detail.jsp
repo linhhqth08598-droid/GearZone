@@ -24,70 +24,108 @@
 </div>
 
 <div class="container my-5">
-    <div class="row">
+    <c:set var="curPrice" value="${not empty part.salePrice and part.salePrice > 0 ? part.salePrice : part.basePrice}" />
+    <div class="row g-4">
         <!-- Ảnh sản phẩm -->
-        <div class="col-md-6 mb-4">
+        <div class="col-md-5">
             <div class="card shadow-sm border-0 rounded-4 position-relative">
-                <div class="card-body p-5 text-center">
+                <div class="card-body p-4 text-center">
                     <c:choose>
                         <c:when test="${not empty primaryImage}">
-                            <img src="<c:out value='${primaryImage}'/>" alt="<c:out value='${part.partName}'/>" class="img-fluid rounded" style="max-height:420px; object-fit:contain;">
+                            <img src="<c:out value='${primaryImage}'/>" alt="<c:out value='${part.partName}'/>" class="img-fluid rounded" style="max-height:320px; object-fit:contain;">
                         </c:when>
                         <c:otherwise>
-                            <div class="d-flex flex-column align-items-center justify-content-center rounded bg-light text-muted" style="height:360px;">
-                                <i class="fas fa-image fa-4x mb-2"></i><span>Chưa có ảnh sản phẩm</span>
+                            <div class="d-flex flex-column align-items-center justify-content-center rounded bg-light text-muted" style="height:260px;">
+                                <i class="fas fa-image fa-3x mb-2"></i><span>Chưa có ảnh sản phẩm</span>
                             </div>
                         </c:otherwise>
                     </c:choose>
                 </div>
 
                 <!-- NÚT YÊU THÍCH -->
-                <button type="button" id="wishlistBtn" onclick="toggleWishlist(${part.partId})" 
-                        class="btn btn-light rounded-circle shadow-sm position-absolute" 
-                        style="top: 15px; right: 15px; width: 45px; height: 45px; color: ${isWishlisted ? '#ff4757' : '#ccc'};">
-                    <i class="fas fa-heart fs-5"></i>
+                <button type="button" id="wishlistBtn" onclick="toggleWishlist(${part.partId})"
+                        class="btn btn-light rounded-circle shadow-sm position-absolute p-0"
+                        style="top: 12px; right: 12px; width: 38px; height: 38px; color: ${isWishlisted ? '#ff4757' : '#ccc'};">
+                    <i class="fas fa-heart"></i>
                 </button>
             </div>
         </div>
 
         <!-- Thông tin sản phẩm -->
-        <div class="col-md-6">
-            <h1 class="fw-bold mb-3">${part.partName}</h1>
-            <p class="text-muted mb-4">Mã sản phẩm: <code>${part.productCode}</code></p>
+        <div class="col-md-7">
+            <h1 class="fw-bold mb-2"><c:out value="${part.partName}"/></h1>
+            <p class="text-muted mb-3">Mã sản phẩm: <code><c:out value="${part.productCode}"/></code></p>
 
-            <h3 class="text-danger fw-bold mb-4">
-                <fmt:formatNumber value="${part.salePrice != null ? part.salePrice : part.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-            </h3>
+            <div class="d-flex align-items-baseline gap-2 mb-3">
+                <h3 class="text-danger fw-bold mb-0">
+                    <fmt:formatNumber value="${curPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                </h3>
+                <c:if test="${not empty part.salePrice and part.salePrice > 0 and part.salePrice < part.basePrice}">
+                    <span class="text-muted text-decoration-line-through small"><fmt:formatNumber value="${part.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
+                </c:if>
+            </div>
 
-            <div class="mb-4 p-3 bg-light rounded-3">
-                <p class="mb-2"><strong><i class="fas fa-shield-alt text-success me-2"></i> Bảo hành:</strong> ${part.warrantyMonths} tháng</p>
-                <p class="mb-0"><strong><i class="fas fa-info-circle text-primary me-2"></i> Trạng thái:</strong> 
-                            <c:choose>
-                                <c:when test="${part.status == 'ACTIVE'}"><span class="text-success">Còn hàng</span></c:when>
+            <div class="mb-3 p-3 bg-light rounded-3">
+                <p class="mb-1"><strong><i class="fas fa-shield-alt text-success me-2"></i> Bảo hành:</strong> ${part.warrantyMonths} tháng</p>
+                <p class="mb-0"><strong><i class="fas fa-info-circle text-primary me-2"></i> Trạng thái:</strong>
+                    <c:choose>
+                        <c:when test="${part.status == 'ACTIVE'}"><span class="text-success">Còn hàng</span></c:when>
                         <c:otherwise><span class="text-danger">Hết hàng</span></c:otherwise>
                     </c:choose>
                 </p>
             </div>
 
-            <div class="mb-5">
-                <h5 class="fw-bold">Mô tả sản phẩm:</h5>
-                <p class="text-secondary">${part.description != null ? part.description : 'Đang cập nhật mô tả...'}</p>
+            <div class="mb-3">
+                <h6 class="fw-bold mb-1">Mô tả sản phẩm</h6>
+                <p class="text-secondary mb-0"><c:out value="${empty part.description ? 'Đang cập nhật mô tả...' : part.description}"/></p>
             </div>
 
-            <div class="d-flex gap-3">
+            <div class="d-flex flex-wrap gap-2">
+                <%-- MUA NGAY: thêm vào giỏ rồi chuyển thẳng sang giỏ hàng để thanh toán --%>
+                <form action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="buyNow" value="1">
+                    <input type="hidden" name="partId" value="${part.partId}">
+                    <button type="submit" class="btn btn-danger w-100" ${part.status == 'ACTIVE' ? '' : 'disabled'}>
+                        <i class="fas fa-bolt"></i> Mua ngay
+                    </button>
+                </form>
+
                 <form action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="partId" value="${part.partId}">
-                    <button type="submit" class="btn btn-primary btn-lg w-100" style="background-color: #ff4757; border: none;">
-                        <i class="fas fa-cart-plus me-2"></i> Thêm vào giỏ hàng
+                    <button type="submit" class="btn btn-outline-danger w-100" ${part.status == 'ACTIVE' ? '' : 'disabled'}>
+                        <i class="fas fa-cart-plus"></i> Thêm vào giỏ
                     </button>
                 </form>
 
                 <!-- NÚT THEO DÕI GIÁ -->
-                <button type="button" id="priceAlertBtn" onclick="togglePriceAlert(${part.partId})" 
-                        class="btn btn-outline-warning btn-lg ${isPriceAlerted ? 'active' : ''}">
+                <button type="button" id="priceAlertBtn" onclick="togglePriceAlert(${part.partId})"
+                        class="btn btn-outline-warning ${isPriceAlerted ? 'active' : ''}">
                     <i class="fas fa-bell"></i> <span id="priceAlertText">${isPriceAlerted ? 'Hủy theo dõi' : 'Theo dõi giá'}</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- THÔNG SỐ KỸ THUẬT (đọc từ bảng spec_* trong CSDL) -->
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="spec-card">
+                <div class="spec-head"><i class="fas fa-list-ul text-danger me-2"></i>Thông số kỹ thuật</div>
+                <table class="table table-bordered table-striped spec-table mb-0">
+                    <tbody>
+                        <c:forEach var="r" items="${generalSpecs}">
+                            <tr><th><c:out value="${r[0]}"/></th><td><c:out value="${r[1]}"/></td></tr>
+                        </c:forEach>
+                        <c:forEach var="r" items="${techSpecs}">
+                            <tr><th><c:out value="${r[0]}"/></th><td><c:out value="${r[1]}"/></td></tr>
+                        </c:forEach>
+                        <c:if test="${empty techSpecs}">
+                            <tr><td colspan="2" class="text-muted fst-italic">Thông số kỹ thuật chi tiết đang được cập nhật.</td></tr>
+                        </c:if>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -106,7 +144,7 @@
                     <input type="hidden" name="action" value="register">
                     <input type="hidden" name="partId" value="${part.partId}">
                     <p>Sản phẩm: <b class="text-dark">${part.partName}</b></p>
-                    <p>Giá hiện tại: <b class="text-danger"><fmt:formatNumber value="${part.salePrice != null ? part.salePrice : part.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></b></p>
+                    <p>Giá hiện tại: <b class="text-danger"><fmt:formatNumber value="${curPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></b></p>
 
                     <div class="input-group mb-3">
                         <span class="input-group-text bg-light"><i class="fas fa-tag text-warning"></i></span>

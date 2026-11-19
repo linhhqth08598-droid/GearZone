@@ -7,7 +7,7 @@
     .rating-wrapper {
         position: relative;
         display: inline-block;
-        font-size: 30px;
+        font-size: 22px;
         color: #ccc;
         cursor: pointer;
         margin-bottom: 10px;

@@ -17,7 +17,8 @@ public class ContactServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        request.getRequestDispatcher("/views/khanhnb08894/contact.jsp").forward(request, response);
+        // Trang Liên hệ đã được gộp vào trang Hỗ trợ khách hàng (/user/support)
+        response.sendRedirect(request.getContextPath() + "/user/support");
     }
 
     @Override
