@@ -462,15 +462,16 @@ body.modal-open { padding-right: 0 !important; overflow: hidden; }
     background-color: #ffffff;
     border-right: 1px solid #e2e8f0;
     z-index: 100;
-    /* thanh cuộn mảnh để biết sidebar còn mục phía dưới */
+        /* Thanh cuộn siêu mảnh, tự ẩn khi không di chuột vào sidebar */
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-color: transparent transparent;
     transition: margin-left .25s ease, visibility 0s;
 }
-.app-sidebar::-webkit-scrollbar { width: 6px; }
-.app-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.app-sidebar:hover { scrollbar-color: #cbd5e1 transparent; }
+.app-sidebar::-webkit-scrollbar { width: 5px; }
+.app-sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
+.app-sidebar:hover::-webkit-scrollbar-thumb { background: #cbd5e1; }
 .app-sidebar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-.app-sidebar .nav { padding: 4px 0 16px; flex-wrap: nowrap; }
 
 /* Thu gọn trên máy tính: đẩy sidebar ra khỏi màn hình, nội dung tự giãn rộng */
 html.sb-collapsed .app-sidebar {

@@ -7,16 +7,20 @@
 
 <div class="container mt-4">
     <c:if test="${not empty sessionScope.message}">
-        <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
+        <div class="alert alert-success alert-dismissible fade show shadow-lg"
+             style="position: fixed; top: 85px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
             <a href="${pageContext.request.contextPath}/cart" class="alert-link ms-2">Xem giỏ hàng</a>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
         <c:remove var="message" scope="session"/>
     </c:if>
+
     <c:if test="${not empty sessionScope.error}">
         <div class="alert alert-danger alert-dismissible fade show"><i class="fas fa-exclamation-circle me-1"></i> <c:out value="${sessionScope.error}"/>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-        <c:remove var="error" scope="session"/>
-    </c:if>
+            <c:remove var="error" scope="session"/>
+        </c:if>
 </div>
 
 <div class="container my-5">
@@ -36,7 +40,7 @@
                         </c:otherwise>
                     </c:choose>
                 </div>
-                
+
                 <!-- NÚT YÊU THÍCH -->
                 <button type="button" id="wishlistBtn" onclick="toggleWishlist(${part.partId})" 
                         class="btn btn-light rounded-circle shadow-sm position-absolute" 
@@ -45,31 +49,31 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- Thông tin sản phẩm -->
         <div class="col-md-6">
             <h1 class="fw-bold mb-3">${part.partName}</h1>
             <p class="text-muted mb-4">Mã sản phẩm: <code>${part.productCode}</code></p>
-            
+
             <h3 class="text-danger fw-bold mb-4">
                 <fmt:formatNumber value="${part.salePrice != null ? part.salePrice : part.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
             </h3>
-            
+
             <div class="mb-4 p-3 bg-light rounded-3">
                 <p class="mb-2"><strong><i class="fas fa-shield-alt text-success me-2"></i> Bảo hành:</strong> ${part.warrantyMonths} tháng</p>
                 <p class="mb-0"><strong><i class="fas fa-info-circle text-primary me-2"></i> Trạng thái:</strong> 
-                    <c:choose>
-                        <c:when test="${part.status == 'ACTIVE'}"><span class="text-success">Còn hàng</span></c:when>
+                            <c:choose>
+                                <c:when test="${part.status == 'ACTIVE'}"><span class="text-success">Còn hàng</span></c:when>
                         <c:otherwise><span class="text-danger">Hết hàng</span></c:otherwise>
                     </c:choose>
                 </p>
             </div>
-            
+
             <div class="mb-5">
                 <h5 class="fw-bold">Mô tả sản phẩm:</h5>
                 <p class="text-secondary">${part.description != null ? part.description : 'Đang cập nhật mô tả...'}</p>
             </div>
-            
+
             <div class="d-flex gap-3">
                 <form action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
                     <input type="hidden" name="action" value="add">
@@ -78,7 +82,7 @@
                         <i class="fas fa-cart-plus me-2"></i> Thêm vào giỏ hàng
                     </button>
                 </form>
-                
+
                 <!-- NÚT THEO DÕI GIÁ -->
                 <button type="button" id="priceAlertBtn" onclick="togglePriceAlert(${part.partId})" 
                         class="btn btn-outline-warning btn-lg ${isPriceAlerted ? 'active' : ''}">
@@ -103,7 +107,7 @@
                     <input type="hidden" name="partId" value="${part.partId}">
                     <p>Sản phẩm: <b class="text-dark">${part.partName}</b></p>
                     <p>Giá hiện tại: <b class="text-danger"><fmt:formatNumber value="${part.salePrice != null ? part.salePrice : part.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></b></p>
-                    
+
                     <div class="input-group mb-3">
                         <span class="input-group-text bg-light"><i class="fas fa-tag text-warning"></i></span>
                         <input type="number" class="form-control" name="targetPrice" required min="1000" step="1000" placeholder="Nhập số tiền bạn muốn mua...">
@@ -124,28 +128,28 @@
 <!-- SCRIPT AJAX -->
 <script>
     function toggleWishlist(partId) {
-        fetch('${pageContext.request.contextPath}/user/wishlist?action=toggle&partId=' + partId, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const btn = document.getElementById('wishlistBtn');
-                    btn.style.color = data.isWishlisted ? '#ff4757' : '#ccc';
-                }
-            });
+        fetch('${pageContext.request.contextPath}/user/wishlist?action=toggle&partId=' + partId, {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const btn = document.getElementById('wishlistBtn');
+                        btn.style.color = data.isWishlisted ? '#ff4757' : '#ccc';
+                    }
+                });
     }
 
     function togglePriceAlert(partId) {
         const btn = document.getElementById('priceAlertBtn');
         if (btn.classList.contains('active')) {
             // Huỷ theo dõi
-            fetch('${pageContext.request.contextPath}/user/price-alert?action=cancel&partId=' + partId, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        btn.classList.remove('active');
-                        document.getElementById('priceAlertText').innerText = 'Theo dõi giá';
-                    }
-                });
+            fetch('${pageContext.request.contextPath}/user/price-alert?action=cancel&partId=' + partId, {method: 'POST'})
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            btn.classList.remove('active');
+                            document.getElementById('priceAlertText').innerText = 'Theo dõi giá';
+                        }
+                    });
         } else {
             // Mở modal nhập giá mong muốn (mở bằng JS để vẫn dùng được sau khi vừa hủy theo dõi)
             bootstrap.Modal.getOrCreateInstance(document.getElementById('priceAlertModal')).show();
@@ -165,34 +169,36 @@
             headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
             body: new URLSearchParams(new FormData(form)).toString()
         })
-        .then(res => res.text().then(text => ({ status: res.status, url: res.url, text: text })))
-        .then(r => {
-            let data;
-            try {
-                data = JSON.parse(r.text);
-            } catch (err) {
-                // Server không trả về JSON -> in ra để biết lỗi thật
-                console.error('Price-alert response not JSON:', r);
-                alert('Server trả về dữ liệu không hợp lệ (HTTP ' + r.status + '). Mở F12 > Console để xem chi tiết.');
-                return;
-            }
-            if (data.success) {
-                const modalEl = document.getElementById('priceAlertModal');
-                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-                const btn = document.getElementById('priceAlertBtn');
-                btn.classList.add('active');
-                document.getElementById('priceAlertText').innerText = 'Hủy theo dõi';
-                form.reset();
-                alert(data.message || 'Đăng ký thành công');
-            } else {
-                alert(data.message || 'Đăng ký thất bại');
-            }
-        })
-        .catch(err => {
-            console.error('Price-alert error:', err);
-            alert('Lỗi: ' + err);
-        })
-        .finally(() => { submitBtn.disabled = false; });
+                .then(res => res.text().then(text => ({status: res.status, url: res.url, text: text})))
+                .then(r => {
+                    let data;
+                    try {
+                        data = JSON.parse(r.text);
+                    } catch (err) {
+                        // Server không trả về JSON -> in ra để biết lỗi thật
+                        console.error('Price-alert response not JSON:', r);
+                        alert('Server trả về dữ liệu không hợp lệ (HTTP ' + r.status + '). Mở F12 > Console để xem chi tiết.');
+                        return;
+                    }
+                    if (data.success) {
+                        const modalEl = document.getElementById('priceAlertModal');
+                        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                        const btn = document.getElementById('priceAlertBtn');
+                        btn.classList.add('active');
+                        document.getElementById('priceAlertText').innerText = 'Hủy theo dõi';
+                        form.reset();
+                        alert(data.message || 'Đăng ký thành công');
+                    } else {
+                        alert(data.message || 'Đăng ký thất bại');
+                    }
+                })
+                .catch(err => {
+                    console.error('Price-alert error:', err);
+                    alert('Lỗi: ' + err);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                });
     });
 </script>
 

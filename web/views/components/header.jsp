@@ -16,15 +16,24 @@
                 try {
                     var mobile = window.matchMedia('(max-width: 991.98px)').matches;
                     var saved = localStorage.getItem('gz_sidebar_open');
-                    if (mobile || saved !== '1') document.documentElement.classList.add('sb-collapsed');
-                } catch (e) { document.documentElement.classList.add('sb-collapsed'); }
+                    if (mobile || saved !== '1')
+                        document.documentElement.classList.add('sb-collapsed');
+                } catch (e) {
+                    document.documentElement.classList.add('sb-collapsed');
+                }
             })();
         </script>
 
         <style>
             /* chống lệch trang khi mở modal */
-            body.modal-open { padding-right: 0 !important; overflow: hidden; }
-            html { overflow-y: scroll; scrollbar-gutter: stable; }
+            body.modal-open {
+                padding-right: 0 !important;
+                overflow: hidden;
+            }
+            html {
+                overflow-y: scroll;
+                scrollbar-gutter: stable;
+            }
             /* === FIX LỖI LỆCH TRANG DO THANH CUỘN === */
             html {
                 scrollbar-gutter: stable;
@@ -47,7 +56,7 @@
             footer {
                 padding: 15px 0 !important;
             }
-            
+
             /* === NAVBAR USER === */
             .navbar-custom {
                 background-color: #ffffff;
@@ -117,27 +126,25 @@
                                 </a>
                             </li>
                         </c:if>
-                        <%-- Giỏ hàng: số món lấy từ session "cartCount" (UnreadCountFilter cập nhật mỗi lần mở trang) --%>
+                        <%-- Giỏ hàng & Thông báo: luôn giữ thẻ span.badge để JS cập nhật realtime --%>
                         <c:if test="${not empty sessionScope.loggedUser}">
                             <li class="nav-item me-2">
                                 <a class="nav-link position-relative" href="${pageContext.request.contextPath}/cart" title="Giỏ hàng">
                                     <i class="fas fa-shopping-cart fs-5"></i>
-                                    <c:if test="${sessionScope.cartCount > 0}">
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
-                                            ${sessionScope.cartCount}
-                                        </span>
-                                    </c:if>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                          style="font-size: 10px; ${sessionScope.cartCount > 0 ? '' : 'display:none;'}">
+                                        ${sessionScope.cartCount > 0 ? sessionScope.cartCount : 0}
+                                    </span>
                                 </a>
                             </li>
                             <li class="nav-item me-2">
                                 <a class="nav-link position-relative" href="${pageContext.request.contextPath}/user/notifications" title="Thông báo">
                                     <i class="fas fa-bell fs-5"></i>
                                     <c:set var="unreadCount" value="${sessionScope.unreadCount}" />
-                                    <c:if test="${unreadCount > 0}">
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
-                                            ${unreadCount}
-                                        </span>
-                                    </c:if>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                          style="font-size: 10px; ${unreadCount > 0 ? '' : 'display:none;'}">
+                                        ${unreadCount > 0 ? unreadCount : 0}
+                                    </span>
                                 </a>
                             </li>
                         </c:if>

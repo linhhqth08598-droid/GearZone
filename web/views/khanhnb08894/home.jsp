@@ -56,40 +56,44 @@
 <div class="container my-5">
     <h3 class="fw-bold mb-4"><i class="fas fa-fire text-danger me-2"></i>Sản phẩm nổi bật</h3>
     <c:if test="${not empty sessionScope.message}">
-    <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
-        <a href="${pageContext.request.contextPath}/cart" class="alert-link ms-2">Xem giỏ hàng</a>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-    <c:remove var="message" scope="session"/>
-</c:if>
+        <div class="alert alert-success alert-dismissible fade show shadow-lg"
+             style="position: fixed; top: 85px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
+            <a href="${pageContext.request.contextPath}/cart" class="alert-link ms-2">Xem giỏ hàng</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <c:remove var="message" scope="session"/>
+    </c:if>
+
     <c:if test="${not empty sessionScope.error}"><div class="alert alert-danger"><c:out value="${sessionScope.error}"/></div><c:remove var="error" scope="session"/></c:if>
-    <div class="row">
+        <div class="row">
         <c:if test="${empty featured}"><div class="col-12 text-center text-muted py-5"><p>Chưa có sản phẩm nào đang bán.</p></div></c:if>
-<c:forEach var="p" items="${featured}">
-    <div class="col-6 col-md-3 mb-4">
-        <div class="card h-100 border-0 shadow-sm rounded-4">
-            <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="text-decoration-none text-dark">
-                <div class="card-body text-center p-4">
-                    <div class="d-flex align-items-center justify-content-center mb-3" style="height:150px;">
-                        <c:choose>
-                            <c:when test="${not empty p.imageUrl}"><img src="<c:out value='${p.imageUrl}'/>" alt="<c:out value='${p.partName}'/>" style="max-width:100%; max-height:150px; object-fit:contain;"></c:when>
-                            <c:otherwise><i class="fas fa-microchip fa-3x text-secondary"></i></c:otherwise>
-                        </c:choose>
-                    </div>
-                    <h6 class="fw-bold" style="min-height:40px"><c:out value="${p.partName}"/></h6>
-                    <div class="text-danger fw-bold">
-                        <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+        <c:forEach var="p" items="${featured}">
+            <div class="col-6 col-md-3 mb-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <a href="${pageContext.request.contextPath}/product?action=detail&id=${p.partId}" class="text-decoration-none text-dark">
+                        <div class="card-body text-center p-4">
+                            <div class="d-flex align-items-center justify-content-center mb-3" style="height:150px;">
+                                <c:choose>
+                                    <c:when test="${not empty p.imageUrl}"><img src="<c:out value='${p.imageUrl}'/>" alt="<c:out value='${p.partName}'/>" style="max-width:100%; max-height:150px; object-fit:contain;"></c:when>
+                                    <c:otherwise><i class="fas fa-microchip fa-3x text-secondary"></i></c:otherwise>
+                                </c:choose>
+                            </div>
+                            <h6 class="fw-bold" style="min-height:40px"><c:out value="${p.partName}"/></h6>
+                            <div class="text-danger fw-bold">
+                                <fmt:formatNumber value="${not empty p.salePrice and p.salePrice > 0 ? p.salePrice : p.basePrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <form action="${pageContext.request.contextPath}/cart" method="POST" class="m-0">
+                            <input type="hidden" name="action" value="add"><input type="hidden" name="partId" value="${p.partId}">
+                            <button type="submit" class="btn btn-danger btn-sm w-100"><i class="fas fa-cart-plus me-1"></i> Thêm vào giỏ</button>
+                        </form>
                     </div>
                 </div>
-            </a>
-            <div class="card-footer bg-white border-0 pb-3">
-                <form action="${pageContext.request.contextPath}/cart" method="POST" class="m-0">
-                    <input type="hidden" name="action" value="add"><input type="hidden" name="partId" value="${p.partId}">
-                    <button type="submit" class="btn btn-danger btn-sm w-100"><i class="fas fa-cart-plus me-1"></i> Thêm vào giỏ</button>
-                </form>
             </div>
-        </div>
-    </div>
-</c:forEach>
+        </c:forEach>
     </div>
     <div class="text-center"><a href="${pageContext.request.contextPath}/product" class="btn btn-outline-danger">Xem tất cả linh kiện</a></div>
 </div>
@@ -108,8 +112,8 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <span class="badge bg-warning text-dark fs-6"><c:out value="${c.code}"/></span>
                             <c:if test="${not empty c.endDate}"><small class="text-muted">HSD: <fmt:formatDate value="${c.endDate}" pattern="dd/MM/yyyy"/></small></c:if>
-                        </div>
-                        <h6 class="fw-bold mt-2 mb-1"><c:out value="${c.name}"/></h6>
+                            </div>
+                            <h6 class="fw-bold mt-2 mb-1"><c:out value="${c.name}"/></h6>
                         <div class="text-danger fw-bold">
                             <c:choose>
                                 <c:when test="${c.type == 'PERCENT'}"><fmt:formatNumber value="${c.value}" maxFractionDigits="0"/>%<c:if test="${c.maxDiscount > 0}"> (tối đa <fmt:formatNumber value="${c.maxDiscount}" maxFractionDigits="0"/> ₫)</c:if></c:when>
@@ -118,9 +122,9 @@
                             </c:choose>
                         </div>
                         <c:if test="${c.minOrder > 0}"><small class="text-muted">Đơn từ <fmt:formatNumber value="${c.minOrder}" maxFractionDigits="0"/> ₫</small></c:if>
+                        </div>
                     </div>
                 </div>
-            </div>
         </c:forEach>
         <c:forEach var="p" items="${homePromos}">
             <div class="col-md-4 mb-3">
@@ -128,16 +132,16 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-1"><i class="fas fa-fire text-danger me-1"></i><c:out value="${p.name}"/></h6>
                         <c:if test="${not empty p.targetName}"><div class="small text-muted">Áp dụng: <c:out value="${p.targetName}"/></div></c:if>
-                        <div class="text-danger fw-bold">
-                            Giảm <c:choose>
+                            <div class="text-danger fw-bold">
+                                Giảm <c:choose>
                                 <c:when test="${p.discountType == 'PERCENT'}"><fmt:formatNumber value="${p.value}" maxFractionDigits="0"/>%</c:when>
                                 <c:otherwise><fmt:formatNumber value="${p.value}" maxFractionDigits="0"/> ₫</c:otherwise>
                             </c:choose>
                         </div>
                         <c:if test="${not empty p.endDate}"><small class="text-muted">Đến <fmt:formatDate value="${p.endDate}" pattern="dd/MM/yyyy"/></small></c:if>
+                        </div>
                     </div>
                 </div>
-            </div>
         </c:forEach>
     </div>
     <div class="text-center"><a href="${pageContext.request.contextPath}/promotion" class="btn btn-outline-warning">Xem tất cả khuyến mãi</a></div>

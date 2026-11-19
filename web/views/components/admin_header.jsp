@@ -17,15 +17,24 @@
                 try {
                     var mobile = window.matchMedia('(max-width: 991.98px)').matches;
                     var saved = localStorage.getItem('gz_sidebar_open');
-                    if (mobile || saved !== '1') document.documentElement.classList.add('sb-collapsed');
-                } catch (e) { document.documentElement.classList.add('sb-collapsed'); }
+                    if (mobile || saved !== '1')
+                        document.documentElement.classList.add('sb-collapsed');
+                } catch (e) {
+                    document.documentElement.classList.add('sb-collapsed');
+                }
             })();
         </script>
 
         <style>
             /* chống lệch trang khi mở modal */
-            body.modal-open { padding-right: 0 !important; overflow: hidden; }
-            html { overflow-y: scroll; scrollbar-gutter: stable; }
+            body.modal-open {
+                padding-right: 0 !important;
+                overflow: hidden;
+            }
+            html {
+                overflow-y: scroll;
+                scrollbar-gutter: stable;
+            }
             /* === FIX LỖI LỆCH TRANG DO THANH CUỘN === */
             html {
                 scrollbar-gutter: stable;
@@ -38,19 +47,19 @@
                 flex-direction: column;
                 margin: 0;
             }
-            
+
             /* === NAVBAR ADMIN (Giống hệt User, chỉ đổi màu) === */
             .navbar-admin {
                 background-color: #ffffff;
                 border-bottom: 2px solid #3b82f6; /* Màu xanh Admin */
-                padding: 15px 0; 
+                padding: 15px 0;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.05);
                 position: sticky;
                 top: 0;
                 z-index: 1000;
             }
             .navbar-admin .navbar-brand {
-                font-size: 24px; 
+                font-size: 24px;
                 font-weight: 900;
                 color: #0f1117;
                 letter-spacing: 1px;
@@ -61,8 +70,8 @@
             .navbar-admin .nav-link {
                 color: #475569;
                 font-weight: 600;
-                font-size: 15px; 
-                margin: 0 10px; 
+                font-size: 15px;
+                margin: 0 10px;
                 transition: 0.3s;
             }
             .navbar-admin .nav-link:hover {
@@ -93,7 +102,9 @@
             }
             @media (min-width: 1200px) {
                 .admin-content h1,
-                .admin-content h1.h2 { font-size: 1.75rem; }
+                .admin-content h1.h2 {
+                    font-size: 1.75rem;
+                }
             }
             .admin-footer {
                 background: #fff;
@@ -121,18 +132,17 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/home">Về trang chủ</a></li>
                     </ul>
-                    
+
                     <!-- Menu bên phải (Thông báo, Avatar, Tên) -->
                     <ul class="navbar-nav align-items-center">
                         <li class="nav-item me-2">
                             <a class="nav-link position-relative" href="${pageContext.request.contextPath}/user/notifications" title="Thông báo">
                                 <i class="fas fa-bell fs-5"></i>
                                 <c:set var="unreadCount" value="${sessionScope.unreadCount}" />
-                                <c:if test="${unreadCount > 0}">
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
-                                        ${unreadCount}
-                                    </span>
-                                </c:if>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      style="font-size: 10px; ${unreadCount > 0 ? '' : 'display:none;'}">
+                                    ${unreadCount > 0 ? unreadCount : 0}
+                                </span>
                             </a>
                         </li>
                         <li class="nav-item dropdown">
@@ -158,4 +168,4 @@
             </div>
         </nav>
 
-<div class="admin-wrapper">
+        <div class="admin-wrapper">
