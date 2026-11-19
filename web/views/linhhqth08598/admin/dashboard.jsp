@@ -70,7 +70,7 @@
                 <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-pie me-2 text-primary"></i>Doanh thu theo Danh mục</h5>
             </div>
             <div class="card-body p-4">
-                <canvas id="revenueChart"></canvas>
+                <div style="position:relative; height:340px;"><canvas id="revenueChart"></canvas></div>
             </div>
         </div>
     </div>
@@ -82,7 +82,7 @@
                 <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-bar me-2 text-success"></i>Top 5 Linh kiện Bán chạy</h5>
             </div>
             <div class="card-body p-4">
-                <canvas id="topPartsChart"></canvas>
+                <div style="position:relative; height:340px;"><canvas id="topPartsChart"></canvas></div>
             </div>
         </div>
     </div>
@@ -107,8 +107,9 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: {position: 'bottom'}
+                    legend: {position: 'bottom', labels: {boxWidth: 12, font: {size: 12}}}
                 }
             }
         });
@@ -121,6 +122,7 @@
     const partData = ${partData};
 
     if (partLabels.length > 0) {
+        const barColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
         new Chart(document.getElementById('topPartsChart'), {
             type: 'bar',
             data: {
@@ -128,14 +130,23 @@
                 datasets: [{
                         label: 'Số lượng bán ra',
                         data: partData,
-                        backgroundColor: '#10b981',
-                        borderRadius: 5
+                        // mỗi sản phẩm một màu để dễ phân biệt
+                        backgroundColor: partLabels.map((_, i) => barColors[i % barColors.length]),
+                        borderRadius: 5,
+                        barThickness: 26
                     }]
             },
             options: {
+                indexAxis: 'y', // cột nằm ngang -> tên sản phẩm dài vẫn đọc được
                 responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {display: false}, // 1 dataset, nhiều màu -> bỏ chú thích 1 màu gây hiểu nhầm
+                    tooltip: {callbacks: {label: ctx => ' Đã bán: ' + ctx.parsed.x}}
+                },
                 scales: {
-                    y: {beginAtZero: true, ticks: {stepSize: 1}}
+                    x: {beginAtZero: true, ticks: {stepSize: 1}},
+                    y: {ticks: {font: {size: 12}}}
                 }
             }
         });
