@@ -15,6 +15,7 @@ public class OrderHistoryItem {
     private int quantity;
     private double unitPrice;
     private String imageUrl;
+    private String serialNumber;
 
     // Getters and Setters
     public int getOrderId() { return orderId; }
@@ -46,4 +47,7 @@ public class OrderHistoryItem {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getSerialNumber() { return serialNumber; }
+    public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
 }

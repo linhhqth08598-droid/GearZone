@@ -24,6 +24,26 @@ public class AdminOrderServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String idParam = request.getParameter("id");
+        if (idParam != null && !idParam.isEmpty()) {   // xem chi tiết 1 đơn
+            try {
+                OrderService.OrderRow order = service.getAnyOrder(Integer.parseInt(idParam));
+                if (order == null) {
+                    request.getSession().setAttribute("error", "Không tìm thấy đơn hàng!");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders");
+                    return;
+                }
+                request.setAttribute("order", order);
+                request.setAttribute("lines", service.getLines(order.getOrderId()));
+                String[] pay = new dungntth08581.service.PaymentService().paymentInfo(order.getOrderId());
+                request.setAttribute("payMethod", pay == null ? "COD" : pay[0]);
+                request.setAttribute("payStatus", pay == null ? "" : pay[1]);
+                request.getRequestDispatcher("/views/dungntth08581/admin/order_detail.jsp").forward(request, response);
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+            }
+            return;
+        }
         String status = request.getParameter("status");
         List<OrderService.OrderRow> all = service.listForAdmin(status);
         PaginationUtil page = new PaginationUtil(request.getParameter("page"), Constants.ADMIN_PAGE_SIZE, all.size());

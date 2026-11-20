@@ -115,6 +115,7 @@ public class PaymentService {
                 try (PreparedStatement ps = con.prepareStatement("UPDATE orders SET order_status = 'CONFIRMED' WHERE order_id = ? AND order_status = 'PENDING'")) {
                     ps.setInt(1, orderId); ps.executeUpdate();
                 }
+                new OrderService().assignSerials(con, orderId);   // PayOS đã thanh toán = chốt serial luôn
                 con.commit();
             } catch (Exception e) { con.rollback(); throw e; }
         } catch (Exception e) {

@@ -34,7 +34,9 @@
         <thead><tr><th>#</th><th>Sản phẩm</th><th class="r">Đơn giá</th><th class="r">SL</th><th class="r">Thành tiền</th></tr></thead>
         <tbody>
             <c:forEach var="l" items="${lines}" varStatus="st">
-                <tr><td>${st.count}</td><td><c:out value="${l.partName}"/></td>
+                <tr><td>${st.count}</td><td><c:out value="${l.partName}"/>
+                        <c:choose><c:when test="${not empty l.serialNumber}"><br><small><strong>S/N: <c:out value="${l.serialNumber}"/></strong></small></c:when>
+                        <c:when test="${order.status == 'PENDING'}"><br><small><em>Chờ xuất kho</em></small></c:when></c:choose></td>
                     <td class="r"><fmt:formatNumber value="${l.unitPrice}" maxFractionDigits="0"/> ₫</td><td class="r">${l.quantity}</td>
                     <td class="r"><fmt:formatNumber value="${l.lineTotal}" maxFractionDigits="0"/> ₫</td></tr>
             </c:forEach>

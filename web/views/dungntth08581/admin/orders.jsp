@@ -44,6 +44,7 @@
                             <td><fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                             <td>
                                 <div class="d-flex gap-1 flex-wrap align-items-center">
+                                    <a href="${pageContext.request.contextPath}/admin/order?id=${o.orderId}" class="btn btn-sm btn-outline-secondary text-nowrap" style="height:30px">Chi tiết</a>
                                     <c:set var="nextStatus" value="${o.status == 'PENDING' ? 'CONFIRMED' : (o.status == 'CONFIRMED' ? 'SHIPPING' : (o.status == 'SHIPPING' ? 'DELIVERED' : ''))}"/>
                                     <c:if test="${not empty nextStatus}">
                                         <form action="${pageContext.request.contextPath}/admin/orders" method="POST" class="d-flex gap-1 m-0 align-items-center">

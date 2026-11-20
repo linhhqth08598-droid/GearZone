@@ -2,6 +2,7 @@ package dungntth08581.service;
 
 import fourSome.model.ShippingAddresses;
 import fourSome.url.DBConnect;
+import khanhnb08894.dao.PartSerialsDAO;
 import khanhnb08894.service.InventoryService;
 import linhhqth08598.service.NotificationService;
 
@@ -20,6 +21,7 @@ import java.util.Random;
 public class OrderService {
 
     private final InventoryService inventory = new InventoryService();
+    private final PartSerialsDAO serialsDAO = new PartSerialsDAO();
     private final NotificationService notifications = new NotificationService();
     private final PromotionService promotions = new PromotionService();
     private final PaymentService paymentService = new PaymentService();
@@ -140,6 +142,11 @@ public class OrderService {
         private String partName;
         private int quantity;
         private double unitPrice;
+        private String serialNumber;
+
+        public String getSerialNumber() {
+            return serialNumber;
+        }
 
         public String getPartName() {
             return partName;
@@ -259,7 +266,7 @@ public class OrderService {
 
     public List<OrderLine> getLines(int orderId) {
         List<OrderLine> list = new ArrayList<>();
-        String sql = "SELECT p.part_name, oi.quantity, oi.unit_price FROM order_items oi JOIN parts p ON p.part_id = oi.part_id WHERE oi.order_id = ?";
+        String sql = "SELECT p.part_name, oi.quantity, oi.unit_price, oi.serial_number FROM order_items oi JOIN parts p ON p.part_id = oi.part_id WHERE oi.order_id = ?";
         try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -268,6 +275,7 @@ public class OrderService {
                     l.partName = rs.getString(1);
                     l.quantity = rs.getInt(2);
                     l.unitPrice = rs.getDouble(3);
+                    l.serialNumber = rs.getString(4);
                     list.add(l);
                 }
             }
@@ -531,6 +539,7 @@ public class OrderService {
             con.setAutoCommit(false);
             try {
                 releaseItems(con, o.orderId);
+                releaseSerials(con, o.orderId);
                 promotions.releaseCouponUse(con, o.orderId);
                 try (PreparedStatement ps = con.prepareStatement(
                         "UPDATE orders SET order_status = 'CANCELLED', cancel_reason = ?, cancelled_at = SYSDATETIME() WHERE order_id = ?")) {
@@ -554,6 +563,41 @@ public class OrderService {
         paymentService.cancelOnlineLink(o.orderId, reason);   // đóng link PayOS còn mở (nếu có)
         notifications.notifyOrder(o.userId, o.orderId, "Đơn hàng " + o.orderCode + " đã được hủy.");
         return null;
+    }
+
+    /** CONFIRMED: bốc serial IN_STOCK lâu nhất cho từng dòng, đổi SOLD, ghi vào order_items.serial_number. */
+    public void assignSerials(Connection con, int orderId) throws SQLException {
+        List<int[]> items = new ArrayList<>();   // {order_item_id, part_id, quantity}
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT order_item_id, part_id, quantity FROM order_items WHERE order_id = ? AND (serial_number IS NULL OR serial_number = '')")) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) items.add(new int[]{rs.getInt(1), rs.getInt(2), rs.getInt(3)});
+            }
+        }
+        for (int[] it : items) {
+            List<String> picked = serialsDAO.pickForSale(con, it[1], it[2]);
+            if (picked.isEmpty()) continue;   // dữ liệu cũ / chưa nhập serial: để trống, bảo hành sẽ dùng mã dự phòng
+            try (PreparedStatement ps = con.prepareStatement("UPDATE order_items SET serial_number = ? WHERE order_item_id = ?")) {
+                ps.setString(1, String.join(", ", picked));
+                ps.setInt(2, it[0]);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    /** CANCELLED: nhả serial về IN_STOCK và xóa serial_number trên order_items. */
+    private void releaseSerials(Connection con, int orderId) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("SELECT serial_number FROM order_items WHERE order_id = ? AND serial_number IS NOT NULL")) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) serialsDAO.releaseSerials(con, rs.getString(1));
+            }
+        }
+        try (PreparedStatement ps = con.prepareStatement("UPDATE order_items SET serial_number = NULL WHERE order_id = ?")) {
+            ps.setInt(1, orderId);
+            ps.executeUpdate();
+        }
     }
 
     private void releaseItems(Connection con, int orderId) throws SQLException {
@@ -580,6 +624,12 @@ public class OrderService {
         }
         if ("CANCELLED".equals(newStatus)) {
             return cancel(o, trackingOrReason == null || trackingOrReason.trim().isEmpty() ? "Cửa hàng hủy đơn" : trackingOrReason.trim());
+        }
+        if ("PENDING".equals(o.status) && "CONFIRMED".equals(newStatus)) {
+            String[] pay = paymentService.paymentInfo(orderId);
+            if (pay != null && "PAYOS".equals(pay[0]) && !"PAID".equals(pay[1])) {
+                return "Đơn thanh toán PayOS chưa được thanh toán, chưa thể xác nhận!";
+            }
         }
         String expected;
         switch (o.status) {
@@ -620,6 +670,9 @@ public class OrderService {
                         ps.executeUpdate();
                     }
                 } else {
+                    if ("CONFIRMED".equals(newStatus)) {
+                        assignSerials(con, orderId);
+                    }
                     try (PreparedStatement ps = con.prepareStatement("UPDATE orders SET order_status = ?, tracking_code = ISNULL(?, tracking_code) WHERE order_id = ?")) {
                         ps.setString(1, newStatus);
                         String tc = trackingOrReason == null || trackingOrReason.trim().isEmpty() ? null : trackingOrReason.trim();

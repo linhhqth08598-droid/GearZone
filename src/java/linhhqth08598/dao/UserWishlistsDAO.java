@@ -121,7 +121,7 @@ public class UserWishlistsDAO {
         java.util.List<fourSome.model.OrderHistoryItem> list = new java.util.ArrayList<>();
         // JOIN bảng orders, order_items, parts, part_media
         String sql = "SELECT o.order_id, o.order_code, o.order_status, o.created_at, o.final_amount, "
-                   + "oi.part_id, oi.quantity, oi.unit_price, p.part_name, m.media_url "
+                   + "oi.part_id, oi.quantity, oi.unit_price, oi.serial_number, p.part_name, m.media_url "
                    + "FROM orders o "
                    + "JOIN order_items oi ON o.order_id = oi.order_id "
                    + "JOIN parts p ON oi.part_id = p.part_id "
@@ -146,6 +146,7 @@ public class UserWishlistsDAO {
                     item.setQuantity(rs.getInt("quantity"));
                     item.setUnitPrice(rs.getDouble("unit_price"));
                     item.setImageUrl(rs.getString("media_url"));
+                    item.setSerialNumber(rs.getString("serial_number"));
                     
                     list.add(item);
                 }

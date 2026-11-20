@@ -24,6 +24,7 @@ public class PublicWarrantyServlet extends HttpServlet {
             req.setAttribute("keyword", keyword.trim());
             req.setAttribute("results", results);
             if (results.isEmpty()) {
+                req.setAttribute("serialInfo", new khanhnb08894.dao.PartSerialsDAO().findInfo(keyword.trim()));
                 req.setAttribute("partPolicy", warrantyService.lookupPartPolicy(keyword.trim()));
             }
             req.setAttribute("searched", true);

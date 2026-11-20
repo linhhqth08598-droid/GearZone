@@ -56,6 +56,33 @@ public class InventoryService {
         log(con, partId, "EXPORT", -qty, orderId, "Xuất kho giao đơn #" + orderId);
     }
 
+    /** Nhập kho: cộng bảng inventory (tạo dòng nếu chưa có) và ghi inventory_transactions (IMPORT). */
+    public void importStock(Connection con, int partId, int qty, int poId) throws SQLException {
+        if (qty <= 0) return;
+        int before = 0;
+        boolean exists = false;
+        try (PreparedStatement ps = con.prepareStatement("SELECT stock_quantity FROM inventory WHERE part_id = ?")) {
+            ps.setInt(1, partId);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) { exists = true; before = rs.getInt(1); } }
+        }
+        if (exists) {
+            try (PreparedStatement ps = con.prepareStatement("UPDATE inventory SET stock_quantity = stock_quantity + ?, updated_at = SYSDATETIME() WHERE part_id = ?")) {
+                ps.setInt(1, qty); ps.setInt(2, partId); ps.executeUpdate();
+            }
+        } else {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO inventory (part_id, stock_quantity, reserved_quantity, damaged_quantity, low_stock_threshold, updated_at, status) VALUES (?, ?, 0, 0, 5, SYSDATETIME(), 'ACTIVE')")) {
+                ps.setInt(1, partId); ps.setInt(2, qty); ps.executeUpdate();
+            }
+        }
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO inventory_transactions (part_id, transaction_type, quantity_change, quantity_before, quantity_after, reference_type, reference_id, reason, created_at, status) "
+              + "VALUES (?, 'IMPORT', ?, ?, ?, 'PO', ?, ?, SYSDATETIME(), 'ACTIVE')")) {
+            ps.setInt(1, partId); ps.setInt(2, qty); ps.setInt(3, before); ps.setInt(4, before + qty);
+            ps.setInt(5, poId); ps.setString(6, "Nhập kho từ phiếu nhập #" + poId);
+            ps.executeUpdate();
+        }
+    }
+
     private void log(Connection con, int partId, String type, int change, int orderId, String reason) throws SQLException {
         int stock = 0;
         try (PreparedStatement ps = con.prepareStatement("SELECT stock_quantity FROM inventory WHERE part_id = ?")) {

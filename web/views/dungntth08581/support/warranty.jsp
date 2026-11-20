@@ -30,6 +30,20 @@
 
     <c:if test="${searched}">
         <c:choose>
+            <c:when test="${empty results and not empty serialInfo}">
+                <div class="card border-0 shadow-sm rounded-4 border-start border-4 border-info">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-1"><c:out value="${serialInfo[0]}"/></h5>
+                        <div class="small text-muted mb-2">Mã SP: <strong><c:out value="${serialInfo[2]}"/></strong> &bull; S/N: <strong><c:out value="${keyword}"/></strong></div>
+                        <c:choose>
+                            <c:when test="${serialInfo[1] == 'IN_STOCK'}"><span class="badge bg-secondary">Serial hợp lệ - hàng còn trong kho, chưa bán</span></c:when>
+                            <c:when test="${serialInfo[1] == 'SOLD'}"><span class="badge bg-warning text-dark">Đã bán - phiếu bảo hành sẽ được kích hoạt khi đơn giao thành công</span></c:when>
+                            <c:otherwise><span class="badge bg-dark"><c:out value="${serialInfo[1]}"/></span></c:otherwise>
+                        </c:choose>
+                        <p class="small text-muted mt-2 mb-0">Chưa có phiếu bảo hành điện tử cho số Serial này.</p>
+                    </div>
+                </div>
+            </c:when>
             <c:when test="${empty results and not empty partPolicy}">
                 <div class="card border-0 shadow-sm rounded-4 border-start border-4 border-primary">
                     <div class="card-body p-4">

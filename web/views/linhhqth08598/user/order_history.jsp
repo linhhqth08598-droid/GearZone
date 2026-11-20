@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <jsp:include page="/views/components/header.jsp" />
 
@@ -66,6 +67,15 @@
                                         <div class="flex-grow-1">
                                             <h6 class="mb-1 fw-bold text-dark"><c:out value='${item.partName}'/></h6>
                                             <span class="text-muted" style="font-size: 14px;">Số lượng: x${item.quantity}</span>
+                                            <c:if test="${not empty item.serialNumber}">
+                                                <div class="mt-1" style="font-size: 13px;">S/N:
+                                                    <c:forTokens items="${item.serialNumber}" delims="," var="sn">
+                                                        <c:set var="snTrim" value="${fn:trim(sn)}"/>
+                                                        <a class="badge bg-light text-dark border text-decoration-none me-1" title="Tra cứu bảo hành"
+                                                           href="${pageContext.request.contextPath}/warranty-lookup?keyword=${snTrim}"><c:out value="${snTrim}"/> <i class="fas fa-shield-alt"></i></a>
+                                                    </c:forTokens>
+                                                </div>
+                                            </c:if>
                                         </div>
                                         <div class="text-end">
                                             <h6 class="text-danger fw-bold mb-2">
@@ -74,6 +84,9 @@
                                             <c:if test="${item.orderStatus == 'DELIVERED'}">
                                                 <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" data-bs-toggle="modal" data-bs-target="#returnModal-${item.orderId}-${item.partId}">
                                                     <i class="fas fa-undo me-1"></i>Đổi trả
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-warning text-nowrap ms-1" data-bs-toggle="modal" data-bs-target="#reviewModal-${item.orderId}-${item.partId}">
+                                                    <i class="fas fa-star me-1"></i>Đánh giá
                                                 </button>
                                             </c:if>
                                         </div>
@@ -101,6 +114,47 @@
 
                         <c:if test="${head.orderStatus == 'DELIVERED'}">
                         <c:forEach var="item" items="${group}">
+                        <div class="modal fade" id="reviewModal-${item.orderId}-${item.partId}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="${pageContext.request.contextPath}/review" method="POST" enctype="multipart/form-data">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Đánh giá: <c:out value="${item.partName}"/></h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="hidden" name="action" value="add">
+                                            <input type="hidden" name="back" value="history">
+                                            <input type="hidden" name="partId" value="${item.partId}">
+                                            <div class="mb-3">
+                                                <label class="form-label">Chất lượng sản phẩm</label>
+                                                <select name="qualityRating" class="form-select" required>
+                                                    <option value="5">5 sao - Rất tốt</option><option value="4.5">4.5 sao</option><option value="4">4 sao - Tốt</option>
+                                                    <option value="3.5">3.5 sao</option><option value="3">3 sao - Bình thường</option><option value="2.5">2.5 sao</option>
+                                                    <option value="2">2 sao - Kém</option><option value="1.5">1.5 sao</option><option value="1">1 sao - Rất tệ</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Hiệu năng (không bắt buộc)</label>
+                                                <select name="performanceRating" class="form-select">
+                                                    <option value="">-- Bỏ qua --</option><option value="5">5 sao</option><option value="4">4 sao</option>
+                                                    <option value="3">3 sao</option><option value="2">2 sao</option><option value="1">1 sao</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Nhận xét</label>
+                                                <textarea name="comment" class="form-control" rows="3" required maxlength="2000" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                                            </div>
+                                            <div class="mb-1">
+                                                <label class="form-label">Ảnh đính kèm (không bắt buộc)</label>
+                                                <input type="file" name="reviewImage" class="form-control" accept="image/*">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer"><button type="submit" class="btn btn-warning">Gửi đánh giá</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         <div class="modal fade" id="returnModal-${item.orderId}-${item.partId}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">

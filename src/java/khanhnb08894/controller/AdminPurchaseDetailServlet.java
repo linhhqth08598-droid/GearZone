@@ -17,17 +17,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import khanhnb08894.dao.PartsDAO;
+import khanhnb08894.dao.PartSerialsDAO;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @WebServlet(name = "AdminPurchaseDetailServlet", urlPatterns = {"/admin/purchase-detail", "/admin/purchase-details"})
 public class AdminPurchaseDetailServlet extends HttpServlet {
 
     private PurchaseOrderDetailsDAO detailDAO;
     private PartsDAO partsDAO;
+    private PartSerialsDAO serialsDAO;
 
     @Override
     public void init() throws ServletException {
         detailDAO = new PurchaseOrderDetailsDAO();
         partsDAO = new PartsDAO();
+        serialsDAO = new PartSerialsDAO();
     }
 
     @Override
@@ -117,11 +123,11 @@ public class AdminPurchaseDetailServlet extends HttpServlet {
             out.println("<h5 class='card-title fw-bold mb-3'>Danh sách linh kiện trong đơn</h5>");
             out.println("<div class='table-responsive'>");
             out.println("<table class='table table-hover align-middle'>");
-            out.println("<thead class='table-light'><tr><th>ID</th><th>Mã SKU</th><th>Tên Linh Kiện</th><th>SL Nhập</th><th>Đơn Giá</th><th>Thành Tiền</th><th class='text-center'>Thao tác</th></tr></thead>");
+            out.println("<thead class='table-light'><tr><th>ID</th><th>Mã SKU</th><th>Tên Linh Kiện</th><th>SL Nhập</th><th>Đã nhận (S/N)</th><th>Đơn Giá</th><th>Thành Tiền</th><th class='text-center'>Thao tác</th></tr></thead>");
             out.println("<tbody>");
             
             if (details.isEmpty()) {
-                out.println("<tr><td colspan='7' class='text-center text-muted py-4'>Chưa có linh kiện nào trong đơn nhập này.</td></tr>");
+                out.println("<tr><td colspan='8' class='text-center text-muted py-4'>Chưa có linh kiện nào trong đơn nhập này.</td></tr>");
             } else {
                 for (PurchaseOrderDetailDTO item : details) {
                     double thanhTien = item.getImportQuantity() * item.getImportUnitPrice();
@@ -130,10 +136,12 @@ public class AdminPurchaseDetailServlet extends HttpServlet {
                     out.println("<td><code>" + item.getProductCode() + "</code></td>");
                     out.println("<td class='fw-bold'>" + item.getPartName() + "</td>");
                     out.println("<td>" + item.getImportQuantity() + "</td>");
+                    out.println("<td>" + item.getReceivedQuantity() + "</td>");
                     out.println("<td class='text-danger'>" + String.format("%,.0f đ", item.getImportUnitPrice()) + "</td>");
                     out.println("<td class='text-danger fw-semibold'>" + String.format("%,.0f đ", thanhTien) + "</td>");
                     out.println("<td class='text-center'>");
                     
+                    out.println("<button type='button' class='btn btn-sm btn-outline-primary me-1' data-bs-toggle='modal' data-bs-target='#serialModal" + item.getPoDetailId() + "'><i class='fas fa-barcode'></i> Nhập Serial</button>");
                     // Nút mở modal / form trả hàng cho từng linh kiện lỗi
                     out.println("<button type='button' class='btn btn-sm btn-outline-danger me-1' data-bs-toggle='modal' data-bs-target='#returnModal" + item.getPoDetailId() + "'><i class='fas fa-undo'></i> Trả hàng</button>");
                     
@@ -147,6 +155,27 @@ public class AdminPurchaseDetailServlet extends HttpServlet {
                     
                     out.println("</td>");
                     out.println("</tr>");
+
+                    // Modal nhập Serial khi nhận hàng
+                    out.println("<div class='modal fade' id='serialModal" + item.getPoDetailId() + "' tabindex='-1'>");
+                    out.println("<div class='modal-dialog modal-dialog-centered'><div class='modal-content border-0 shadow-lg rounded-4'>");
+                    out.println("<form action='" + request.getContextPath() + "/admin/purchase-detail' method='POST'>");
+                    out.println("<input type='hidden' name='action' value='receiveSerials'>");
+                    out.println("<input type='hidden' name='poId' value='" + poId + "'>");
+                    out.println("<input type='hidden' name='poDetailId' value='" + item.getPoDetailId() + "'>");
+                    out.println("<input type='hidden' name='partId' value='" + item.getPartId() + "'>");
+                    out.println("<div class='modal-header'><h5 class='modal-title fw-bold text-primary'><i class='fas fa-barcode me-2'></i>Nhận hàng & nhập Serial (SKU: " + item.getProductCode() + ")</h5>");
+                    out.println("<button type='button' class='btn-close' data-bs-dismiss='modal'></button></div>");
+                    out.println("<div class='modal-body p-4'>");
+                    out.println("<p class='text-muted small mb-2'>Mỗi dòng 1 mã Serial. Số dòng = số lượng thực nhận (tối đa " + item.getImportQuantity() + ").</p>");
+                    out.println("<textarea name='serialList' autocomplete='off' class='form-control mb-3' rows='6' placeholder='SN20260001&#10;SN20260002'></textarea>");
+                    out.println("<div class='form-check mb-2'><input class='form-check-input' type='checkbox' name='autoGen' value='1' id='auto" + item.getPoDetailId() + "'><label class='form-check-label' for='auto" + item.getPoDetailId() + "'>Tạo nhanh dải Serial tự động (bỏ qua ô trên)</label></div>");
+                    out.println("<div class='row g-2'><div class='col-7'><input type='text' name='autoPrefix' autocomplete='off' class='form-control' value='SN-2026-' placeholder='Tiền tố'></div>");
+                    out.println("<div class='col-5'><input type='number' name='autoCount' autocomplete='off' class='form-control' min='1' max='" + item.getImportQuantity() + "' value='" + item.getImportQuantity() + "'></div></div>");
+                    out.println("</div><div class='modal-footer border-0 bg-light'>");
+                    out.println("<button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Hủy</button>");
+                    out.println("<button type='submit' class='btn btn-primary'>Lưu Serial</button>");
+                    out.println("</div></form></div></div></div>");
 
                     // Modal tạo phiếu trả hàng cho từng dòng sản phẩm
                     out.println("<div class='modal fade' id='returnModal" + item.getPoDetailId() + "' tabindex='-1'>");
@@ -206,6 +235,71 @@ public class AdminPurchaseDetailServlet extends HttpServlet {
                     session.setAttribute("message", "Đã xóa linh kiện!");
                 } else {
                     session.setAttribute("error", "Lỗi khi xóa linh kiện.");
+                }
+            } else if ("receiveSerials".equals(action)) {
+                int poDetailId = Integer.parseInt(request.getParameter("poDetailId"));
+                int pId = Integer.parseInt(request.getParameter("partId"));
+                List<String> serials = new ArrayList<>();
+                boolean autoGen = "1".equals(request.getParameter("autoGen"));
+                String autoPrefix = "SN-2026-";
+                int autoCount = 0;
+                if (autoGen) {
+                    String pf = request.getParameter("autoPrefix");
+                    if (pf != null && !pf.trim().isEmpty()) autoPrefix = pf.trim();
+                    autoCount = Integer.parseInt(request.getParameter("autoCount"));
+                    if (autoCount < 1) throw new IllegalArgumentException("Số lượng tự tạo phải >= 1.");
+                } else {
+                    Set<String> uniq = new LinkedHashSet<>();
+                    for (String line : String.valueOf(request.getParameter("serialList")).split("\\r?\\n")) {
+                        String sn = line.trim();
+                        if (sn.isEmpty() || sn.equals("null")) continue;
+                        if (!uniq.add(sn)) throw new IllegalArgumentException("Mã Serial bị lặp trong danh sách: " + sn);
+                    }
+                    serials.addAll(uniq);
+                }
+                if (!autoGen && serials.isEmpty()) throw new IllegalArgumentException("Chưa nhập Serial nào.");
+                try (Connection con = DBConnect.getConnection()) {
+                    con.setAutoCommit(false);
+                    try {
+                        if (autoGen) {   // đánh số tiếp theo sau mã lớn nhất đang có với tiền tố này: SN-2026-0001, 0002, ...
+                            int start = 1;
+                            try (PreparedStatement ps = con.prepareStatement(
+                                    "SELECT MAX(TRY_CAST(SUBSTRING(serial_number, ?, 20) AS INT)) FROM part_serials WHERE LEFT(serial_number, ?) = ?")) {
+                                ps.setInt(1, autoPrefix.length() + 1);
+                                ps.setInt(2, autoPrefix.length());
+                                ps.setString(3, autoPrefix);
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    if (rs.next() && rs.getObject(1) != null) start = rs.getInt(1) + 1;
+                                }
+                            }
+                            for (int i = 0; i < autoCount; i++) serials.add(autoPrefix + String.format("%04d", start + i));
+                        }
+                        int importQty = 0;
+                        try (PreparedStatement ps = con.prepareStatement("SELECT import_quantity - received_quantity FROM purchase_order_details WHERE po_detail_id = ?")) {
+                            ps.setInt(1, poDetailId);
+                            try (java.sql.ResultSet rs = ps.executeQuery()) { if (rs.next()) importQty = Math.max(rs.getInt(1), 0); }
+                        }
+                        for (String sn : serials) {
+                            if (sn.length() > 100) throw new IllegalArgumentException("Serial quá 100 ký tự: " + sn);
+                        }
+                        if (serials.size() > importQty) throw new IllegalArgumentException("Số Serial (" + serials.size() + ") vượt số lượng còn phải nhận (" + importQty + ").");
+                        for (String sn : serials) {
+                            if (serialsDAO.exists(con, sn)) throw new IllegalArgumentException("Serial đã tồn tại trong hệ thống: " + sn);
+                        }
+                        serialsDAO.insertBatch(con, pId, serials);
+                        new khanhnb08894.service.InventoryService().importStock(con, pId, serials.size(), Integer.parseInt(poId));
+                        try (PreparedStatement ps = con.prepareStatement(
+                                "UPDATE purchase_order_details SET received_quantity = received_quantity + ? WHERE po_detail_id = ?")) {
+                            ps.setInt(1, serials.size());
+                            ps.setInt(2, poDetailId);
+                            ps.executeUpdate();
+                        }
+                        con.commit();
+                        session.setAttribute("message", "Đã nhập " + serials.size() + " Serial vào kho (IN_STOCK).");
+                    } catch (Exception ex) {
+                        con.rollback();
+                        throw ex;
+                    }
                 }
             } else if ("createReturn".equals(action)) {
                 // Logic xử lý tạo phiếu trả hàng đã được fix lỗi thiếu cột created_by

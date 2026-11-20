@@ -48,7 +48,9 @@ public class ReviewServlet extends HttpServlet {
             switch (action) {
                 case "add": case "reportInfo": {
                     int partId = Integer.parseInt(request.getParameter("partId"));
-                    redirect = request.getContextPath() + "/product?action=detail&id=" + partId + "#reviews";
+                    redirect = "history".equals(request.getParameter("back"))
+                            ? request.getContextPath() + "/user/order-history"
+                            : request.getContextPath() + "/product?action=detail&id=" + partId + "#reviews";
                     if ("add".equals(action)) addPartReview(request, session, user, partId);
                     else {
                         String err = reviewService.reportPartInfo(user.getUserId(), partId, request.getParameter("content"));

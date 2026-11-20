@@ -101,11 +101,13 @@ public class WarrantyService {
                         cal.add(Calendar.MONTH, months > 0 ? months : 12);
                         Date endDate = cal.getTime();
 
+                        java.util.List<String> assigned = khanhnb08894.dao.PartSerialsDAO.splitSerials(baseSerial);
                         for (int i = 0; i < qty; i++) {
                             EWarranties w = new EWarranties();
                             String code = "EW-" + dateTag + "-" + orderId + "-" + (seq++);
-                            String serial = (baseSerial != null && !baseSerial.trim().isEmpty() && qty == 1)
-                                    ? baseSerial.trim()
+                            // Ưu tiên đúng serial đã gán cho đơn; chỉ khi thiếu mới sinh mã dự phòng
+                            String serial = i < assigned.size()
+                                    ? assigned.get(i)
                                     : "SN-" + orderId + "-" + partId + "-" + (i + 1);
                             w.setWarrantyCode(code);
                             w.setSerialNumber(serial);

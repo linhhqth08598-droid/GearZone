@@ -65,7 +65,7 @@ public class PurchaseOrdersDAO {
                 if (result > 0) {
                     // Nếu trạng thái chuyển thành RECEIVED -> Cộng kho tự động
                     if ("RECEIVED".equalsIgnoreCase(status)) {
-                        String getDetailsSql = "SELECT part_id, import_quantity FROM purchase_order_details WHERE po_id = ?";
+                        String getDetailsSql = "SELECT part_id, import_quantity, import_quantity - received_quantity AS remain FROM purchase_order_details WHERE po_id = ?";
                         String updateStockSql = "UPDATE parts SET stock_quantity = stock_quantity + ? WHERE part_id = ?"; 
                         // Lưu ý: Nếu cột số lượng tồn kho trong bảng parts của team bạn tên khác (ví dụ: quantity hoặc inventory), bạn sửa lại cho khớp nhé!
                         
@@ -75,6 +75,8 @@ public class PurchaseOrdersDAO {
                                 while (rs.next()) {
                                     int partId = rs.getInt("part_id");
                                     int qty = rs.getInt("import_quantity");
+                                    // Phần chưa nhập qua "Nhập Serial" thì cộng vào bảng inventory tại đây (phần có serial đã cộng lúc nhập serial)
+                                    new khanhnb08894.service.InventoryService().importStock(con, partId, Math.max(rs.getInt("remain"), 0), poId);
                                     
                                     try (PreparedStatement psStock = con.prepareStatement(updateStockSql)) {
                                         psStock.setInt(1, qty);
