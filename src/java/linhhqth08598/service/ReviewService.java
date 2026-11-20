@@ -25,11 +25,18 @@ public class ReviewService {
         if (review.getComment().length() > 2000) return "Nhận xét tối đa 2000 ký tự!";
         review.setComment(review.getComment().trim());
 
-        int orderId = reviewDAO.findReviewableOrderId(review.getUserId(), review.getPartId());
-        if (orderId < 0) {
-            return "Bạn chỉ có thể đánh giá linh kiện sau khi đã nhận hàng (và mỗi đơn chỉ đánh giá 1 lần)!";
+        if (review.getOrderId() != null && review.getOrderId() > 0) {
+            // Đánh giá từ Lịch sử mua hàng: kiểm tra đúng đơn được chọn
+            if (!reviewDAO.isReviewable(review.getUserId(), review.getPartId(), review.getOrderId())) {
+                return "Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi (hoặc đơn chưa giao thành công)!";
+            }
+        } else {
+            int orderId = reviewDAO.findReviewableOrderId(review.getUserId(), review.getPartId());
+            if (orderId < 0) {
+                return "Bạn chỉ có thể đánh giá linh kiện sau khi đã nhận hàng (và mỗi đơn chỉ đánh giá 1 lần)!";
+            }
+            review.setOrderId(orderId);
         }
-        review.setOrderId(orderId);
 
         return reviewDAO.insertReview(review) ? null : "Lỗi hệ thống khi gửi đánh giá!";
     }

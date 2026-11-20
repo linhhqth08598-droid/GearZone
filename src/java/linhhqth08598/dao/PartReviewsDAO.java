@@ -179,6 +179,20 @@ public class PartReviewsDAO {
         } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
+    /** Đơn cụ thể có đủ điều kiện đánh giá linh kiện này không (đúng chủ đơn, DELIVERED, có linh kiện, chưa đánh giá). */
+    public boolean isReviewable(int userId, int partId, int orderId) {
+        String sql = "SELECT 1 FROM orders o JOIN order_items oi ON oi.order_id = o.order_id "
+                   + "WHERE o.order_id = ? AND o.user_id = ? AND oi.part_id = ? AND o.order_status = 'DELIVERED' "
+                   + "AND NOT EXISTS (SELECT 1 FROM part_reviews r WHERE r.user_id = o.user_id AND r.part_id = oi.part_id AND r.order_id = o.order_id)";
+        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, userId);
+            ps.setInt(3, partId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
     // ===================== UC 296: chỉ người đã nhận hàng mới được đánh giá =====================
     /** Trả về order_id (đơn DELIVERED có linh kiện này mà user CHƯA đánh giá theo đơn đó), hoặc -1 nếu không đủ điều kiện. */
     public int findReviewableOrderId(int userId, int partId) {

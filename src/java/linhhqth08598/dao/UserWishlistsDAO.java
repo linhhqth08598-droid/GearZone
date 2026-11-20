@@ -121,10 +121,14 @@ public class UserWishlistsDAO {
         java.util.List<fourSome.model.OrderHistoryItem> list = new java.util.ArrayList<>();
         // JOIN bảng orders, order_items, parts, part_media
         String sql = "SELECT o.order_id, o.order_code, o.order_status, o.created_at, o.final_amount, "
-                   + "oi.part_id, oi.quantity, oi.unit_price, oi.serial_number, p.part_name, m.media_url "
+                   + "oi.part_id, oi.quantity, oi.unit_price, oi.serial_number, p.part_name, m.media_url, "
+                   + "CASE WHEN rv.review_id IS NOT NULL THEN 1 ELSE 0 END AS reviewed, "
+                   + "rv.quality_rating, rv.performance_rating, rv.comment AS review_comment, rv.created_at AS review_date, "
+                   + "(SELECT TOP 1 ri.image_url FROM part_review_images ri WHERE ri.review_id = rv.review_id AND ri.status = 'ACTIVE') AS review_image "
                    + "FROM orders o "
                    + "JOIN order_items oi ON o.order_id = oi.order_id "
                    + "JOIN parts p ON oi.part_id = p.part_id "
+                   + "OUTER APPLY (SELECT TOP 1 r.* FROM part_reviews r WHERE r.user_id = o.user_id AND r.part_id = oi.part_id AND r.order_id = o.order_id ORDER BY r.review_id DESC) rv "
                    + "LEFT JOIN part_media m ON p.part_id = m.part_id AND m.is_primary = 1 "
                    + "WHERE o.user_id = ? "
                    + "ORDER BY o.created_at DESC";
@@ -147,6 +151,14 @@ public class UserWishlistsDAO {
                     item.setUnitPrice(rs.getDouble("unit_price"));
                     item.setImageUrl(rs.getString("media_url"));
                     item.setSerialNumber(rs.getString("serial_number"));
+                    item.setReviewed(rs.getInt("reviewed") == 1);
+                    if (item.isReviewed()) {
+                        item.setReviewQuality(rs.getDouble("quality_rating"));
+                        item.setReviewPerformance(rs.getObject("performance_rating", Integer.class));
+                        item.setReviewComment(rs.getString("review_comment"));
+                        item.setReviewDate(rs.getTimestamp("review_date"));
+                        item.setReviewImage(rs.getString("review_image"));
+                    }
                     
                     list.add(item);
                 }

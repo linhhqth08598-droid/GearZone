@@ -50,53 +50,54 @@ public class PurchaseOrdersDAO {
         return false;
     }
 
-    // Cập nhật trạng thái đơn hàng
-    public boolean updateStatus(int poId, String status) {
-        String updatePoSql = "UPDATE purchase_orders SET status = ? WHERE po_id = ?";
-        
+    /**
+     * Cập nhật trạng thái đơn nhập. Ném lỗi (có thông báo rõ) nếu không đổi được.
+     * RECEIVED và CANCELLED là trạng thái cuối: đã cộng kho / đã hủy thì không đổi ngược lại,
+     * vì đổi ngược sẽ không trừ lại tồn kho và làm tồn kho bị cộng đôi nếu nhập kho lần nữa.
+     */
+    public boolean updateStatus(int poId, String status) throws SQLException {
         try (Connection con = DBConnect.getConnection()) {
-            con.setAutoCommit(false); // Bật Transaction để đảm bảo an toàn dữ liệu
-            
-            try (PreparedStatement psPo = con.prepareStatement(updatePoSql)) {
-                psPo.setString(1, status);
-                psPo.setInt(2, poId);
-                int result = psPo.executeUpdate();
-                
-                if (result > 0) {
-                    // Nếu trạng thái chuyển thành RECEIVED -> Cộng kho tự động
-                    if ("RECEIVED".equalsIgnoreCase(status)) {
-                        String getDetailsSql = "SELECT part_id, import_quantity, import_quantity - received_quantity AS remain FROM purchase_order_details WHERE po_id = ?";
-                        String updateStockSql = "UPDATE parts SET stock_quantity = stock_quantity + ? WHERE part_id = ?"; 
-                        // Lưu ý: Nếu cột số lượng tồn kho trong bảng parts của team bạn tên khác (ví dụ: quantity hoặc inventory), bạn sửa lại cho khớp nhé!
-                        
-                        try (PreparedStatement psDetails = con.prepareStatement(getDetailsSql)) {
-                            psDetails.setInt(1, poId);
-                            try (ResultSet rs = psDetails.executeQuery()) {
-                                while (rs.next()) {
-                                    int partId = rs.getInt("part_id");
-                                    int qty = rs.getInt("import_quantity");
-                                    // Phần chưa nhập qua "Nhập Serial" thì cộng vào bảng inventory tại đây (phần có serial đã cộng lúc nhập serial)
-                                    new khanhnb08894.service.InventoryService().importStock(con, partId, Math.max(rs.getInt("remain"), 0), poId);
-                                    
-                                    try (PreparedStatement psStock = con.prepareStatement(updateStockSql)) {
-                                        psStock.setInt(1, qty);
-                                        psStock.setInt(2, partId);
-                                        psStock.executeUpdate();
-                                    }
-                                }
+            con.setAutoCommit(false);
+            try {
+                String current = null;
+                try (PreparedStatement ps = con.prepareStatement("SELECT status FROM purchase_orders WHERE po_id = ?")) {
+                    ps.setInt(1, poId);
+                    try (ResultSet rs = ps.executeQuery()) { if (rs.next()) current = rs.getString(1); }
+                }
+                if (current == null) throw new IllegalStateException("Không tìm thấy đơn nhập #" + poId + ".");
+                if (current.equalsIgnoreCase(status)) throw new IllegalStateException("Đơn nhập đã ở trạng thái này rồi.");
+                if ("RECEIVED".equalsIgnoreCase(current) || "CANCELLED".equalsIgnoreCase(current)) {
+                    throw new IllegalStateException("Đơn nhập đã ở trạng thái cuối (Đã nhập kho / Đã hủy) nên không đổi lại được. Cần nhập thêm hàng thì tạo đơn nhập mới.");
+                }
+
+                try (PreparedStatement psPo = con.prepareStatement("UPDATE purchase_orders SET status = ? WHERE po_id = ?")) {
+                    psPo.setString(1, status);
+                    psPo.setInt(2, poId);
+                    if (psPo.executeUpdate() == 0) throw new IllegalStateException("Không cập nhật được trạng thái.");
+                }
+
+                if ("RECEIVED".equalsIgnoreCase(status)) {
+                    // Phần chưa nhập qua "Nhập Serial" thì cộng vào bảng inventory tại đây (phần có serial đã cộng lúc nhập serial)
+                    String getDetailsSql = "SELECT part_id, import_quantity, import_quantity - received_quantity AS remain FROM purchase_order_details WHERE po_id = ?";
+                    try (PreparedStatement psDetails = con.prepareStatement(getDetailsSql)) {
+                        psDetails.setInt(1, poId);
+                        try (ResultSet rs = psDetails.executeQuery()) {
+                            while (rs.next()) {
+                                int partId = rs.getInt("part_id");
+                                new khanhnb08894.service.InventoryService().importStock(con, partId, Math.max(rs.getInt("remain"), 0), poId);
                             }
                         }
                     }
-                    con.commit();
-                    return true;
                 }
-                con.rollback();
+                con.commit();
+                return true;
             } catch (Exception e) {
                 con.rollback();
                 e.printStackTrace();
+                if (e instanceof IllegalStateException) throw (IllegalStateException) e;
+                throw new SQLException("Lỗi khi cập nhật trạng thái: " + e.getMessage(), e);
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
+        }
     }
-    
+
 }

@@ -38,6 +38,14 @@ public class AdminOrderServlet extends HttpServlet {
                 String[] pay = new dungntth08581.service.PaymentService().paymentInfo(order.getOrderId());
                 request.setAttribute("payMethod", pay == null ? "COD" : pay[0]);
                 request.setAttribute("payStatus", pay == null ? "" : pay[1]);
+                if ("invoice".equals(request.getParameter("action"))) {   // admin in hóa đơn cho mọi đơn (trừ đơn đã hủy)
+                    if ("CANCELLED".equals(order.getStatus())) {
+                        response.sendRedirect(request.getContextPath() + "/admin/order?id=" + order.getOrderId());
+                        return;
+                    }
+                    request.getRequestDispatcher("/views/dungntth08581/user/invoice.jsp").forward(request, response);
+                    return;
+                }
                 request.getRequestDispatcher("/views/dungntth08581/admin/order_detail.jsp").forward(request, response);
             } catch (NumberFormatException e) {
                 response.sendRedirect(request.getContextPath() + "/admin/orders");

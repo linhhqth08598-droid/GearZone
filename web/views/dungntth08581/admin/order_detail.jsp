@@ -8,7 +8,12 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="fw-bold mb-0"><i class="fas fa-receipt text-primary me-2"></i>Đơn hàng <c:out value="${order.orderCode}"/></h3>
-        <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Quay lại</a>
+        <div>
+            <c:if test="${order.status != 'CANCELLED'}">
+                <a href="${pageContext.request.contextPath}/admin/order?id=${order.orderId}&action=invoice" target="_blank" class="btn btn-outline-primary me-2"><i class="fas fa-print me-1"></i>In hóa đơn</a>
+            </c:if>
+            <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Quay lại</a>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">

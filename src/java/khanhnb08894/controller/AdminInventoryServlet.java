@@ -31,18 +31,13 @@ public class AdminInventoryServlet extends HttpServlet {
         
         response.setContentType("text/html;charset=UTF-8");
         List<Inventory> inventoryList = inventoryDAO.getAll();
+        java.util.Map<Integer, String> partNames = new java.util.HashMap<>();
+        for (fourSome.model.Parts p : new khanhnb08894.dao.PartsDAO().getAll()) partNames.put(p.getPartId(), p.getProductCode() + " - " + p.getPartName());
 
         try (PrintWriter out = response.getWriter()) {
-            out.println("<!DOCTYPE html>");
-            out.println("<html lang='vi'>");
-            out.println("<head>");
-            out.println("<meta charset='UTF-8'>");
-            out.println("<title>Quản lý Tồn Kho - GearZone</title>");
-            out.println("<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>");
-            out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
-            out.println("</head>");
-            out.println("<body class='bg-light'>");
-            out.println("<div class='container py-5'>");
+            request.getRequestDispatcher("/views/components/admin_header.jsp").include(request, response);
+            request.getRequestDispatcher("/views/components/admin_sidebar.jsp").include(request, response);
+            out.flush();
             
             // Header
             out.println("<div class='d-flex justify-content-between align-items-center mb-4'>");
@@ -55,11 +50,11 @@ public class AdminInventoryServlet extends HttpServlet {
             out.println("<div class='card-body p-4'>");
             out.println("<div class='table-responsive'>");
             out.println("<table class='table table-hover align-middle'>");
-            out.println("<thead class='table-light'><tr><th>ID</th><th>Mã Part ID</th><th>Tồn kho</th><th>Đang giữ (Reserved)</th><th>Hỏng / Lỗi</th><th>Ngưỡng báo động</th><th class='text-center'>Trạng thái</th></tr></thead>");
+            out.println("<thead class='table-light'><tr><th>ID</th><th>Linh kiện</th><th>Tồn kho</th><th>Đang giữ (Reserved)</th><th>Hỏng / Lỗi</th><th>Ngưỡng báo động</th><th class='text-center'>Trạng thái</th><th class='text-center'>Serial</th></tr></thead>");
             out.println("<tbody>");
 
             if (inventoryList.isEmpty()) {
-                out.println("<tr><td colspan='7' class='text-center text-muted py-4'>Chưa có dữ liệu tồn kho.</td></tr>");
+                out.println("<tr><td colspan='8' class='text-center text-muted py-4'>Chưa có dữ liệu tồn kho.</td></tr>");
             } else {
                 for (Inventory item : inventoryList) {
                     int stock = item.getStockQuantity();
@@ -68,20 +63,21 @@ public class AdminInventoryServlet extends HttpServlet {
                     
                     out.println("<tr>");
                     out.println("<td>#" + item.getInventoryId() + "</td>");
-                    out.println("<td><code>Part #" + item.getPartId() + "</code></td>");
+                    String pn = partNames.get(item.getPartId());
+                    out.println("<td><span class='fw-semibold'>" + (pn == null ? "Part #" + item.getPartId() : pn.replace("&", "&amp;").replace("<", "&lt;")) + "</span> <small class='text-muted'>(#" + item.getPartId() + ")</small></td>");
                     out.println("<td class='fw-bold text-primary'>" + stock + "</td>");
                     out.println("<td>" + item.getReservedQuantity() + "</td>");
                     out.println("<td class='text-danger'>" + item.getDamagedQuantity() + "</td>");
                     out.println("<td>" + threshold + "</td>");
                     out.println("<td class='text-center'>" + badge + "</td>");
+                    out.println("<td class='text-center text-nowrap'><a class='btn btn-sm btn-outline-dark text-nowrap py-0 px-2' style='font-size:13px' href='" + request.getContextPath() + "/admin/part-serials?partId=" + item.getPartId() + "'><i class='fas fa-barcode'></i> Xem Serial</a></td>");
                     out.println("</tr>");
                 }
             }
 
             out.println("</tbody></table></div></div></div>");
-            out.println("</div>");
-            out.println("<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'></script>");
-            out.println("</body></html>");
+            out.flush();
+            request.getRequestDispatcher("/views/components/footer.jsp").include(request, response);
         }
     }
 }

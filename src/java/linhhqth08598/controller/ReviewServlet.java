@@ -89,6 +89,8 @@ public class ReviewServlet extends HttpServlet {
         PartReviews review = new PartReviews();
         review.setUserId(user.getUserId());
         review.setPartId(partId);
+        String oid = request.getParameter("orderId");
+        if (oid != null && oid.matches("\\d+")) review.setOrderId(Integer.parseInt(oid));
         review.setQualityRating(Double.parseDouble(request.getParameter("qualityRating"))); // giữ nguyên 4.5 (decimal(2,1))
         String perf = request.getParameter("performanceRating");
         if (perf != null && perf.matches("[1-5]")) review.setPerformanceRating(Integer.parseInt(perf));

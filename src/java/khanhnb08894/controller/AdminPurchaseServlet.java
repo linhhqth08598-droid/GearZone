@@ -77,7 +77,7 @@ public class AdminPurchaseServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("error", "Đã xảy ra lỗi: " + e.getMessage());
+            session.setAttribute("error", e instanceof IllegalStateException ? e.getMessage() : "Đã xảy ra lỗi: " + e.getMessage());
         }
 
         response.sendRedirect(request.getContextPath() + "/admin/purchases");

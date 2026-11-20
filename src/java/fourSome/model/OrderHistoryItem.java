@@ -16,6 +16,12 @@ public class OrderHistoryItem {
     private double unitPrice;
     private String imageUrl;
     private String serialNumber;
+    private Double reviewQuality;
+    private Integer reviewPerformance;
+    private String reviewComment;
+    private String reviewImage;
+    private Date reviewDate;
+    private boolean reviewed; // đã đánh giá sản phẩm này trong đơn này
 
     // Getters and Setters
     public int getOrderId() { return orderId; }
@@ -50,4 +56,17 @@ public class OrderHistoryItem {
 
     public String getSerialNumber() { return serialNumber; }
     public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
+
+    public boolean isReviewed() { return reviewed; }
+    public void setReviewed(boolean reviewed) { this.reviewed = reviewed; }
+    public Double getReviewQuality() { return reviewQuality; }
+    public void setReviewQuality(Double v) { this.reviewQuality = v; }
+    public Integer getReviewPerformance() { return reviewPerformance; }
+    public void setReviewPerformance(Integer v) { this.reviewPerformance = v; }
+    public String getReviewComment() { return reviewComment; }
+    public void setReviewComment(String v) { this.reviewComment = v; }
+    public String getReviewImage() { return reviewImage; }
+    public void setReviewImage(String v) { this.reviewImage = v; }
+    public Date getReviewDate() { return reviewDate; }
+    public void setReviewDate(Date v) { this.reviewDate = v; }
 }

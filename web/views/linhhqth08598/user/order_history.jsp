@@ -85,9 +85,18 @@
                                                 <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" data-bs-toggle="modal" data-bs-target="#returnModal-${item.orderId}-${item.partId}">
                                                     <i class="fas fa-undo me-1"></i>Đổi trả
                                                 </button>
-                                                <button type="button" class="btn btn-sm btn-outline-warning text-nowrap ms-1" data-bs-toggle="modal" data-bs-target="#reviewModal-${item.orderId}-${item.partId}">
-                                                    <i class="fas fa-star me-1"></i>Đánh giá
-                                                </button>
+                                                <c:choose>
+                                                    <c:when test="${item.reviewed}">
+                                                        <button type="button" class="btn btn-sm btn-outline-success text-nowrap ms-1" data-bs-toggle="modal" data-bs-target="#viewReviewModal-${item.orderId}-${item.partId}">
+                                                            <i class="fas fa-eye me-1"></i>Xem đánh giá
+                                                        </button>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning text-nowrap ms-1" data-bs-toggle="modal" data-bs-target="#reviewModal-${item.orderId}-${item.partId}">
+                                                            <i class="fas fa-star me-1"></i>Đánh giá
+                                                        </button>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </c:if>
                                         </div>
                                     </div>
@@ -114,6 +123,33 @@
 
                         <c:if test="${head.orderStatus == 'DELIVERED'}">
                         <c:forEach var="item" items="${group}">
+                        <c:if test="${item.reviewed}">
+                        <div class="modal fade" id="viewReviewModal-${item.orderId}-${item.partId}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Đánh giá của bạn: <c:out value="${item.partName}"/></h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-2"><span class="text-muted">Chất lượng:</span>
+                                            <strong class="text-warning"><i class="fas fa-star"></i> <c:out value="${item.reviewQuality}"/>/5</strong></div>
+                                        <c:if test="${not empty item.reviewPerformance}">
+                                            <div class="mb-2"><span class="text-muted">Hiệu năng:</span>
+                                                <strong class="text-warning"><i class="fas fa-star"></i> ${item.reviewPerformance}/5</strong></div>
+                                        </c:if>
+                                        <div class="mb-2"><span class="text-muted">Nhận xét:</span>
+                                            <div class="p-2 bg-light rounded mt-1" style="white-space: pre-wrap;"><c:out value="${item.reviewComment}"/></div></div>
+                                        <c:if test="${not empty item.reviewImage}">
+                                            <img src="${item.reviewImage}" alt="Ảnh đánh giá" class="img-fluid rounded mt-2" style="max-height: 240px;">
+                                        </c:if>
+                                        <div class="text-muted small mt-3"><i class="far fa-clock me-1"></i>Gửi lúc <fmt:formatDate value="${item.reviewDate}" pattern="dd/MM/yyyy HH:mm"/></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </c:if>
+                        <c:if test="${not item.reviewed}">
                         <div class="modal fade" id="reviewModal-${item.orderId}-${item.partId}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -126,6 +162,7 @@
                                             <input type="hidden" name="action" value="add">
                                             <input type="hidden" name="back" value="history">
                                             <input type="hidden" name="partId" value="${item.partId}">
+                                            <input type="hidden" name="orderId" value="${item.orderId}">
                                             <div class="mb-3">
                                                 <label class="form-label">Chất lượng sản phẩm</label>
                                                 <select name="qualityRating" class="form-select" required>
@@ -155,6 +192,7 @@
                                 </div>
                             </div>
                         </div>
+                        </c:if>
                         <div class="modal fade" id="returnModal-${item.orderId}-${item.partId}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">

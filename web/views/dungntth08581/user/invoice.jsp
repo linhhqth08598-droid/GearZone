@@ -8,18 +8,22 @@
     <title>Hóa đơn <c:out value="${order.orderCode}"/> | GearZone</title>
     <style>
         body { font-family: Arial, Helvetica, sans-serif; color: #222; max-width: 800px; margin: 24px auto; padding: 0 16px; }
-        h1 { margin: 0; font-size: 24px; } .muted { color: #666; font-size: 13px; }
+        h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: 1px; color: #0f1117; } h1 span { color: #ff4757; }
+        .brand { display: flex; align-items: center; gap: 12px; } .logo { width: 56px; height: 56px; object-fit: contain; } .muted { color: #666; font-size: 13px; }
         table { width: 100%; border-collapse: collapse; margin-top: 16px; }
         th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
         th.r, td.r { text-align: right; } .total td { font-weight: bold; font-size: 16px; border-bottom: none; }
         .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #222; padding-bottom: 12px; }
         .actions { margin-top: 20px; } button { padding: 8px 16px; cursor: pointer; }
-        @media print { .actions { display: none; } body { margin: 0; } }
+        @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .actions { display: none; } body { margin: 0; } }
     </style>
 </head>
 <body>
     <div class="head">
-        <div><h1>GearZone</h1><div class="muted">Hóa đơn bán hàng</div></div>
+        <div class="brand">
+            <img src="${pageContext.request.contextPath}/views/components/image/GearZone.png" alt="GearZone" class="logo">
+            <div><h1>GEAR<span>ZONE</span></h1><div class="muted">Hóa đơn bán hàng</div></div>
+        </div>
         <div style="text-align:right">
             <div><strong>Số: <c:out value="${order.orderCode}"/></strong></div>
             <div class="muted">Ngày đặt: <fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/></div>
