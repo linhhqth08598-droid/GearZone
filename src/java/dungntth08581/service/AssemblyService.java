@@ -270,8 +270,59 @@ public class AssemblyService {
 
     public static class PartLine {
         public int usedId, partId, quantity; public String partName, serial;
+        /** UC 257 – serial của đơn hàng cho linh kiện này: toàn bộ, đã ghi, còn lại chưa ghi. */
+        public List<String> pool = new ArrayList<>(), remaining = new ArrayList<>();
+        public int usedQty;
         public int getUsedId() { return usedId; } public int getPartId() { return partId; } public int getQuantity() { return quantity; }
         public String getPartName() { return partName; } public String getSerial() { return serial; }
+        public int getUsedQty() { return usedQty; }
+        public int getRemainingQty() { return Math.max(0, quantity - usedQty); }
+        public boolean isHasPool() { return !pool.isEmpty(); }
+        public List<String> getRemaining() { return remaining; }
+        /** Chuỗi gợi ý "SN1, SN2" cho số chiếc còn phải ghi (rỗng nếu không có gợi ý). */
+        public String getSuggest() {
+            int n = Math.min(getRemainingQty(), remaining.size());
+            return n <= 0 ? "" : String.join(", ", remaining.subList(0, n));
+        }
+        public int getSuggestQty() { int n = Math.min(getRemainingQty(), remaining.size()); return Math.max(n, 0); }
+    }
+
+    /**
+     * UC 257 – danh sách linh kiện cần lắp kèm GỢI Ý serial: lấy serial đã gán cho đơn hàng (order_items.serial_number)
+     * của đơn lắp ráp, trừ những serial kỹ thuật viên đã ghi. Đơn không gắn đơn hàng (chỉ có cấu hình) thì không có gợi ý.
+     */
+    public List<PartLine> sourceWithSerials(int assemblyId) {
+        List<PartLine> src = sourceParts(assemblyId);
+        Map<Integer, List<String>> pool = new HashMap<>();
+        try (Connection c = DBConnect.getConnection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT oi.part_id, oi.serial_number FROM order_items oi JOIN assembly_orders a ON a.order_id = oi.order_id "
+              + "WHERE a.assembly_id = ? AND oi.serial_number IS NOT NULL AND oi.serial_number <> '' ORDER BY oi.order_item_id")) {
+            ps.setInt(1, assemblyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) pool.computeIfAbsent(rs.getInt(1), k -> new ArrayList<>()).addAll(splitSerials(rs.getString(2)));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        Map<Integer, Set<String>> usedSn = new HashMap<>();
+        Map<Integer, Integer> usedQty = new HashMap<>();
+        for (PartLine u : usedParts(assemblyId)) {
+            usedQty.merge(u.partId, u.quantity, Integer::sum);
+            for (String sn : splitSerials(u.serial)) usedSn.computeIfAbsent(u.partId, k -> new HashSet<>()).add(sn.toUpperCase());
+        }
+        for (PartLine p : src) {
+            p.usedQty = usedQty.getOrDefault(p.partId, 0);
+            List<String> all = pool.getOrDefault(p.partId, new ArrayList<>());
+            Set<String> done = usedSn.getOrDefault(p.partId, new HashSet<>());
+            p.pool = all;
+            for (String sn : all) if (!done.contains(sn.toUpperCase())) p.remaining.add(sn);
+        }
+        return src;
+    }
+
+    private static List<String> splitSerials(String csv) {
+        List<String> r = new ArrayList<>();
+        if (csv == null) return r;
+        for (String x : csv.split("[,;\\r\\n]+")) { if (!x.trim().isEmpty()) r.add(x.trim()); }
+        return r;
     }
 
     /** Linh kiện cần lắp (từ đơn hàng và/hoặc cấu hình PC của đơn lắp ráp), gộp theo linh kiện. */
@@ -312,20 +363,47 @@ public class AssemblyService {
     /** UC 257. Chỉ ghi khi đang lắp/kiểm tra; linh kiện phải nằm trong danh sách cần lắp, tổng số lượng không vượt quá số cần. */
     public String addUsedPart(int assemblyId, int partId, int qty, String serial) {
         if (qty <= 0) return "Số lượng phải lớn hơn 0!";
-        if (serial != null && serial.length() > 100) return "Số serial tối đa 100 ký tự!";
+        if (serial != null && serial.length() > 500) return "Danh sách serial tối đa 500 ký tự!";
         try (Connection c = DBConnect.getConnection()) {
             String st = currentStatus(c, assemblyId);
             if (st == null) return "Không tìm thấy đơn lắp ráp!";
             if (!"IN_PROGRESS".equals(st) && !"TESTING".equals(st)) return "Chỉ ghi linh kiện khi đơn đang lắp hoặc đang kiểm tra!";
-            int need = -1;
-            for (PartLine p : sourceParts(assemblyId)) if (p.partId == partId) need = p.quantity;
+            int need = -1; PartLine line = null;
+            for (PartLine p : sourceWithSerials(assemblyId)) if (p.partId == partId) { need = p.quantity; line = p; }
             if (need < 0) return "Linh kiện này không thuộc đơn lắp ráp!";
             int used = 0;
             for (PartLine p : usedParts(assemblyId)) if (p.partId == partId) used += p.quantity;
             if (used + qty > need) return "Vượt số lượng cần lắp (cần " + need + ", đã ghi " + used + ")!";
+            // UC 257 – kiểm tra serial: không trùng trong đơn; nếu đơn hàng đã gán serial thì chỉ nhận serial của đơn đó
+            List<String> sns = splitSerials(serial);
+            if (!sns.isEmpty()) {
+                if (sns.size() != qty) return "Số lượng " + qty + " nhưng nhập " + sns.size() + " serial – cần nhập đúng " + qty + " mã!";
+                Set<String> seen = new HashSet<>();
+                for (String sn : sns) if (!seen.add(sn.toUpperCase())) return "Serial \"" + sn + "\" bị nhập trùng!";
+                Set<String> already = new HashSet<>();
+                for (PartLine u : usedParts(assemblyId)) for (String sn : splitSerials(u.serial)) already.add(sn.toUpperCase());
+                Set<String> allowed = new HashSet<>();
+                for (String sn : line.pool) allowed.add(sn.toUpperCase());
+                for (String sn : sns) {
+                    // serial đã có trong kho nhưng là của linh kiện khác -> nhập nhầm, chặn lại
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "SELECT s.part_id, p.part_name FROM part_serials s JOIN parts p ON p.part_id = s.part_id WHERE s.serial_number = ?")) {
+                        ps.setString(1, sn);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next() && rs.getInt(1) != partId)
+                                return "Serial \"" + sn + "\" là của linh kiện khác (" + rs.getString(2) + "), không phải linh kiện này!";
+                        }
+                    }
+                    if (already.contains(sn.toUpperCase())) return "Serial \"" + sn + "\" đã được ghi trong đơn lắp ráp này!";
+                    if (!allowed.isEmpty() && !allowed.contains(sn.toUpperCase()))
+                        return "Serial \"" + sn + "\" không thuộc đơn hàng này (serial của đơn: " + String.join(", ", line.pool) + ")!";
+                }
+            }
+            // Để trống serial mà đơn hàng đã gán serial cho linh kiện này -> tự điền theo gợi ý
+            if (sns.isEmpty() && !line.remaining.isEmpty()) sns = new ArrayList<>(line.remaining.subList(0, Math.min(qty, line.remaining.size())));
             try (PreparedStatement ps = c.prepareStatement("INSERT INTO assembly_parts_used (assembly_id, part_id, quantity, serial_number) VALUES (?, ?, ?, ?)")) {
                 ps.setInt(1, assemblyId); ps.setInt(2, partId); ps.setInt(3, qty);
-                ps.setString(4, serial == null || serial.trim().isEmpty() ? null : serial.trim());
+                ps.setString(4, sns.isEmpty() ? null : String.join(", ", sns));
                 ps.executeUpdate();
             }
             return null;

@@ -4,6 +4,7 @@ import fourSome.model.ShippingAddresses;
 import fourSome.url.DBConnect;
 import khanhnb08894.dao.PartSerialsDAO;
 import khanhnb08894.service.InventoryService;
+import linhhqth08598.service.AuditLogService;
 import linhhqth08598.service.NotificationService;
 
 import java.math.BigDecimal;
@@ -139,10 +140,19 @@ public class OrderService {
 
     public static class OrderLine {
 
+        private int orderItemId, partId;
         private String partName;
         private int quantity;
         private double unitPrice;
         private String serialNumber;
+
+        public int getOrderItemId() {
+            return orderItemId;
+        }
+
+        public int getPartId() {
+            return partId;
+        }
 
         public String getSerialNumber() {
             return serialNumber;
@@ -266,7 +276,7 @@ public class OrderService {
 
     public List<OrderLine> getLines(int orderId) {
         List<OrderLine> list = new ArrayList<>();
-        String sql = "SELECT p.part_name, oi.quantity, oi.unit_price, oi.serial_number FROM order_items oi JOIN parts p ON p.part_id = oi.part_id WHERE oi.order_id = ?";
+        String sql = "SELECT p.part_name, oi.quantity, oi.unit_price, oi.serial_number, oi.order_item_id, oi.part_id FROM order_items oi JOIN parts p ON p.part_id = oi.part_id WHERE oi.order_id = ? ORDER BY oi.order_item_id";
         try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -276,6 +286,8 @@ public class OrderService {
                     l.quantity = rs.getInt(2);
                     l.unitPrice = rs.getDouble(3);
                     l.serialNumber = rs.getString(4);
+                    l.orderItemId = rs.getInt(5);
+                    l.partId = rs.getInt(6);
                     list.add(l);
                 }
             }
@@ -586,6 +598,102 @@ public class OrderService {
         }
     }
 
+    /** Trạng thái đơn còn cho phép admin sửa serial (trước khi giao xong, vì giao xong là phát hành bảo hành theo serial). */
+    public static boolean canEditSerials(String orderStatus) {
+        return "CONFIRMED".equals(orderStatus) || "ASSEMBLING".equals(orderStatus) || "SHIPPING".equals(orderStatus);
+    }
+
+    /**
+     * Admin sửa tay serial của 1 dòng đơn (nhân viên kho nhặt nhầm chiếc khác trên kệ).
+     * Quy tắc: đơn đang CONFIRMED/ASSEMBLING/SHIPPING; nhập đúng số lượng của dòng, không trùng nhau;
+     * serial mới phải là hàng IN_STOCK đúng linh kiện (hoặc đang thuộc chính dòng này);
+     * serial bị bỏ ra quay về IN_STOCK. Tất cả trong 1 giao dịch. Trả về null nếu OK, ngược lại là lời báo lỗi.
+     */
+    public String editSerials(int orderId, int orderItemId, String rawSerials, int staffId) {
+        List<String> news = PartSerialsDAO.parseInput(rawSerials);
+        try (Connection con = DBConnect.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                String status = null;
+                try (PreparedStatement ps = con.prepareStatement("SELECT order_status FROM orders WHERE order_id = ?")) {
+                    ps.setInt(1, orderId);
+                    try (ResultSet rs = ps.executeQuery()) { if (rs.next()) status = rs.getString(1); }
+                }
+                if (status == null) { con.rollback(); return "Không tìm thấy đơn hàng!"; }
+                if (!canEditSerials(status)) { con.rollback(); return "Chỉ sửa được serial khi đơn đã xác nhận và chưa giao xong!"; }
+
+                int partId = 0, qty = 0; String oldCsv = null; boolean found = false;
+                try (PreparedStatement ps = con.prepareStatement(
+                        "SELECT part_id, quantity, serial_number FROM order_items WITH (UPDLOCK) WHERE order_item_id = ? AND order_id = ?")) {
+                    ps.setInt(1, orderItemId); ps.setInt(2, orderId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) { found = true; partId = rs.getInt(1); qty = rs.getInt(2); oldCsv = rs.getString(3); }
+                    }
+                }
+                if (!found) { con.rollback(); return "Không tìm thấy dòng sản phẩm trong đơn!"; }
+                if (news.size() != qty) { con.rollback(); return "Dòng này mua " + qty + " chiếc, cần nhập đúng " + qty + " mã serial (đang nhập " + news.size() + ")!"; }
+
+                java.util.Set<String> seen = new java.util.HashSet<>();
+                for (String sn : news) {
+                    if (sn.length() > 100) { con.rollback(); return "Serial \"" + sn + "\" dài quá 100 ký tự!"; }
+                    if (!seen.add(sn.toUpperCase())) { con.rollback(); return "Serial \"" + sn + "\" bị nhập trùng trong danh sách!"; }
+                }
+
+                java.util.Map<String, String> oldMap = new java.util.HashMap<>();   // HOA -> mã gốc đang lưu trong DB
+                for (String sn : PartSerialsDAO.splitSerials(oldCsv)) oldMap.put(sn.toUpperCase(), sn);
+
+                // Serial đã được kỹ thuật viên ghi trong đơn lắp ráp thì không được gỡ ra nữa
+                for (String sn : PartSerialsDAO.splitSerials(oldCsv)) {
+                    if (seen.contains(sn.toUpperCase())) continue;
+                    try (PreparedStatement ps = con.prepareStatement(
+                            "SELECT 1 FROM assembly_parts_used u JOIN assembly_orders a ON a.assembly_id = u.assembly_id "
+                          + "WHERE a.order_id = ? AND (',' + REPLACE(u.serial_number, ' ', '') + ',') LIKE ?")) {
+                        ps.setInt(1, orderId); ps.setString(2, "%," + sn + ",%");
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) { con.rollback(); return "Serial \"" + sn + "\" đã được ghi vào đơn lắp ráp, hãy xóa dòng lắp ráp đó trước khi đổi!"; }
+                        }
+                    }
+                }
+
+                // 1) Nhả serial bị bỏ ra
+                for (String sn : PartSerialsDAO.splitSerials(oldCsv)) {
+                    if (!seen.contains(sn.toUpperCase())) serialsDAO.moveStatus(con, sn, partId, "SOLD", "IN_STOCK");
+                }
+                // 2) Bốc serial mới (phải đang IN_STOCK, đúng linh kiện)
+                for (String sn : news) {
+                    if (oldMap.containsKey(sn.toUpperCase())) continue;
+                    if (!serialsDAO.moveStatus(con, sn, partId, "IN_STOCK", "SOLD")) {
+                        con.rollback();
+                        String[] info = serialsDAO.findInfo(sn);
+                        if (info == null) return "Serial \"" + sn + "\" không có trong kho!";
+                        if (!"IN_STOCK".equals(info[1])) return "Serial \"" + sn + "\" không còn trong kho (trạng thái " + info[1] + ")!";
+                        return "Serial \"" + sn + "\" thuộc linh kiện khác (" + info[0] + "), không đúng dòng này!";
+                    }
+                }
+                // 3) Ghi vào dòng đơn
+                List<String> finalList = new ArrayList<>();
+                for (String sn : news) finalList.add(oldMap.getOrDefault(sn.toUpperCase(), sn));   // giữ đúng chữ hoa/thường của mã cũ
+                String newCsv = String.join(", ", finalList);
+                try (PreparedStatement ps = con.prepareStatement("UPDATE order_items SET serial_number = ? WHERE order_item_id = ?")) {
+                    ps.setString(1, newCsv); ps.setInt(2, orderItemId);
+                    ps.executeUpdate();
+                }
+                con.commit();
+                new AuditLogService().logAction(staffId, "EDIT_ORDER_SERIAL", "order_items", orderItemId,
+                        "Đơn #" + orderId + ": đổi serial từ [" + (oldCsv == null ? "" : oldCsv) + "] sang [" + newCsv + "]");
+                return null;
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            } finally {
+                con.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Không sửa được serial, vui lòng thử lại!";
+        }
+    }
+
     /** CANCELLED: nhả serial về IN_STOCK và xóa serial_number trên order_items. */
     private void releaseSerials(Connection con, int orderId) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement("SELECT serial_number FROM order_items WHERE order_id = ? AND serial_number IS NOT NULL")) {
@@ -715,4 +823,4 @@ public class OrderService {
         notifications.notifyOrder(o.userId, o.orderId, "Đơn hàng " + o.orderCode + " " + msg);
         return null;
     }
-}
+}   

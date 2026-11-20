@@ -119,10 +119,30 @@
             <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
                 <h6 class="fw-bold">${tNeed}</h6>
                 <table class="table table-sm align-middle mb-0">
-                    <thead class="table-light"><tr><th>Linh kiện</th><th class="text-center">Cần</th></tr></thead>
+                    <thead class="table-light"><tr><th>Linh kiện</th><th class="text-center">Cần</th><th class="text-center">Đã ghi</th><th>Serial gợi ý (từ đơn hàng)</th></tr></thead>
                     <tbody>
-                        <c:forEach var="p" items="${source}"><tr><td><c:out value="${p.partName}"/></td><td class="text-center">${p.quantity}</td></tr></c:forEach>
-                        <c:if test="${empty source}"><tr><td colspan="2" class="text-center text-muted">Đơn này không gắn đơn hàng/cấu hình có linh kiện.</td></tr></c:if>
+                        <c:forEach var="p" items="${source}">
+                            <tr><td><c:out value="${p.partName}"/></td><td class="text-center">${p.quantity}</td><td class="text-center">${p.usedQty}</td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${p.suggestQty > 0}">
+                                            <code><c:out value="${p.suggest}"/></code>
+                                            <c:if test="${a.status == 'IN_PROGRESS' || a.status == 'TESTING'}">
+                                                <form action="${pageContext.request.contextPath}/admin/assembly" method="POST" class="d-inline m-0 ms-1">
+                                                    <input type="hidden" name="id" value="${a.assemblyId}"><input type="hidden" name="action" value="addPart"><input type="hidden" name="detail" value="1">
+                                                    <input type="hidden" name="partId" value="${p.partId}"><input type="hidden" name="qty" value="${p.suggestQty}">
+                                                    <input type="hidden" name="serial" value="<c:out value='${p.suggest}'/>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success py-0">Ghi theo gợi ý</button>
+                                                </form>
+                                            </c:if>
+                                        </c:when>
+                                        <c:when test="${p.hasPool && empty p.remaining}"><span class="text-success small">Đã ghi đủ serial</span></c:when>
+                                        <c:when test="${p.hasPool}"><span class="text-warning small">Đủ số lượng nhưng chưa ghi serial: <c:forEach var="sn" items="${p.remaining}" varStatus="vs"><code><c:out value="${sn}"/></code><c:if test="${!vs.last}">, </c:if></c:forEach></span></c:when>
+                                        <c:otherwise><span class="text-muted small fst-italic">Không có (đơn chưa gán serial)</span></c:otherwise>
+                                    </c:choose>
+                                </td></tr>
+                        </c:forEach>
+                        <c:if test="${empty source}"><tr><td colspan="4" class="text-center text-muted">Đơn này không gắn đơn hàng/cấu hình có linh kiện.</td></tr></c:if>
                     </tbody>
                 </table>
             </div></div>
@@ -154,7 +174,7 @@
                             <c:forEach var="p" items="${source}"><option value="${p.partId}"><c:out value="${p.partName}"/></option></c:forEach>
                         </select></div>
                         <div class="col-md-2"><input type="number" name="qty" value="1" min="1" class="form-control" title="Số lượng" required></div>
-                        <div class="col-md-4"><input type="text" name="serial" maxlength="100" class="form-control" placeholder="Số serial (nếu có)"></div>
+                        <div class="col-md-4"><input type="text" name="serial" id="serialInput" maxlength="500" class="form-control" placeholder="Số serial (nếu có, nhiều mã cách nhau dấu phẩy)"></div>
                         <div class="col-12 small text-muted">Nhập số lượng/serial (nếu cần) rồi chọn linh kiện – hệ thống tự ghi luôn, không cần bấm nút.</div>
                     </form>
                 </c:if>

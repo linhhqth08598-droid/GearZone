@@ -33,7 +33,7 @@ public class AdminAssemblyServlet extends HttpServlet {
             if (row == null) { request.getSession().setAttribute("error", "Không tìm thấy đơn lắp ráp!"); response.sendRedirect(request.getContextPath() + "/admin/assembly"); return; }
             request.setAttribute("a", row);
             request.setAttribute("technicians", service.technicians());
-            request.setAttribute("source", service.sourceParts(row.assemblyId));
+            request.setAttribute("source", service.sourceWithSerials(row.assemblyId));
             request.setAttribute("used", service.usedParts(row.assemblyId));
             request.setAttribute("isService", AssemblyService.isServiceType(row.type));
             request.setAttribute("report", service.getReport(row.assemblyId));

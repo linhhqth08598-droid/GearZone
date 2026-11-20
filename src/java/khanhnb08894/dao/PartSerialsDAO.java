@@ -118,6 +118,29 @@ public class PartSerialsDAO {
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
 
+    /**
+     * Đổi trạng thái 1 serial CHỈ KHI đúng linh kiện và đang ở trạng thái {@code from}.
+     * Trả về false nếu không khớp (serial lạ, sai linh kiện, hoặc đã bị đơn khác bốc).
+     */
+    public boolean moveStatus(Connection con, String serialNumber, int partId, String from, String to) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE part_serials SET status = ? WHERE serial_number = ? AND part_id = ? AND status = ?")) {
+            ps.setString(1, to);
+            ps.setString(2, serialNumber);
+            ps.setInt(3, partId);
+            ps.setString(4, from);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    /** Tách danh sách serial do người dùng nhập: chấp nhận dấu phẩy, chấm phẩy hoặc xuống dòng. */
+    public static List<String> parseInput(String raw) {
+        List<String> r = new ArrayList<>();
+        if (raw == null) return r;
+        for (String s : raw.split("[,;\\r\\n]+")) { if (!s.trim().isEmpty()) r.add(s.trim()); }
+        return r;
+    }
+
     /** Nhả danh sách serial "SN1, SN2" từ SOLD về IN_STOCK (hủy đơn). */
     public void releaseSerials(Connection con, String serialCsv) throws SQLException {
         for (String sn : splitSerials(serialCsv)) updateStatus(con, sn, "IN_STOCK");

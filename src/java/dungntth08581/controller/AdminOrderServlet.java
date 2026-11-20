@@ -68,6 +68,19 @@ public class AdminOrderServlet extends HttpServlet {
         Users admin = (Users) session.getAttribute("loggedUser");
         String err;
         int id = 0;
+        if ("editSerial".equals(request.getParameter("action"))) {   // admin sửa serial thủ công trên 1 dòng đơn
+            try {
+                id = Integer.parseInt(request.getParameter("id"));
+                int itemId = Integer.parseInt(request.getParameter("orderItemId"));
+                err = admin == null ? "Bạn chưa đăng nhập!" : service.editSerials(id, itemId, request.getParameter("serials"), admin.getUserId());
+            } catch (NumberFormatException e) {
+                err = "Dữ liệu không hợp lệ!";
+            }
+            if (err == null) session.setAttribute("message", "Đã cập nhật serial của đơn #" + id + ".");
+            else session.setAttribute("error", err);
+            response.sendRedirect(request.getContextPath() + "/admin/order?id=" + id);
+            return;
+        }
         try {
             id = Integer.parseInt(request.getParameter("id"));
             String next = request.getParameter("next");

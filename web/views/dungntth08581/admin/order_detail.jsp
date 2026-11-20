@@ -16,6 +16,15 @@
         </div>
     </div>
 
+    <c:if test="${not empty sessionScope.message}">
+        <div class="alert alert-success alert-dismissible fade show"><c:out value="${sessionScope.message}"/><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <c:remove var="message" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.error}">
+        <div class="alert alert-danger alert-dismissible fade show"><c:out value="${sessionScope.error}"/><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <c:remove var="error" scope="session"/>
+    </c:if>
+
     <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
         <div class="d-flex justify-content-between mb-2">
             <span>Trạng thái: <jsp:include page="/views/components/order_status_badge.jsp"><jsp:param name="status" value="${order.status}"/></jsp:include></span>
@@ -48,7 +57,22 @@
                             <td><c:choose>
                                 <c:when test="${not empty l.serialNumber}"><code><c:out value="${l.serialNumber}"/></code></c:when>
                                 <c:otherwise><span class="text-muted fst-italic">Chưa xuất kho</span></c:otherwise>
-                            </c:choose></td>
+                            </c:choose>
+                            <c:if test="${order.status == 'CONFIRMED' || order.status == 'ASSEMBLING' || order.status == 'SHIPPING'}">
+                                <a class="ms-2 small" data-bs-toggle="collapse" href="#editSn${l.orderItemId}" role="button"><i class="fas fa-pen"></i> Sửa</a>
+                                <div class="collapse mt-2" id="editSn${l.orderItemId}">
+                                    <form action="${pageContext.request.contextPath}/admin/order" method="POST" class="m-0">
+                                        <input type="hidden" name="id" value="${order.orderId}">
+                                        <input type="hidden" name="action" value="editSerial">
+                                        <input type="hidden" name="orderItemId" value="${l.orderItemId}">
+                                        <textarea name="serials" rows="${l.quantity > 4 ? 4 : l.quantity}" class="form-control form-control-sm" required
+                                                  placeholder="Nhập đúng ${l.quantity} mã, cách nhau bằng dấu phẩy hoặc xuống dòng"><c:out value="${l.serialNumber}"/></textarea>
+                                        <div class="small text-muted my-1">Chỉ nhận serial còn trong kho (IN_STOCK) của đúng linh kiện này.
+                                            <a href="${pageContext.request.contextPath}/admin/part-serials?partId=${l.partId}" target="_blank">Xem Serial trong kho</a></div>
+                                        <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Đổi serial của dòng này?');">Lưu serial</button>
+                                    </form>
+                                </div>
+                            </c:if></td>
                             <td class="text-end"><fmt:formatNumber value="${l.unitPrice}" type="number" maxFractionDigits="0"/> ₫</td>
                             <td class="text-center">${l.quantity}</td>
                             <td class="text-end"><fmt:formatNumber value="${l.lineTotal}" type="number" maxFractionDigits="0"/> ₫</td>
