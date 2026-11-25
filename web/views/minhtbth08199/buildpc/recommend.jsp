@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 <jsp:include page="/views/components/header.jsp" />
+<jsp:include page="/views/components/sidebar.jsp" />
 <div class="container py-5">
  <div class="row justify-content-center"><div class="col-lg-9">
   <div class="p-4 p-md-5 rounded-4 text-white mb-4" style="background:linear-gradient(125deg,#151d2e,#29446c)">

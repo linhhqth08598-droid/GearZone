@@ -2,6 +2,7 @@ package linhhqth08598.controller;
 
 import fourSome.model.Users;
 import fourSome.model.SupportTickets;
+import linhhqth08598.dao.SiteContactInfoDAO;
 import linhhqth08598.service.SupportService;
 
 import jakarta.servlet.ServletException;
@@ -30,6 +31,7 @@ public class SupportServlet extends HttpServlet {
 
         List<SupportTickets> tickets = supportService.getUserTickets(user.getUserId());
         request.setAttribute("tickets", tickets);
+        request.setAttribute("siteContactInfo", new SiteContactInfoDAO().getActiveInfo());
         request.getRequestDispatcher("/views/linhhqth08598/support/ticket.jsp").forward(request, response);
     }
 

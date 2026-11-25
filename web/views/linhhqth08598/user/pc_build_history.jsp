@@ -116,6 +116,14 @@
                                     <input type="hidden" name="buildId" value="${build.buildId}">
                                     <button type="submit" class="btn btn-outline-secondary btn-sm" title="Sao chép cấu hình"><i class="far fa-copy"></i></button>
                                 </form>
+                                <form action="${pageContext.request.contextPath}/upgrade-pc" method="POST" class="d-inline">
+                                    <input type="hidden" name="action" value="fromHistory">
+                                    <input type="hidden" name="historyBuildId" value="${build.buildId}">
+                                    <input type="hidden" name="historyUpgradeBudget" value="10000000">
+                                    <button type="submit" class="btn btn-outline-success btn-sm" title="Dùng cấu hình này làm PC hiện tại để nâng cấp">
+                                        <i class="fas fa-arrow-up-right-dots me-1"></i>Nâng cấp PC này
+                                    </button>
+                                </form>
                                 <form action="${pageContext.request.contextPath}/user/pc-build-history" method="POST" class="d-inline"
                                       onsubmit="return confirm('Xóa cấu hình này? Link chia sẻ của nó cũng sẽ không còn dùng được.');">
                                     <input type="hidden" name="action" value="delete">

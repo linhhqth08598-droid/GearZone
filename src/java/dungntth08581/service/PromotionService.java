@@ -547,20 +547,50 @@ public class PromotionService {
     // THÔNG BÁO KHUYẾN MÃI HÀNG LOẠT (UC 250)
     // =====================================================================
 
-    /** Gửi thông báo trong ứng dụng cho mọi khách hàng ACTIVE (bỏ qua nhân viên). Trả về số người đã gửi, -1 nếu thiếu nội dung. */
+    /** Gửi thông báo trong ứng dụng + email (nếu có SMTP) cho mọi khách hàng ACTIVE (bỏ qua nhân viên). Trả về số người đã gửi, -1 nếu thiếu nội dung. */
     public int broadcast(String title, String content) {
         if (blank(title) || blank(content)) return -1;
         if (title.length() > 150) title = title.substring(0, 150);
         NotificationService ns = new NotificationService();
-        String sql = "SELECT u.user_id FROM users u WHERE u.status = 'ACTIVE' AND NOT EXISTS "
+        String sql = "SELECT u.user_id, u.email, u.full_name FROM users u WHERE u.status = 'ACTIVE' AND NOT EXISTS "
                    + "(SELECT 1 FROM user_roles ur JOIN roles r ON r.role_id = ur.role_id WHERE ur.user_id = u.user_id AND r.role_code IN ('ADMIN','OWNER','STAFF'))";
-        List<Integer> ids = new ArrayList<>();
+        List<String[]> targets = new ArrayList<>();
         try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) ids.add(rs.getInt(1));
+            while (rs.next()) {
+                targets.add(new String[]{String.valueOf(rs.getInt(1)), rs.getString(2), rs.getString(3)});
+            }
         } catch (Exception e) { e.printStackTrace(); return 0; }
         int sent = 0;
-        for (int uid : ids) if (ns.notifyPromotion(uid, title.trim(), content.trim())) sent++;
+        String cleanTitle = title.trim();
+        String cleanContent = content.trim();
+        for (String[] t : targets) {
+            int uid = Integer.parseInt(t[0]);
+            if (ns.notifyPromotion(uid, cleanTitle, cleanContent)) {
+                sent++;
+                sendPromoEmailAsync(t[1], t[2], cleanTitle, cleanContent);
+            }
+        }
         return sent;
+    }
+
+    private void sendPromoEmailAsync(String toEmail, String fullName, String title, String content) {
+        if (toEmail == null || toEmail.trim().isEmpty()) return;
+        String safeName = (fullName == null || fullName.trim().isEmpty()) ? "Khách hàng" : fullName.trim();
+        String html = "<div style='font-family:Segoe UI,Arial,sans-serif;line-height:1.5'>"
+                + "<p>Xin chào <b>" + escapeHtmlPromo(safeName) + "</b>,</p>"
+                + "<h3>" + escapeHtmlPromo(title) + "</h3>"
+                + "<p>" + escapeHtmlPromo(content) + "</p>"
+                + "<p>Trân trọng,<br/>GearZone</p>"
+                + "</div>";
+        fourSome.util.EmailUtil.sendAsync(toEmail.trim(), "GearZone - " + title, html, true, null);
+    }
+
+    private static String escapeHtmlPromo(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     private boolean exec(String sql, int id) {

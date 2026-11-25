@@ -76,6 +76,167 @@
     </div>
 </div>
 
+<!-- Cấu hình thông tin liên hệ hiển thị cho khách (lưu vào site_contact_info) -->
+<div class="card shadow-sm border-0 rounded-4 mt-4">
+    <div class="card-body p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-address-book text-primary me-2"></i>Cấu hình thông tin liên hệ</h5>
+        <form action="${pageContext.request.contextPath}/admin/support" method="post">
+            <input type="hidden" name="action" value="updateContactInfo">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tên công ty / cửa hàng</label>
+                    <input type="text" name="companyName" class="form-control" maxlength="200" required
+                           value="<c:out value='${siteContactInfo.companyName}'/>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Hotline</label>
+                    <input type="text" name="hotline" class="form-control" maxlength="50" required
+                           value="<c:out value='${siteContactInfo.hotline}'/>">
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Lời giới thiệu ngắn</label>
+                    <input type="text" name="introText" class="form-control" maxlength="500"
+                           value="<c:out value='${siteContactInfo.introText}'/>">
+                </div>
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-semibold mb-0">Danh sách địa chỉ cơ sở</label>
+                        <button type="button" class="btn btn-sm btn-outline-success" id="btnAddBranch">
+                            <i class="fas fa-plus me-1"></i>Thêm cơ sở
+                        </button>
+                    </div>
+                    <div id="branchListContainer" class="d-flex flex-column gap-2">
+                        <c:choose>
+                            <c:when test="${not empty siteContactInfo.addresses}">
+                                <c:forEach var="addr" items="${siteContactInfo.addresses}" varStatus="st">
+                                    <div class="input-group branch-row">
+                                        <span class="input-group-text branch-label">Cơ sở ${st.index + 1}</span>
+                                        <input type="text" name="addresses" class="form-control" maxlength="255"
+                                               placeholder="Nhập địa chỉ cơ sở..." value="<c:out value='${addr}'/>">
+                                        <button type="button" class="btn btn-outline-danger btn-remove-branch" title="Xóa cơ sở">
+                                            <i class="fas fa-trash-alt"></i> Xóa
+                                        </button>
+                                    </div>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <c:if test="${not empty siteContactInfo.address1}">
+                                    <div class="input-group branch-row">
+                                        <span class="input-group-text branch-label">Cơ sở 1</span>
+                                        <input type="text" name="addresses" class="form-control" maxlength="255"
+                                               placeholder="Nhập địa chỉ cơ sở..." value="<c:out value='${siteContactInfo.address1}'/>">
+                                        <button type="button" class="btn btn-outline-danger btn-remove-branch" title="Xóa cơ sở">
+                                            <i class="fas fa-trash-alt"></i> Xóa
+                                        </button>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty siteContactInfo.address2}">
+                                    <div class="input-group branch-row">
+                                        <span class="input-group-text branch-label">Cơ sở 2</span>
+                                        <input type="text" name="addresses" class="form-control" maxlength="255"
+                                               placeholder="Nhập địa chỉ cơ sở..." value="<c:out value='${siteContactInfo.address2}'/>">
+                                        <button type="button" class="btn btn-outline-danger btn-remove-branch" title="Xóa cơ sở">
+                                            <i class="fas fa-trash-alt"></i> Xóa
+                                        </button>
+                                    </div>
+                                </c:if>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="form-text">Có thể thêm nhiều cơ sở hoặc xóa bớt cơ sở tùy ý.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Giờ tư vấn &amp; bán hàng</label>
+                    <input type="text" name="salesHours" class="form-control" maxlength="150"
+                           value="<c:out value='${siteContactInfo.salesHours}'/>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Giờ hỗ trợ kỹ thuật</label>
+                    <input type="text" name="techHours" class="form-control" maxlength="150"
+                           value="<c:out value='${siteContactInfo.techHours}'/>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Link Facebook</label>
+                    <input type="text" name="facebookUrl" class="form-control" maxlength="500"
+                           value="<c:out value='${siteContactInfo.facebookUrl}'/>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Link YouTube</label>
+                    <input type="text" name="youtubeUrl" class="form-control" maxlength="500"
+                           value="<c:out value='${siteContactInfo.youtubeUrl}'/>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Link Chat</label>
+                    <input type="text" name="chatUrl" class="form-control" maxlength="500"
+                           value="<c:out value='${siteContactInfo.chatUrl}'/>">
+                </div>
+            </div>
+            <div class="mt-3 text-end">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save me-1"></i>Lưu thông tin liên hệ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var container = document.getElementById('branchListContainer');
+        var addBtn = document.getElementById('btnAddBranch');
+        if (!container || !addBtn) return;
+
+        function refreshLabels() {
+            var rows = container.querySelectorAll('.branch-row');
+            rows.forEach(function (row, idx) {
+                var lbl = row.querySelector('.branch-label');
+                if (lbl) lbl.textContent = 'Cơ sở ' + (idx + 1);
+            });
+        }
+
+        function bindRemove(btn) {
+            btn.addEventListener('click', function () {
+                var row = btn.closest('.branch-row');
+                if (row) {
+                    row.remove();
+                    refreshLabels();
+                }
+            });
+        }
+
+        container.querySelectorAll('.btn-remove-branch').forEach(bindRemove);
+
+        addBtn.addEventListener('click', function () {
+            var row = document.createElement('div');
+            row.className = 'input-group branch-row';
+
+            var span = document.createElement('span');
+            span.className = 'input-group-text branch-label';
+            span.textContent = 'Cơ sở ' + (container.querySelectorAll('.branch-row').length + 1);
+
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'addresses';
+            input.className = 'form-control';
+            input.maxLength = 255;
+            input.placeholder = 'Nhập địa chỉ cơ sở mới...';
+
+            var delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'btn btn-outline-danger btn-remove-branch';
+            delBtn.title = 'Xóa cơ sở';
+            delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Xóa';
+            bindRemove(delBtn);
+
+            row.appendChild(span);
+            row.appendChild(input);
+            row.appendChild(delBtn);
+            container.appendChild(row);
+            input.focus();
+        });
+    })();
+</script>
+
 
 <!-- Các modal đặt ngoài bảng (đặt trong <tbody> là HTML sai cấu trúc) -->
 <c:forEach var="t" items="${ticketsList}">

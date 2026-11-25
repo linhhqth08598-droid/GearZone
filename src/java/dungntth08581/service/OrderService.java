@@ -501,6 +501,8 @@ public class OrderService {
                 res.orderId = orderId;
                 res.orderCode = code;
                 notifications.notifyOrder(userId, orderId, "Đơn hàng " + code + " đã được tiếp nhận. Chúng tôi sẽ sớm xác nhận và giao hàng cho bạn.");
+                sendOrderEmailAsync(userId, code, "PENDING",
+                        "Đơn hàng " + code + " đã được tiếp nhận. Chúng tôi sẽ sớm xác nhận và giao hàng cho bạn.");
                 return res;
             } catch (Exception e) {
                 con.rollback();
@@ -511,6 +513,94 @@ public class OrderService {
             res.error = "Không đặt được hàng, vui lòng thử lại!";
             return res;
         }
+    }
+
+    private void sendOrderEmailAsync(int userId, String orderCode, String statusKey, String bodyText) {
+        String sql = "SELECT email, full_name FROM users WHERE user_id = ? AND status = 'ACTIVE'";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return;
+                String toEmail = rs.getString("email");
+                String fullName = rs.getString("full_name");
+                if (toEmail == null || toEmail.trim().isEmpty()) return;
+                String safeName = (fullName == null || fullName.trim().isEmpty()) ? "Khách hàng" : fullName.trim();
+
+                String badgeBg;
+                String badgeText;
+                String accentColor;
+                String subjectPrefix;
+                switch (statusKey == null ? "" : statusKey.toUpperCase()) {
+                    case "CONFIRMED":
+                        badgeBg = "#dbeafe";
+                        badgeText = "#1d4ed8";
+                        accentColor = "#2563eb";
+                        subjectPrefix = "Đã xác nhận đơn hàng";
+                        break;
+                    case "SHIPPING":
+                        badgeBg = "#fef3c7";
+                        badgeText = "#b45309";
+                        accentColor = "#d97706";
+                        subjectPrefix = "Đơn hàng đang giao";
+                        break;
+                    case "DELIVERED":
+                        badgeBg = "#dcfce7";
+                        badgeText = "#15803d";
+                        accentColor = "#16a34a";
+                        subjectPrefix = "Giao hàng thành công";
+                        break;
+                    case "CANCELLED":
+                        badgeBg = "#fee2e2";
+                        badgeText = "#b91c1c";
+                        accentColor = "#dc2626";
+                        subjectPrefix = "Đơn hàng đã hủy";
+                        break;
+                    default:
+                        badgeBg = "#f1f5f9";
+                        badgeText = "#334155";
+                        accentColor = "#ff4757";
+                        subjectPrefix = "Đặt hàng thành công";
+                        break;
+                }
+
+                String subject = "[GearZone] " + subjectPrefix + " #" + orderCode;
+                String html = "<div style='font-family: \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 30px 20px;'>"
+                        + "<div style='max-width: 520px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;'>"
+                        + "<div style='background-color: #ffffff; border-bottom: 2px solid #ff4757; padding: 15px; text-align: center;'>"
+                        + "<h2 style='margin: 0; font-size: 24px; font-weight: 800; color: #0f1117; letter-spacing: 1px;'>GEAR<span style='color: #ff4757;'>ZONE</span></h2>"
+                        + "</div>"
+                        + "<div style='padding: 25px 30px; color: #334155;'>"
+                        + "<div style='margin-bottom: 14px;'>"
+                        + "<span style='display: inline-block; background-color: " + badgeBg + "; color: " + badgeText + "; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 999px; border-left: 3px solid " + accentColor + ";'>"
+                        + escapeHtml(subjectPrefix) + "</span>"
+                        + "</div>"
+                        + "<p style='margin: 0 0 14px 0; font-size: 15px;'>Xin chào <b style='color: #0f1117;'>" + escapeHtml(safeName) + "</b>,</p>"
+                        + "<p style='margin: 0 0 18px 0; font-size: 14px; line-height: 1.6;'>" + escapeHtml(bodyText) + "</p>"
+                        + "<div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px;'>"
+                        + "<span style='font-size: 13px; color: #64748b;'>Mã đơn hàng: </span>"
+                        + "<b style='font-size: 15px; color: " + accentColor + ";'>" + escapeHtml(orderCode) + "</b>"
+                        + "</div>"
+                        + "<p style='margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;'>Cảm ơn bạn đã tin tưởng mua sắm linh kiện &amp; phụ kiện tại GearZone.</p>"
+                        + "</div>"
+                        + "<div style='background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 15px; text-align: center;'>"
+                        + "<p style='margin: 0; font-size: 12px; color: #94a3b8;'>&copy; 2026 GearZone - Chuyên linh kiện PC &amp; Phụ kiện Gaming.</p>"
+                        + "<p style='margin: 5px 0 0 0; font-size: 11px; color: #cbd5e1;'>Email được gửi tự động, vui lòng không trả lời.</p>"
+                        + "</div>"
+                        + "</div>"
+                        + "</div>";
+                fourSome.util.EmailUtil.sendAsync(toEmail.trim(), subject, html, true, null);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     // ---------- Hủy đơn (UC 231) ----------
@@ -805,7 +895,8 @@ public class OrderService {
         if ("DELIVERED".equals(newStatus)) {
             try {
                 new WarrantyService().issueWarrantiesForOrder(orderId, null);
-            } catch (Exception ignored) {
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
         String msg;
@@ -821,6 +912,8 @@ public class OrderService {
                 break;
         }
         notifications.notifyOrder(o.userId, o.orderId, "Đơn hàng " + o.orderCode + " " + msg);
+        sendOrderEmailAsync(o.userId, o.orderCode, newStatus,
+                "Đơn hàng " + o.orderCode + " " + msg);
         return null;
     }
 }   
