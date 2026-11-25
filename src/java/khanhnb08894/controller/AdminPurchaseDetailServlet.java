@@ -356,27 +356,16 @@ public class AdminPurchaseDetailServlet extends HttpServlet {
                     }
                 }
             } else if ("createReturn".equals(action)) {
-                // Logic xử lý tạo phiếu trả hàng đã được fix lỗi thiếu cột created_by
                 int pId = Integer.parseInt(request.getParameter("partId"));
                 int qty = Integer.parseInt(request.getParameter("returnQty"));
-                String defect = request.getParameter("defectType"); // Nhận giá trị tiếng Anh
+                String defect = request.getParameter("defectType");
                 String reason = request.getParameter("reason");
-                String returnCode = "RET-" + System.currentTimeMillis();
+                fourSome.model.Users loggedUser = (fourSome.model.Users) session.getAttribute("loggedUser");
+                Integer userId = loggedUser != null ? loggedUser.getUserId() : null;
 
-                String sql = "INSERT INTO [supplier_returns] (return_code, supplier_id, po_id, part_id, quantity, defect_type, reason, status, created_by, created_at) " +
-                             "VALUES (?, 1, ?, ?, ?, ?, ?, 'PENDING', 1, GETDATE())";
-
-                try (Connection con = DBConnect.getConnection();
-                     PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setString(1, returnCode);
-                    ps.setInt(2, Integer.parseInt(poId));
-                    ps.setInt(3, pId);
-                    ps.setInt(4, qty);
-                    ps.setString(5, defect);
-                    ps.setString(6, reason);
-                    ps.executeUpdate();
-                    session.setAttribute("message", "Lập phiếu trả hàng thành công! Mã phiếu: " + returnCode);
-                }
+                String returnCode = new khanhnb08894.service.SupplierService()
+                        .createSupplierReturn(Integer.parseInt(poId), pId, qty, defect, reason, userId);
+                session.setAttribute("message", "Lập phiếu trả hàng thành công! Mã phiếu: " + returnCode);
             }
         } catch (Exception e) {
             e.printStackTrace();
