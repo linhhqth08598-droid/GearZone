@@ -12,6 +12,59 @@ import java.util.Map;
 
 public class CompatibilityService {
 
+    /** Kiểm tra tương thích nhận danh sách partId trực tiếp (tự tra loại linh kiện từ bảng parts). */
+    public CompatibilityResult checkBuild(List<Integer> partIds) {
+        return checkBuild(partIds, null, null);
+    }
+
+    public CompatibilityResult checkBuild(List<Integer> partIds, Integer userId, Integer buildId) {
+        Map<String, Integer> mapped = new java.util.HashMap<>();
+        if (partIds != null && !partIds.isEmpty()) {
+            try (Connection conn = DBConnect.getConnection()) {
+                if (conn != null) {
+                    for (Integer pid : partIds) {
+                        if (pid == null || pid <= 0) {
+                            continue;
+                        }
+                        String key = resolveSlotKeyByPartId(conn, pid);
+                        if (key != null && !mapped.containsKey(key)) {
+                            mapped.put(key, pid);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return checkBuild(mapped, userId, buildId);
+    }
+
+    private String resolveSlotKeyByPartId(Connection conn, int partId) {
+        String sql = "SELECT c.category_code, c.category_name FROM [parts] p "
+                + "LEFT JOIN [categories] c ON c.category_id = p.category_id WHERE p.part_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String raw = ((rs.getString("category_code") != null ? rs.getString("category_code") : "")
+                            + " " + (rs.getString("category_name") != null ? rs.getString("category_name") : ""))
+                            .toUpperCase();
+                    if (raw.contains("CPU")) return "cpu";
+                    if (raw.contains("MAIN") || raw.contains("BOARD")) return "main";
+                    if (raw.contains("RAM")) return "ram";
+                    if (raw.contains("VGA") || raw.contains("GPU") || raw.contains("GRAPH")) return "vga";
+                    if (raw.contains("SSD") || raw.contains("NVME") || raw.contains("STORAGE")) return "ssd";
+                    if (raw.contains("PSU") || raw.contains("POWER")) return "psu";
+                    if (raw.contains("CASE")) return "case";
+                    if (raw.contains("COOLER") || raw.contains("FAN") || raw.contains("TAN")) return "cooler";
+                    if (raw.contains("MONITOR") || raw.contains("MAN")) return "monitor";
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
     /**
      * Kiểm tra tương thích toàn cấu hình (UC 41-69)
      * @param parts Map key: "cpu", "main", "ram", "vga", "ssd", "hdd", "psu", "case", "cooler", "monitor"
@@ -55,6 +108,9 @@ public class CompatibilityService {
             CoolerInfo cooler = coolerId > 0 ? loadCooler(conn, coolerId) : null;
             StorageInfo ssd = ssdId > 0 ? loadStorage(conn, ssdId) : null;
             MonitorInfo monitor = monitorId > 0 ? loadMonitor(conn, monitorId) : null;
+
+            // Áp dụng quy tắc cấu hình động từ bảng compatibility_rules (nếu có quy tắc ACTIVE tương ứng)
+            applyDynamicCompatibilityRules(conn, cpu, main, ram, vga, psu, pcCase, cooler, ssd, monitor, result, loggedReasons);
 
             // 1. CPU <-> Mainboard (UC 41-44: Socket, thế hệ CPU)
             if (cpu != null && main != null) {
@@ -422,6 +478,60 @@ public class CompatibilityService {
             }
         } catch (Exception ignored) {}
         return "";
+    }
+
+    private void applyDynamicCompatibilityRules(
+            Connection conn,
+            CpuInfo cpu,
+            MainInfo main,
+            RamInfo ram,
+            VgaInfo vga,
+            PsuInfo psu,
+            CaseInfo pcCase,
+            CoolerInfo cooler,
+            StorageInfo ssd,
+            MonitorInfo monitor,
+            CompatibilityResult result,
+            List<String> loggedReasons) {
+        String sql = "SELECT rule_name, check_type, error_message, severity FROM [compatibility_rules] WHERE status = 'ACTIVE'";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String checkType = rs.getString("check_type");
+                String severity = rs.getString("severity");
+                String errMsg = rs.getString("error_message");
+                if (checkType == null || errMsg == null) {
+                    continue;
+                }
+                String ct = checkType.trim().toUpperCase();
+                boolean violated = false;
+                if (("SOCKET_MATCH".equals(ct) || "CPU_MAINBOARD_SOCKET".equals(ct)) && cpu != null && main != null) {
+                    violated = cpu.socketId > 0 && main.socketId > 0 && cpu.socketId != main.socketId;
+                } else if (("RAM_DDR_MATCH".equals(ct) || "RAM_STANDARD".equals(ct)) && ram != null && main != null) {
+                    violated = notBlank(ram.ddrType) && notBlank(main.ramStandard)
+                            && !ram.ddrType.trim().equalsIgnoreCase(main.ramStandard.trim());
+                } else if (("CASE_VGA_LENGTH".equals(ct) || "VGA_CASE_LENGTH".equals(ct)) && vga != null && pcCase != null) {
+                    violated = vga.lengthMm > 0 && pcCase.maxVgaLengthMm > 0 && vga.lengthMm > pcCase.maxVgaLengthMm;
+                } else if ("CASE_COOLER_HEIGHT".equals(ct) && cooler != null && pcCase != null) {
+                    violated = cooler.heightMm > 0 && pcCase.maxCpuCoolerHeightMm > 0 && cooler.heightMm > pcCase.maxCpuCoolerHeightMm;
+                } else if ("COOLER_SOCKET".equals(ct) && cooler != null && cpu != null) {
+                    violated = notBlank(cpu.socketName) && notBlank(cooler.supportedSockets)
+                            && !containsIgnoreCase(cooler.supportedSockets, cpu.socketName);
+                }
+
+                if (violated) {
+                    String prefix = "[Rule: " + (rs.getString("rule_name") != null ? rs.getString("rule_name") : ct) + "] ";
+                    String full = prefix + errMsg.trim();
+                    if ("WARNING".equalsIgnoreCase(severity)) {
+                        result.addWarning(full);
+                    } else {
+                        result.addError(full);
+                        loggedReasons.add(full);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     private void saveConflictLog(Connection conn, Integer userId, Integer buildId, int cpuId, int mainId, int vgaId, int psuId, int caseId, String reason) {

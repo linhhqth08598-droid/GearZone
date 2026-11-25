@@ -31,11 +31,11 @@ public class RecommendPCServlet extends HttpServlet {
         setOptions(request);
         boolean preset = "true".equals(request.getParameter("preset"));
         try {
-            double budget = Double.parseDouble(request.getParameter("budget"));
+            double budget = parseBudget(request.getParameter("budget"));
             if (!Double.isFinite(budget) || budget < 3_000_000 || budget > 500_000_000) throw new IllegalArgumentException("Ngân sách phải từ 3 triệu đến 500 triệu đồng.");
             String gameValue = request.getParameter("gameProfile");
-            String game = gameValue == null && !preset ? "general" : allowed(gameValue, "valorant", "lol", "cs2");
-            String resolution = allowed(request.getParameter("resolution") == null && preset ? "1080p" : request.getParameter("resolution"), "1080p", "1440p", "4K");
+            String game = gameValue == null && !preset ? "general" : normalizeGameChoice(gameValue);
+            String resolution = allowed(request.getParameter("resolution") == null && preset ? "1080p" : request.getParameter("resolution"), "1080p", "1440p", "2K", "4K");
             List<Integer> refreshRates = recommend.availableMonitorRefreshRates();
             List<Integer> ramSizes = recommend.availableRamSizes();
             String fpsValue = request.getParameter("fps");
@@ -62,7 +62,7 @@ public class RecommendPCServlet extends HttpServlet {
             dao.updateField(id, "gpu_priority", "gpu".equals(priority) ? 5 : "cpu".equals(priority) ? 2 : 3);
             dao.complete(id, ("general".equals(game) ? "Nhu cầu: " + purpose : "Game: " + game) + "; " + resolution + " ở " + fps + " Hz; ưu tiên " + priority + ".");
 
-            String buildLabel = "general".equals(game) ? purposeLabel(purpose) : switch (game) { case "valorant" -> "Valorant"; case "lol" -> "Liên Minh Huyền Thoại"; default -> "CS2"; };
+            String buildLabel = "general".equals(game) ? purposeLabel(purpose) : gameDisplayLabel(game);
             PcBuilds build = buildService.create(user == null ? null : user.getUserId(), "Build " + buildLabel + " - " + (int)(budget / 1_000_000) + " triệu");
             for (var part : suggestedParts) buildService.setPart(build.getBuildId(), part.getPartId(), 1);
             if (user == null) {
@@ -88,6 +88,47 @@ public class RecommendPCServlet extends HttpServlet {
             request.setAttribute("error", message);
             request.getRequestDispatcher("/views/minhtbth08199/buildpc/recommend.jsp").forward(request, response);
         }
+    }
+
+    private double parseBudget(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập ngân sách hợp lệ.");
+        }
+        String cleaned = raw.trim().replaceAll("[\\s.,_₫đĐ]", "");
+        return Double.parseDouble(cleaned);
+    }
+
+    private String normalizeGameChoice(String raw) {
+        if (raw == null) {
+            throw new IllegalArgumentException("Một lựa chọn không hợp lệ. Vui lòng kiểm tra lại biểu mẫu.");
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException("Một lựa chọn không hợp lệ. Vui lòng kiểm tra lại biểu mẫu.");
+        }
+        String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+        if ("valorant".equals(lower)) {
+            return "valorant";
+        }
+        if ("lol".equals(lower) || "liên minh huyền thoại".equals(lower) || "lien minh huyen thoai".equals(lower)) {
+            return "lol";
+        }
+        if ("cs2".equals(lower) || "counter-strike 2".equals(lower)) {
+            return "cs2";
+        }
+        return trimmed;
+    }
+
+    private String gameDisplayLabel(String game) {
+        if (game == null || game.isBlank()) {
+            return "Gaming";
+        }
+        return switch (game.toLowerCase(java.util.Locale.ROOT)) {
+            case "valorant" -> "Valorant";
+            case "lol" -> "Liên Minh Huyền Thoại";
+            case "cs2" -> "Counter-Strike 2";
+            default -> game;
+        };
     }
 
     private String purposeLabel(String purpose) {

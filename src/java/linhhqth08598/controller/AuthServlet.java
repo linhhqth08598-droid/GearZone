@@ -28,6 +28,7 @@ public class AuthServlet extends HttpServlet {
 
         switch (action) {
             case "login":
+                captureReturnUrlIfNeeded(request);
                 request.getRequestDispatcher("/views/linhhqth08598/auth/login.jsp").forward(request, response);
                 break;
             case "register":
@@ -164,6 +165,55 @@ public class AuthServlet extends HttpServlet {
             request.setAttribute("email", email);
             request.getRequestDispatcher("/views/linhhqth08598/auth/login.jsp").forward(request, response);
         }
+    }
+
+    private void captureReturnUrlIfNeeded(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        if (session.getAttribute("redirectAfterLogin") != null) {
+            return;
+        }
+        String explicitNext = request.getParameter("next");
+        if (explicitNext != null && !explicitNext.trim().isEmpty()) {
+            String safe = sanitizeInternalRedirect(request, explicitNext.trim());
+            if (safe != null) {
+                session.setAttribute("redirectAfterLogin", safe);
+                return;
+            }
+        }
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.trim().isEmpty()) {
+            try {
+                java.net.URI refUri = java.net.URI.create(referer.trim());
+                String rawPath = refUri.getRawPath();
+                String ctx = request.getContextPath();
+                if (rawPath != null && (ctx == null || ctx.isEmpty() || rawPath.startsWith(ctx + "/"))) {
+                    String candidate = rawPath + (refUri.getRawQuery() != null ? "?" + refUri.getRawQuery() : "");
+                    String safe = sanitizeInternalRedirect(request, candidate);
+                    if (safe != null) {
+                        session.setAttribute("redirectAfterLogin", safe);
+                    }
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+    }
+
+    private String sanitizeInternalRedirect(HttpServletRequest request, String candidate) {
+        if (candidate == null || candidate.isBlank()) {
+            return null;
+        }
+        if (candidate.startsWith("http://") || candidate.startsWith("https://") || candidate.startsWith("//")) {
+            return null;
+        }
+        String ctx = request.getContextPath() == null ? "" : request.getContextPath();
+        String pathOnly = candidate.split("\\?")[0];
+        if (!ctx.isEmpty() && !pathOnly.startsWith(ctx + "/")) {
+            return null;
+        }
+        if (pathOnly.endsWith("/auth") || pathOnly.endsWith("/auth/")) {
+            return null;
+        }
+        return candidate;
     }
 
     private void handleRegister(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

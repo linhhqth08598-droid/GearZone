@@ -14,8 +14,8 @@
     <div class="col-md-6"><label class="form-label fw-semibold">Mục đích chính *</label><select class="form-select" name="purpose" required>
      <option value="gaming" ${param.purpose == 'gaming' ? 'selected' : ''}>Gaming</option><option value="design" ${param.purpose == 'design' ? 'selected' : ''}>Đồ họa / thiết kế</option><option value="office" ${param.purpose == 'office' ? 'selected' : ''}>Văn phòng</option><option value="streaming" ${param.purpose == 'streaming' ? 'selected' : ''}>Livestream</option><option value="video" ${param.purpose == 'video' ? 'selected' : ''}>Dựng phim / video</option>
     </select></div>
-    <div class="col-md-6"><label class="form-label fw-semibold">Ngân sách (₫) *</label><input class="form-control" type="number" name="budget" min="3000000" max="500000000" step="500000" value="${param.budget}" placeholder="VD: 20000000" required><div class="form-text">Từ 3 triệu đến 500 triệu đồng.</div></div>
-    <div class="col-md-6"><label class="form-label fw-semibold">Độ phân giải mục tiêu</label><select class="form-select" name="resolution"><option value="1080p" ${param.resolution == '1440p' || param.resolution == '4K' ? '' : 'selected'}>1080p</option><option value="1440p" ${param.resolution == '1440p' ? 'selected' : ''}>1440p</option><option value="4K" ${param.resolution == '4K' ? 'selected' : ''}>4K</option></select></div>
+    <div class="col-md-6"><label class="form-label fw-semibold">Ngân sách (₫) *</label><input class="form-control" type="text" inputmode="numeric" id="budgetInput" name="budget" value="${param.budget}" placeholder="VD: 20.000.000" required><div class="form-text">Từ 3.000.000 đến 500.000.000 đồng.</div></div>
+    <div class="col-md-6"><label class="form-label fw-semibold">Độ phân giải mục tiêu</label><select class="form-select" name="resolution"><option value="1080p" ${param.resolution == '1440p' || param.resolution == '2K' || param.resolution == '4K' ? '' : 'selected'}>1080p</option><option value="1440p" ${param.resolution == '1440p' ? 'selected' : ''}>1440p</option><option value="2K" ${param.resolution == '2K' ? 'selected' : ''}>2K</option><option value="4K" ${param.resolution == '4K' ? 'selected' : ''}>4K</option></select></div>
     <div class="col-md-6"><label class="form-label fw-semibold">FPS mong muốn</label><select class="form-select" name="fps" required><c:forEach var="hz" items="${fpsOptions}"><option value="${hz}" ${param.fps == hz ? 'selected' : ''}><c:out value="${hz}"/> Hz</option></c:forEach></select><div class="form-text">Lựa chọn theo tần số màn hình đang còn hàng.</div></div>
     <div class="col-md-6"><label class="form-label fw-semibold">RAM mong muốn</label><select class="form-select" name="ram" required><c:forEach var="ramSize" items="${ramOptions}"><option value="${ramSize}" ${param.ram == ramSize ? 'selected' : ''}><c:out value="${ramSize}"/> GB</option></c:forEach></select><div class="form-text">Cấu hình sẽ chọn đúng dung lượng RAM này.</div></div>
     <div class="col-md-6"><label class="form-label fw-semibold">Ưu tiên</label><select class="form-select" name="priority"><option value="balanced" ${param.priority == 'gpu' || param.priority == 'cpu' || param.priority == 'cost' ? '' : 'selected'}>Cân bằng</option><option value="gpu" ${param.priority == 'gpu' ? 'selected' : ''}>Hiệu năng đồ họa</option><option value="cpu" ${param.priority == 'cpu' ? 'selected' : ''}>Hiệu năng CPU</option><option value="cost" ${param.priority == 'cost' ? 'selected' : ''}>Tối ưu chi phí</option></select></div>
@@ -25,4 +25,24 @@
   </div></div>
  </div></div>
 </div>
+<script>
+(function () {
+    const budgetInput = document.getElementById('budgetInput');
+    if (!budgetInput) return;
+    function formatDots(raw) {
+        const digits = (raw || '').replace(/\D+/g, '');
+        if (!digits) return '';
+        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+    budgetInput.value = formatDots(budgetInput.value);
+    budgetInput.addEventListener('input', function () {
+        this.value = formatDots(this.value);
+    });
+    if (budgetInput.form) {
+        budgetInput.form.addEventListener('submit', function () {
+            budgetInput.value = (budgetInput.value || '').replace(/\D+/g, '');
+        });
+    }
+})();
+</script>
 <jsp:include page="/views/components/footer.jsp" />

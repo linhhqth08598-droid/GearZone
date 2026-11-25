@@ -16,16 +16,16 @@ public class RecommendPCService {
     private static final int[] CATEGORIES = {3, 1, 2, 4, 5, 6, 7, 9, 10};
 
     public List<Integer> availableRamSizes() {
-        TreeSet<Integer> values = new TreeSet<>();
+        TreeSet<Integer> values = new TreeSet<>(java.util.Arrays.asList(8, 16, 32, 64, 128, 256));
         for (Parts p : catalog.findAvailable(3, "", 5000)) {
             int size = ramSize(p.getPartName());
-            if (size > 0) values.add(size);
+            if (size > 0 && size <= 256) values.add(size);
         }
         return new ArrayList<>(values);
     }
 
     public List<Integer> availableMonitorRefreshRates() {
-        TreeSet<Integer> values = new TreeSet<>();
+        TreeSet<Integer> values = new TreeSet<>(java.util.Arrays.asList(360, 520, 1000));
         for (Parts p : catalog.findAvailable(10, "", 5000)) {
             int hz = monitorHz(p.getPartName());
             if (hz > 0) values.add(hz);
@@ -43,6 +43,7 @@ public class RecommendPCService {
         if ("cpu".equals(priority)) { weights[1] += .04; weights[3] -= .04; }
         if ("gpu".equals(priority)) { weights[3] += .05; weights[1] -= .05; }
         if ("cost".equals(priority)) { weights[1] -= .02; weights[3] -= .04; weights[5] += .02; weights[7] += .02; }
+        if (ramGb < 1 || ramGb > 256) throw new IllegalArgumentException("Dung lượng RAM hỗ trợ tối đa 256 GB.");
         double ramReserve = minimumPrice(catalog.findAvailable(3, "", 5000), 3, ramGb, fps);
         double monitorReserve = minimumPrice(catalog.findAvailable(10, "", 5000), 10, ramGb, fps);
         if (!Double.isFinite(ramReserve)) throw new IllegalArgumentException("Không còn RAM " + ramGb + " GB trong kho.");
@@ -72,6 +73,12 @@ public class RecommendPCService {
                 if (cat == 3 && ramSize(p.getPartName()) != ramGb) continue;
                 if (cat == 10 && monitorHz(p.getPartName()) < fps) continue;
                 if (!fitsCompatibility(cat, p, byCategory)) continue;
+                if (price(p) <= availableForPart && betterChoice(cat, p, choice)) choice=p;
+            }
+            // Nếu ngân sách còn dư sau khi đã thử lọc chặt, nới điều kiện tương thích nhẹ cho các linh kiện chưa ghép được
+            if (choice == null) for (Parts p : candidates) {
+                if (cat == 3 && ramSize(p.getPartName()) != ramGb) continue;
+                if (cat == 10 && monitorHz(p.getPartName()) < fps) continue;
                 if (price(p) <= availableForPart && betterChoice(cat, p, choice)) choice=p;
             }
             if (choice != null && price(choice) <= budget-used) { picked.add(choice); byCategory.put(cat, choice); used += price(choice); }

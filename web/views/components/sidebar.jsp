@@ -38,8 +38,13 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link ${fn:contains(currentURL, '/product') ? 'active' : ''}" href="${pageContext.request.contextPath}/product">
+                <a class="nav-link ${fn:contains(currentURL, '/product') && !fn:contains(currentURL, '/compare') ? 'active' : ''}" href="${pageContext.request.contextPath}/product">
                     <i class="fas fa-microchip"></i><span>Linh kiện PC</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(currentURL, '/compare') ? 'active' : ''}" href="${pageContext.request.contextPath}/compare">
+                    <i class="fas fa-balance-scale"></i><span>So sánh linh kiện</span>
                 </a>
             </li>
             <li class="nav-item">
