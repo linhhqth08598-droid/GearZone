@@ -41,26 +41,27 @@
 - [ ] Tạo nhánh Git `khanhnb08894`.
 
 ### Tuần 1 – Module A (phần 1): Danh mục & sản phẩm (≈ 30h)
-- [x] `CategoriesDAO`, `BrandsDAO`, `ProductSeriesDAO` + `CatalogService`: thêm danh mục, sửa tên, thêm thương hiệu (UC 19–22).
+- [x] `CategoriesDAO`, `BrandsDAO`, `ProductSeriesDAO` + `CatalogService`: thêm danh mục, sửa tên, thêm thương hiệu và thêm dòng sản phẩm (`product_series`) (UC 19–22).
 - [x] `PartsDAO` + 10 `Spec*DAO` + `SpecService` + `ProductService` (đã triển khai các hàm tìm/lọc/đọc spec/thêm/sửa/đổi trạng thái).
-- [ ] `AdminProductServlet` + `products.jsp`, `product_form.jsp`; `AdminCatalogServlet` + `categories.jsp`: rà và hoàn thiện đầy đủ các trường `spec_*` khi cập nhật.
+- [x] `AdminProductServlet` + `products.jsp`, `product_form.jsp`: cập nhật giá/trạng thái bán (`ACTIVE`/`HIDDEN`/`DISCONTINUED`), ghi nhật ký thao tác admin (`UPDATE_PRODUCT` vào `staff_audit_logs`) và đã test ẩn/hiện/cập nhật linh kiện trên web.
+- [ ] Rà và hoàn thiện thêm đầy đủ các trường `spec_*` khi cập nhật (`updateProduct`).
 
 ### Tuần 2 – Module A (phần 2) + hiển thị cho khách (≈ 29h)
-- [x] `UploadApiServlet` (`/api/upload`): hỗ trợ upload ảnh (`<= 10MB`), video (`<= 50MB`) hoặc link media vào bảng `part_media` và đặt ảnh chính (`is_primary`) (UC 34–35).
-- [ ] Cập nhật thông số (UC 33), giá & giá khuyến mãi (UC 36–37), công khai/ẩn linh kiện (UC 38–39), tra cứu theo mã sản phẩm (UC 40).
+- [x] `UploadApiServlet` (`/api/upload`): hỗ trợ upload ảnh (`<= 10MB`), video (`<= 50MB`) hoặc link media vào bảng `part_media` và đặt ảnh chính (`is_primary`) (UC 34–35); đã test `GET` và `POST` thành công.
+- [ ] Cập nhật thông số (UC 33), giá & giá khuyến mãi (UC 36–37), tra cứu theo mã sản phẩm (UC 40).
 - [x] `ProductServlet` + `list.jsp` + `detail.jsp`: đã có bộ lọc đa tiêu chí, sắp xếp và phân trang (`PaginationUtil`).
 
 ### Tuần 3 – Module B: Kiểm tra tương thích (53,6h)
 - [x] `CompatibilityService` đã có engine kiểm tra nhiều cặp linh kiện, áp dụng quy tắc động `compatibility_rules`, gợi ý thay thế, hỗ trợ `checkBuild(List<Integer>)` và ghi log xung đột vào `compatibility_conflict_logs`.
-- [x] `CompatibilityApiServlet` + `AdminCompatibilityServlet` + `compatibility.jsp`: đã kết nối kiểm tra tương thích JSON và quản lý quy tắc.
+- [x] `CompatibilityApiServlet` + `AdminCompatibilityServlet` + `compatibility.jsp`: đã kết nối kiểm tra tương thích JSON và quản lý quy tắc; đã test thêm quy tắc (`SOCKET_MATCH`, `RAM_DDR_MATCH`, `CASE_VGA_LENGTH`, `CASE_COOLER_HEIGHT`, `COOLER_SOCKET`) và gọi `/api/compatibility`.
 
 ### Tuần 4 – Module C: Lọc, sắp xếp, so sánh (47,3h)
 - [x] `ProductService.filterAndSortParts(...)` + `ProductServlet` + `list.jsp`: câu SQL lọc động + sắp xếp + phân trang giữ tham số (UC 131–156).
-- [x] `GameService` + `AdminGameServlet` + `games.jsp` + `CompareServlet` + `compare.jsp` + mục sidebar **So sánh linh kiện**: so sánh theo từng loại danh mục, hiệu năng/giá và FPS benchmark VGA (UC 158–160).
+- [x] `GameService` + `AdminGameServlet` + `games.jsp` + `CompareServlet` + `compare.jsp` + mục sidebar **So sánh linh kiện**: so sánh theo từng loại danh mục, hiệu năng/giá và FPS benchmark VGA (UC 158–160); đã test thêm game & benchmark trên `/admin/game`.
 
 ### Tuần 5 – Module D: Quản lý kho (49,4h)
-- [x] `InventoryService` + `AdminInventoryServlet` + `inventory.jsp`: đã có `getAvailable`, `reserve`, `release`, `exportStock`, `importStock`, điều chỉnh kiểm kê/lỗi/thất thoát (`adjustStock`), thống kê tồn kho theo danh mục (`getCategoryStockSummary` – UC 345) và luồng Serial cơ bản.
-- [ ] Bổ sung cảnh báo sắp hết/hết hàng tự động, tồn lâu ngày và test các kịch bản PO/Serial chưa test.
+- [x] `InventoryService` + `AdminInventoryServlet` + `inventory.jsp` + `AdminInventoryTransactionsServlet`: đã có `getAvailable`, `reserve`, `release`, `exportStock`, `importStock`, điều chỉnh kiểm kê/lỗi/thất thoát (`adjustStock`), cảnh báo sắp hết/hết hàng (`getLowOrOutOfStockItems`), tồn lâu ngày (`getAgingStockItems`), thống kê tồn kho theo danh mục (`getCategoryStockSummary` – UC 345), luồng Serial cơ bản và đã cập nhật header/sidebar/footer admin cho trang Lịch sử biến động kho.
+- [ ] Gắn hiển thị cảnh báo sắp hết/hết hàng & tồn lâu ngày lên giao diện và test các kịch bản PO/Serial chưa test.
 
 ### Tuần 6 – Module E: Nhà cung cấp & đơn nhập (35,1h)
 - [x] `SupplierService`, `AdminSupplierServlet`, `AdminPurchaseServlet`, `AdminPurchaseDetailServlet`, `AdminPurchaseReturnsServlet`, `purchases.jsp` và `supplier_returns.jsp` đã kết nối quản lý NCC, PO, mốc thời gian chốt/nhận hàng, lịch sử giao dịch theo NCC và phiếu trả hàng NCC.
@@ -76,10 +77,10 @@
 | Module | Kế hoạch | Trạng thái | Ghi chú |
 |---|---|---|---|
 | Tuần 0 – Chuẩn bị | 0,5 tuần | ◐ Một phần | Build/DB đã chạy; còn chốt nhóm & branch |
-| A1 – Danh mục, thêm sản phẩm | Tuần 1 | ◐ Một phần | `CatalogService`, `ProductService` đã viết; cần rà đủ spec/form |
-| A2 – Cập nhật & hiển thị sản phẩm | Tuần 2 | ◐ Một phần | Đã có `UploadApiServlet` + lọc/sắp xếp/phân trang; còn cập nhật spec/giá/trạng thái |
-| B – Tương thích | Tuần 3 | 🔄 Gần xong | Đã có engine + quy tắc động + log xung đột + API + admin UI |
-| C – Lọc, sắp xếp, so sánh | Tuần 4 | 🔄 Gần xong | Đã làm lọc/sắp xếp/phân trang + `GameService` + `AdminGameServlet` + `CompareServlet` + `compare.jsp` |
-| D – Kho | Tuần 5 | ◐ Một phần | Đã có `InventoryService.adjustStock`, thống kê danh mục & luồng Serial; còn cảnh báo tự động/tồn lâu ngày |
+| A1 – Danh mục, thêm sản phẩm | Tuần 1 | 🔄 Gần xong | Đã cập nhật/test trạng thái & audit log sản phẩm; còn rà full spec khi sửa |
+| A2 – Cập nhật & hiển thị sản phẩm | Tuần 2 | ◐ Một phần | Đã làm & test `UploadApiServlet` + lọc/sắp xếp/phân trang |
+| B – Tương thích | Tuần 3 | 🔄 Gần xong | Đã làm & test quy tắc động + `/api/compatibility` |
+| C – Lọc, sắp xếp, so sánh | Tuần 4 | 🔄 Gần xong | Đã làm & test `/admin/game`, so sánh theo loại & bộ lọc/phân trang |
+| D – Kho | Tuần 5 | 🔄 Gần xong | Đã thêm layout admin cho lịch sử biến động kho, cảnh báo & tồn lâu ngày |
 | E – NCC & đơn nhập | Tuần 6 | ◐ Một phần | Đã làm `SupplierService`, lịch sử giao dịch PO, phiếu trả hàng NCC (chờ test) |
 | Tích hợp, test, hoàn thiện | Tuần 7 | ☐ | |

@@ -98,10 +98,11 @@ public class PcBuildShareDAO {
         return null;
     }
 
-    /** Lưu cấu hình: DRAFT -> SAVED kèm đặt tên. */
+    /** Lưu cấu hình: DRAFT -> SAVED kèm đặt tên (chỉ áp dụng cho cấu hình đã có ít nhất 1 linh kiện đang ACTIVE). */
     public boolean saveBuild(int buildId, int userId, String name) {
         String sql = "UPDATE pc_builds SET status = 'SAVED', build_name = ? "
-                   + "WHERE build_id = ? AND user_id = ? AND status IN ('DRAFT','SAVED')";
+                   + "WHERE build_id = ? AND user_id = ? AND status = 'DRAFT' "
+                   + "AND EXISTS (SELECT 1 FROM pc_build_details WHERE build_id = pc_builds.build_id AND status = 'ACTIVE')";
         return exec(sql, name, buildId, userId);
     }
 
@@ -121,10 +122,10 @@ public class PcBuildShareDAO {
         return false;
     }
 
-    /** Tạo link mới - link cũ lập tức vô hiệu. */
+    /** Tạo link mới - link cũ lập tức vô hiệu (chỉ cho cấu hình đã SAVED). */
     public String regenerateToken(int buildId, int userId) {
         String token = newToken();
-        String sql = "UPDATE pc_builds SET share_token = ? WHERE build_id = ? AND user_id = ? AND status IN ('DRAFT','SAVED')";
+        String sql = "UPDATE pc_builds SET share_token = ? WHERE build_id = ? AND user_id = ? AND status = 'SAVED'";
         try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, token);
             ps.setInt(2, buildId);

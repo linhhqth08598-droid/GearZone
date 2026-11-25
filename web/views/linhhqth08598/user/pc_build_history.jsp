@@ -81,20 +81,19 @@
                                 </div>
                             </div>
 
-                            <div class="card-footer bg-white border-top-0 pb-3 d-flex flex-wrap gap-2 justify-content-end">
-                                <a href="${pageContext.request.contextPath}/build-pc?id=${build.buildId}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-eye me-1"></i> Xem / sửa
-                                </a>
-
-                                <c:if test="${build.status != 'SAVED'}">
+                        <div class="card-footer bg-white border-top-0 pb-3 d-flex flex-wrap gap-2 justify-content-end">
+                            <c:choose>
+                                <c:when test="${build.status != 'SAVED'}">
+                                    <a href="${pageContext.request.contextPath}/build-pc?buildId=${build.buildId}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i> Xem / sửa
+                                    </a>
                                     <!-- UC 16: Lưu cấu hình (nháp -> đã lưu) -->
                                     <button type="button" class="btn btn-success btn-sm js-name-modal" data-bs-toggle="modal" data-bs-target="#nameModal"
                                             data-mode="save" data-id="${build.buildId}" data-name="<c:out value='${build.buildName}'/>">
                                         <i class="fas fa-save me-1"></i> Lưu cấu hình
                                     </button>
-                                </c:if>
-
-                                <c:if test="${build.status == 'SAVED'}">
+                                </c:when>
+                                <c:otherwise>
                                     <!-- UC 17: Chia sẻ -->
                                     <button type="button" class="btn btn-outline-secondary btn-sm js-share-btn" data-bs-toggle="modal" data-bs-target="#shareModal"
                                             data-id="${build.buildId}" data-token="${build.shareToken}">
@@ -109,7 +108,8 @@
                                             data-id="${build.buildId}" data-rating="${build.reviewRating}" data-comment="<c:out value='${build.reviewComment}'/>">
                                         <i class="fas fa-star me-1"></i> <c:choose><c:when test="${empty build.reviewRating}">Đánh giá</c:when><c:otherwise>${build.reviewRating}/5</c:otherwise></c:choose>
                                     </button>
-                                </c:if>
+                                </c:otherwise>
+                            </c:choose>
 
                                 <form action="${pageContext.request.contextPath}/user/pc-build-history" method="POST" class="d-inline">
                                     <input type="hidden" name="action" value="duplicate">

@@ -218,6 +218,7 @@ public class AdminProductServlet extends HttpServlet {
 
                 int warrantyMonths = Integer.parseInt(request.getParameter("warrantyMonths"));
                 String description = request.getParameter("description");
+                String statusParam = request.getParameter("status");
 
                 Parts part = new Parts();
                 part.setPartId(partId);
@@ -231,7 +232,15 @@ public class AdminProductServlet extends HttpServlet {
                 part.setDescription(description);
 
                 if (partsDAO.update(part)) {
+                    if (statusParam != null && statusParam.matches("ACTIVE|HIDDEN|DISCONTINUED")) {
+                        partsDAO.setStatus(partId, statusParam);
+                    }
                     saveImage(request, partId);
+                    if (adminUser != null) {
+                        new linhhqth08598.service.AuditLogService().logAction(
+                                adminUser.getUserId(), "UPDATE_PRODUCT", "parts", partId,
+                                "Cập nhật linh kiện: " + partName + " (" + productCode + ")");
+                    }
                     session.setAttribute("message", "Cập nhật linh kiện thành công!");
                 } else {
                     session.setAttribute("error", "Không cập nhật được.");

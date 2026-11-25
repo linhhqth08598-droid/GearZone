@@ -2,10 +2,15 @@ package khanhnb08894.service;
 
 import fourSome.model.Brands;
 import fourSome.model.Categories;
+import fourSome.model.ProductSeries;
 import fourSome.model.Users;
+import fourSome.url.DBConnect;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
 import khanhnb08894.dao.BrandsDAO;
 import khanhnb08894.dao.CategoriesDAO;
+import khanhnb08894.dao.ProductSeriesDAO;
 import linhhqth08598.service.AuditLogService;
 
 public class CatalogService {
@@ -86,5 +91,32 @@ public class CatalogService {
             return null;
         }
         return "Lỗi hệ thống khi xóa danh mục!";
+    }
+
+    private final ProductSeriesDAO productSeriesDAO = new ProductSeriesDAO();
+
+    public List<ProductSeries> getAllSeries() {
+        return productSeriesDAO.getAll();
+    }
+
+    public boolean addSeries(int brandId, String seriesName, Users adminUser) {
+        if (brandId <= 0 || seriesName == null || seriesName.trim().isEmpty()) {
+            return false;
+        }
+        String sql = "INSERT INTO [product_series] (brand_id, series_name, status) VALUES (?, ?, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, brandId);
+            ps.setString(2, seriesName.trim());
+            boolean ok = ps.executeUpdate() > 0;
+            if (ok && adminUser != null) {
+                new AuditLogService().logAction(adminUser.getUserId(), "INSERT_SERIES", "product_series", 0,
+                        "Admin đã thêm dòng sản phẩm: " + seriesName.trim());
+            }
+            return ok;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

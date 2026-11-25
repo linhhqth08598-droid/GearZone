@@ -1,4 +1,4 @@
-# KẾ HOẠCH LÀM WEB – GearZone (Phần của linhhqth08598) - Bản cập nhật ngày 25/11/2026 (đối chiếu Code & DB)
+# KẾ HOẠCH LÀM WEB – GearZone (Phần của linhhqth08598) - Bản cập nhật ngày 25/11/2026 (đã bổ sung SQL UC 343, rà & hoàn thiện phần code/JSP còn lại)
 
 |                          |                                                                                                                               |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -12,13 +12,13 @@
 
 ## 0. Kết quả rà soát & cập nhật (15/11/2026 – 25/11/2026)
 
-- **Biên dịch thử toàn bộ source:** chỉ lỗi ở `EmailUtil` do môi trường rà soát thiếu thư viện `jakarta.mail` (không phải lỗi code); `ReportExportServlet`/`AdminExportServlet` cần thư viện Apache POI. Còn lại biên dịch sạch.
+- **Biên dịch thử toàn bộ source:** chỉ lỗi ở `EmailUtil` do môi trường rà soát thiếu thư viện `jakarta.mail` (không phải lỗi code); `ReportExportServlet`/`AdminExportServlet` dùng `ExcelExportUtil` tạo OOXML trực tiếp trong bộ nhớ. Các file DAO/Service/Controller của `linhhqth08598` đã rà và cập nhật thêm ngày 25/11/2026.
 - **Kiểm tra 24 câu SQL của `ReportService`** với schema `GearZone.sql`: tên bảng/cột đều hợp lệ. Vẫn cần chạy thật trên SQL Server để xem kết quả/số liệu.
-- **UC 16, 17 (Lưu/Chia sẻ cấu hình):** phía Linh đã có code (`PcBuildShareDAO`, `BuildShareService`, `SharedBuildServlet` tại `/build-share`, hộp thoại lưu/đổi tên/chia sẻ trong `pc_build_history.jsp`). Còn phối hợp luồng tạo/lưu/chia sẻ build với `minhtbth08199`.
-- **Contact:** bảng `contacts` đã có trong `GearZone.sql`, `ContactServlet` ghi được; chỉ còn dọn `ContactDAO` (đang rỗng) và (nếu cần) trang admin xem liên hệ.
-- **UC 343 (ngân sách):** đã làm ✱ – bảng mới `budget_tier_rules` (file `GearZone_UC343_budget_tier_rules.sql`), `BudgetTierRulesDAO`, tab "Đề xuất theo ngân sách" trong `admin/system.jsp`. Cần thông báo Minh/Khánh để dùng bảng này khi đề xuất theo ngân sách.
-- **Địa chỉ:** đã bỏ hẳn Quận/Huyện ở form/servlet (chỉ còn Tỉnh/Thành phố → Phường/Xã); `UserServlet` không còn đọc `district`.
-- **Phân trang:** đã áp dụng cho `admin/audit_logs.jsp`, `admin/reviews.jsp`, `admin/returns.jsp`, `admin/support.jsp`, `user/order_history.jsp`, `user/notifications.jsp` (✱, dùng chung `components/pagination.jsp`).
+- **UC 16, 17 (Lưu/Chia sẻ cấu hình):** phía Linh đã có `PcBuildShareDAO`, `BuildShareService`, `SharedBuildServlet` (`/build-share`), `pc_build_history.jsp`, `shared_build.jsp`; ngày 25/11/2026 đã rà lại điều kiện `saveBuild` (chỉ lưu `DRAFT` có ít nhất 1 `pc_build_details` đang `ACTIVE`), `regenerateToken` (chỉ áp dụng cho `SAVED`), sửa link "Xem / sửa" sang `/build-pc?buildId=...` khớp `BuildPCServlet`, và ẩn nút "Chia sẻ" khi cấu hình chưa ở trạng thái `SAVED`.
+- **Contact:** bảng `contacts` đã có trong `GearZone.sql`, `ContactServlet` ghi được; file `ContactDAO.java` nằm ở package `khanhnb08894.dao` (không có trong `linhhqth08598`).
+- **UC 343 (ngân sách):** đã tạo file `GearZone_UC343_budget_tier_rules.sql` tạo bảng `budget_tier_rules` + dữ liệu khung ngân sách mẫu (idempotent, khớp `GearZone.sql`), đi kèm `BudgetTierRulesDAO`, `BudgetTierService` và tab "Đề xuất theo ngân sách" trong `admin/system.jsp`. Cần chạy file SQL này trên SQL Server và nối `BudgetTierService` vào `RecommendPCService` khi đề xuất theo ngân sách.
+- **Địa chỉ & Hồ sơ / Avatar (UC 8–10):** đã bỏ hẳn Quận/Huyện ở form/servlet; ngày 25/11/2026 đã cập nhật thêm nút xóa ảnh đại diện (`removeAvatar`), nhận diện `Locale.ROOT` khi kiểm tra đuôi file ảnh trong `UserServlet`, escape thông báo flash & chữ cái đầu avatar an toàn khi `fullName` trống trong `profile.jsp`.
+- **Phân trang:** đã áp dụng cho `admin/audit_logs.jsp`, `admin/reviews.jsp`, `admin/returns.jsp`, `admin/support.jsp`, `user/order_history.jsp`, `user/notifications.jsp` (dùng chung `components/pagination.jsp`).
 - **Sidebar người dùng:** đã bổ sung mục **So sánh linh kiện** (`/compare`) trên `web/views/components/sidebar.jsp` ngày 25/11/2026.
 
 ### Bổ sung lần 3 – làm hộ phần phụ thuộc người khác (15/11/2026)
@@ -54,12 +54,11 @@
   - ✱ Cấu hình hệ thống (UC 341–342): `AdminSystemServlet`, `PsuPowerRulesDAO`, `UsageProfilesDAO`, `admin/system.jsp` – thêm/sửa/bật-tắt ngưỡng công suất nguồn PSU và tiêu chí hiệu năng gaming (bảng `psu_power_rules`, `usage_profiles`). *(Giao diện CRUD Thương hiệu/Danh mục/Quy tắc tương thích tích hợp cùng `khanhnb08894` tại `admin/catalog_brand.jsp`, `admin/catalog_category.jsp`, `admin/compatibility.jsp`; mục sidebar "Cấu hình hệ thống" đã được thêm)*.
 - **Module I + J – Thống kê & Xuất báo cáo (UC 346–370):** Dashboard (`AdminDashboardServlet`, `admin/dashboard.jsp`, KPI + biểu đồ danh mục + Top 5 bán chạy) và xuất Excel doanh thu/tồn kho (`ReportExportServlet`) đã chạy được. ✱ Mới viết: `ReportService` (24 báo cáo), `AdminReportServlet`, `admin/reports.jsp` (UC 346–367, có lọc ngày), `AdminExportServlet` (UC 368–370, xuất Excel mọi báo cáo) và mục sidebar "Thống kê chi tiết".
 
-**Đang làm dở / Cần hoàn thiện tiếp (🔄 / ☐ – 6/85 UC còn lại)**
+**Đã hoàn thiện code & rà soát bổ sung (✅ / 🔄 – 85/85 UC đã có code; các mục ✱ đã viết xong và rà code, chờ chạy kiểm thử trực tiếp trên SQL Server + Tomcat)**
 
-- **Module A (Giao diện user – UC 8, 9, 10):** Code đã có đủ (`UserServlet`, `ShippingAddressesDAO`, `user/profile.jsp`, `user/address.jsp`). Đã cập nhật form địa chỉ: Tỉnh/Thành phố, Phường/Xã (đã bỏ cấp Quận/Huyện theo chính quyền 2 cấp từ 01/07/2025), Số nhà/Thôn/Xóm và **Tên đường (không bắt buộc)**, gộp vào cột `detailed_address`; cột `district` trong DB chỉ lưu chuỗi rỗng. Còn cần test end-to-end thêm/sửa/xóa/đặt mặc định địa chỉ và upload ảnh đại diện Base64 vào `avatar_url`.
-- **Module B (Phần 3 – UC 16, 17):** ✱ Phía Linh đã có code (lưu/đổi tên/xóa/sao chép/đổi link chia sẻ trong `PcBuildHistoryServlet`; xem công khai tại `/build-share?token=...`). Cần phối hợp test khi có dữ liệu `pc_builds` thật.
-- **Module G (UC 343 – Tiêu chí đề xuất theo ngân sách):** ✱ đã làm bằng bảng riêng `budget_tier_rules` (khung ngân sách + % phân bổ CPU/GPU/RAM/ổ cứng/khác, kiểm tra tổng 100% và không chồng khung). Cần chạy file SQL tạo bảng và báo Minh/Khánh để dùng khi đề xuất.
-- **Việc khác:** Contact – bảng `contacts` đã có trong `GearZone.sql`, không cần xử lý thêm ngoài dọn `ContactDAO` rỗng.
+- **Module A (UC 8–10 – Hồ sơ, Sổ địa chỉ, Ảnh đại diện):** Đã có đủ `UserServlet`, `ShippingAddressesDAO`, `user/profile.jsp`, `user/address.jsp`; ngày 25/11/2026 đã bổ sung nút xóa avatar trên `profile.jsp`, dùng `Locale.ROOT` khi kiểm tra đuôi file ảnh và escape an toàn. Còn bước test trực tiếp trên web với SQL Server + Tomcat.
+- **Module B (UC 16–17 – Lưu & Chia sẻ cấu hình):** Đã có `PcBuildShareDAO`, `BuildShareService`, `SharedBuildServlet`, `pc_build_history.jsp`, `shared_build.jsp`; ngày 25/11/2026 đã rà lại điều kiện lưu cấu hình có linh kiện `ACTIVE`, thu hồi token chỉ trên cấu hình `SAVED`, sửa đường dẫn `/build-pc?buildId=...` và ẩn nút chia sẻ khi chưa `SAVED`. Còn bước test end-to-end với dữ liệu `pc_builds` thật.
+- **Module G (UC 343 – Tiêu chí đề xuất theo ngân sách):** Đã có `BudgetTierRulesDAO`, `BudgetTierService`, `admin/system.jsp` và đã tạo file `GearZone_UC343_budget_tier_rules.sql` tạo bảng `budget_tier_rules` + dữ liệu khung ngân sách mẫu. Cần chạy file SQL trên SQL Server và phối hợp `minhtbth08199` gọi `BudgetTierService`.
 
 ---
 
@@ -67,17 +66,17 @@
 
 | #   | Module                                            | UC (STT trong Excel) | Số UC  | Effort (giờ) | Trạng thái hiện tại (Đối chiếu code thật)                                                                             | Bảng DB chính (`GearZone.sql`)                                                        |
 | --- | ------------------------------------------------- | -------------------- | ------ | ------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| A   | Tài khoản & xác thực                              | 1–10                 | 10     | 23,5         | 🔄 **Gần xong (~90%)** - Xong UC 1–7; UC 8–10 đã có code, đã thêm Tên đường cho địa chỉ, còn test avatar/địa chỉ | `users`, `user_verifications`, `shipping_addresses` |
-| B   | Wishlist, lịch sử, chia sẻ cấu hình, báo giảm giá | 11–18                | 8      | 19,2         | 🔄 **Đạt 75%** - Xong UC 11–15, 18; còn ghép UC 16–17 (Lưu/Chia sẻ `share_token`) với Minh                            | `user_wishlists`, `orders`, `pc_builds`, `pc_build_details`, `price_drop_notifications` |
+| A   | Tài khoản & xác thực                              | 1–10                 | 10     | 23,5         | 🔄 **Đã có đủ code + rà 25/11 (cần test web)** - Xong UC 1–7; UC 8–10 có code, thêm Tên đường & nút xóa avatar, còn test web | `users`, `user_verifications`, `shipping_addresses` |
+| B   | Wishlist, lịch sử, chia sẻ cấu hình, báo giảm giá | 11–18                | 8      | 19,2         | 🔄 **Đã có đủ code + rà 25/11 (cần test web)** - Xong UC 11–15, 18; UC 16–17 đã sửa link/trạng thái, chờ test end-to-end | `user_wishlists`, `orders`, `pc_builds`, `pc_build_details`, `price_drop_notifications` |
 | C   | Thông báo bảo hành & đổi trả/hoàn tiền            | 285, 288–295         | 9      | 23,6         | ✅ **Hoàn thành (100%)** (`notifications.jsp`, `user/returns.jsp`, `admin/returns.jsp`)                               | `notifications`, `product_returns`, `payments`                                        |
 | D   | Đánh giá sản phẩm / cấu hình / lắp ráp            | 296–302              | 7      | 16,6         | ✅ **Hoàn thành (100%)** (`ReviewServlet`, `AdminReviewServlet`, `review_section.jsp`, `admin/reviews.jsp`)           | `part_reviews`, `part_review_images`, `pc_builds`, `assembly_orders`                  |
 | E   | Tư vấn, khiếu nại, hỗ trợ kỹ thuật                | 304–310              | 7      | 16,9         | ✅ **Hoàn thành (100%)** (`SupportServlet`, `AdminSupportServlet`, `support/ticket.jsp`, `admin/support.jsp`)         | `support_tickets`, `support_ticket_messages`, `user_requirements`, `user_current_pcs` |
 | F   | Nhân viên & phân quyền                            | 326–334              | 9      | 22,9         | ✅ **Hoàn thành (100%)** (`AdminUserServlet`, `AdminRoleServlet`, `AdminAuthFilter`, `users.jsp`, `roles.jsp`)        | `users`, `roles`, `user_roles`, `permissions`, `role_permissions`                     |
-| G   | Danh mục hệ thống & quy tắc                       | 335–343              | 9      | 45,0         | ✅ **9/9 UC có code** - UC 335–340 ✅; UC 341–343 ✱ (`admin/system.jsp` 3 tab: tiêu chí, nguồn PSU, ngân sách – cần test; UC 343 cần chạy `GearZone_UC343_budget_tier_rules.sql`) | `socket_types`, `chipset_types`, `ram_standards`, `storage_interfaces`, `psu_power_rules`, `usage_profiles`, `compatibility_rules` |
+| G   | Danh mục hệ thống & quy tắc                       | 335–343              | 9      | 45,0         | 🔄 **9/9 UC có code + SQL 25/11 (✱ cần test)** - UC 335–340 ✅; UC 341–343 ✱ (`GearZone_UC343_budget_tier_rules.sql` đã tạo) | `socket_types`, `chipset_types`, `ram_standards`, `storage_interfaces`, `psu_power_rules`, `usage_profiles`, `compatibility_rules`, `budget_tier_rules` |
 | H   | Audit log nhân viên                               | 344                  | 1      | 3,1          | ✅ **Hoàn thành (100%)** (`StaffAuditLogsDAO`, `AuditLogService`, `AdminAuditLogServlet`, `admin/audit_logs.jsp`)     | `staff_audit_logs`                                                                    |
 | I   | Thống kê (dashboard)                              | 346–367              | 22     | 65,5         | ✅ **Hoàn thành code** - Dashboard ✅ (có sẵn, gồm bán chạy + doanh thu theo danh mục); 20 UC còn lại ✱ nằm trong `reports.jsp` (24 báo cáo, mới viết, cần test) | `orders`, `order_items`, `parts`, `inventory`, `pc_builds`, `warranty_claims`, … |
 | J   | Xuất báo cáo                                      | 368–370              | 3      | 8,4          | ✅ **Hoàn thành code** - UC 368, 369 ✅ (`ReportExportServlet`); UC 370 ✱ (`AdminExportServlet`, mới viết, cần test) | `orders`, `order_items`, `parts`, `inventory` |
-|     | **Tổng**                                          |                      | **85** | **244,7**    | **Đã làm được 79/85 UC (~93%)**, trong đó 23 UC (✱) mới viết cần test. Còn 🔄 4 UC (8, 9, 10, 343) và ☐ 2 UC (16, 17) |  |
+|     | **Tổng**                                          |                      | **85** | **244,7**    | **85/85 UC đã có code** (bao gồm 23 UC ✱/🔄 đã rà code ngày 25/11/2026 & file SQL UC 343; còn chạy kiểm thử trực tiếp trên DB/Tomcat) |  |
 
 ---
 
@@ -94,8 +93,8 @@
 - [x] `UsersDAO`, `ShippingAddressesDAO`, `UserVerificationsDAO`.
 - [x] `AuthService`, `AuthServlet` + 5 trang JSP `auth/`.
 - [x] `UserService`, `UserServlet` và `UserProfileServlet`.
-- [x] Giao diện `user/address.jsp`: thêm Tên đường (không bắt buộc), escape dữ liệu hiển thị.
-- [ ] Test end-to-end: sửa hồ sơ `user/profile.jsp`, thêm/sửa/xóa/đặt mặc định địa chỉ, upload `avatar_url`.
+- [x] Giao diện `user/address.jsp`: thêm Tên đường (không bắt buộc), escape dữ liệu hiển thị; rà `UserServlet` & `profile.jsp` ngày 25/11/2026 (nút xóa avatar, `Locale.ROOT`, escape).
+- [ ] Test trực tiếp trên SQL Server + Tomcat: sửa hồ sơ `user/profile.jsp`, thêm/sửa/xóa/đặt mặc định địa chỉ, upload/xóa `avatar_url`.
 
 ### Tuần 2 – Module F + H: Nhân viên, phân quyền, audit log (26h) (✅ Đã hoàn thành)
 
@@ -110,7 +109,7 @@
 - [x] Wishlist (`UserWishlistsDAO`, `WishlistService`, `WishlistServlet`, `user/wishlist.jsp`).
 - [x] Lịch sử mua linh kiện (`OrderHistoryServlet`, `user/order_history.jsp`).
 - [x] Lịch sử cấu hình PC (`PcBuildHistoryServlet`, `user/pc_build_history.jsp`).
-- [x] ✱ Lưu cấu hình PC và Chia sẻ qua `share_token` – code phía Linh xong; phối hợp test cùng `minhtbth08199`.
+- [x] ✱ Lưu cấu hình PC và Chia sẻ qua `share_token` – code phía Linh đã rà lại điều kiện lưu/thu hồi/link `buildId` ngày 25/11/2026; cần test end-to-end cùng `minhtbth08199`.
 - [x] Đăng ký báo giảm giá (`PriceDropNotificationsDAO`, `PriceAlertServlet`, `user/price_alert.jsp`) + job ngầm `PriceAlertJob`.
 - [x] Đánh giá (`PartReviewsDAO`, `PartReviewImagesDAO`, `ReviewService`, `ReviewServlet`, `product/review_section.jsp`, `AdminReviewServlet`, `admin/reviews.jsp`).
 - [x] **Mốc:** khách hàng mua xong → đánh giá → thấy trong lịch sử/wishlist.
@@ -127,7 +126,7 @@
 - [x] Hoàn thiện Quản lý Socket CPU (`AdminSocketServlet`, `admin/socket.jsp`).
 - [x] Hoàn thiện Quản lý Chipset/RAM/Ổ cứng (`AdminSystemCatalogServlet`, `admin/system_catalog.jsp`).
 - [x] ✱ Cấu hình hệ thống: Ngưỡng nguồn PSU & Tiêu chí hiệu năng (`AdminSystemServlet`, `admin/system.jsp`) – mới viết, cần test.
-- [x] ✱ Tiêu chí đề xuất theo ngân sách (UC 343) – bảng `budget_tier_rules` + tab mới trong `admin/system.jsp`, cần test.
+- [x] ✱ Tiêu chí đề xuất theo ngân sách (UC 343) – bảng `budget_tier_rules` (`GearZone_UC343_budget_tier_rules.sql` đã tạo) + tab mới trong `admin/system.jsp`, cần chạy SQL trên DB thật và test.
 - [x] Phối hợp đồng bộ Thương hiệu, Danh mục & Quy tắc tương thích (`khanhnb08894`).
 
 ### Tuần 6 – Module I + J: Thống kê & xuất báo cáo (73,9h) (✅ Đã có code, ✱ cần test)
@@ -192,14 +191,14 @@
 | Module                               | Kế hoạch | Trạng thái        | Ghi chú                                                                                                 |
 | ------------------------------------ | -------- | ----------------- | ------------------------------------------------------------------------------------------------------- |
 | Tuần 0 – Chuẩn bị                    | 0,5 tuần | ✅ Hoàn thành     | Đã xong cấu trúc, `DBConnect` & `AdminAuthFilter`, `UserAuthFilter`                                     |
-| A – Tài khoản & xác thực             | Tuần 1   | 🔄 Gần xong (~90%) | Xong UC 1–7; UC 8–10 đã có code + thêm Tên đường cho địa chỉ, còn test avatar/địa chỉ |
+| A – Tài khoản & xác thực             | Tuần 1   | 🔄 Rà xong 25/11  | Xong UC 1–7; UC 8–10 có code + Tên đường & nút xóa avatar, còn test web |
 | F + H – Nhân viên, phân quyền, audit | Tuần 2   | ✅ Hoàn thành     | Xong toàn bộ DAO, Service, Servlet & JSP                                                                |
-| B – Wishlist, Lịch sử, Báo giá       | Tuần 3   | 🔄 Đạt 75%        | Đã xong Wishlist, Lịch sử mua, Báo giá, Lịch sử cấu hình PC. Còn lại: ghép Lưu/Chia sẻ cấu hình         |
+| B – Wishlist, Lịch sử, Báo giá       | Tuần 3   | 🔄 Rà xong 25/11  | Đã rà lại UC 16–17 (`PcBuildShareDAO`, `pc_build_history.jsp`); chờ test với dữ liệu `pc_builds` thật |
 | D – Đánh giá                         | Tuần 3   | ✅ Hoàn thành     | Đã xong logic & giao diện (kể cả Admin quản lý)                                                         |
 | C + E – Thông báo, đổi trả, hỗ trợ   | Tuần 4   | ✅ Hoàn thành     | Đã xong logic & giao diện                                                                               |
-| G – Danh mục & quy tắc               | Tuần 5   | ✅ Có code (✱ cần test) | Xong socket, system_catalog; ✱ system.jsp (PSU + tiêu chí + ngân sách) |
+| G – Danh mục & quy tắc               | Tuần 5   | 🔄 Đã có SQL 25/11 | Đã tạo `GearZone_UC343_budget_tier_rules.sql` + `admin/system.jsp` 3 tab (✱ cần chạy SQL & test) |
 | I + J – Thống kê & xuất báo cáo      | Tuần 6   | ✅ Có code (✱ cần test) | Dashboard + xuất Excel cũ chạy được; ✱ `reports.jsp` (24 báo cáo) và `AdminExportServlet` mới viết |
-| Tích hợp, test, hoàn thiện           | Tuần 7   | ☐                 | Test các mục ✱ (đặc biệt `reports.jsp`, xuất Excel, `system.jsp`); chạy SQL UC 343; ghép UC 16–17 với Minh; test UC 8–10; |
+| Tích hợp, test, hoàn thiện           | Tuần 7   | 🔄 Đang làm       | Đã tạo SQL UC 343 & rà code/JSP còn lại ngày 25/11; còn chạy `GearZone_UC343_budget_tier_rules.sql` + test trên Tomcat/SQL Server |
 
 ---
 

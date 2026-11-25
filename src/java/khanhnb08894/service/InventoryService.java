@@ -242,6 +242,79 @@ public class InventoryService {
         }
     }
 
+    /** Cảnh báo mặt hàng sắp hết hoặc hết hàng (UC 207-208). */
+    public List<Map<String, Object>> getLowOrOutOfStockItems() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        String sql = "SELECT i.inventory_id, i.part_id, p.product_code, p.part_name, "
+                + "i.stock_quantity, i.reserved_quantity, i.low_stock_threshold, i.updated_at "
+                + "FROM [inventory] i "
+                + "JOIN [parts] p ON p.part_id = i.part_id "
+                + "WHERE i.status = 'ACTIVE' AND p.status <> 'DISCONTINUED' "
+                + "AND (i.stock_quantity - i.reserved_quantity) <= i.low_stock_threshold "
+                + "ORDER BY (i.stock_quantity - i.reserved_quantity) ASC, i.part_id ASC";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                int stock = rs.getInt("stock_quantity");
+                int reserved = rs.getInt("reserved_quantity");
+                int avail = Math.max(0, stock - reserved);
+                String alertType = avail == 0 ? "OUT_OF_STOCK" : "LOW_STOCK";
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("inventoryId", rs.getInt("inventory_id"));
+                m.put("partId", rs.getInt("part_id"));
+                m.put("productCode", rs.getString("product_code"));
+                m.put("partName", rs.getString("part_name"));
+                m.put("stockQuantity", stock);
+                m.put("reservedQuantity", reserved);
+                m.put("availableStock", avail);
+                m.put("lowStockThreshold", rs.getInt("low_stock_threshold"));
+                m.put("alertType", alertType);
+                m.put("updatedAt", rs.getTimestamp("updated_at"));
+                rows.add(m);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rows;
+    }
+
+    /** Tra cứu tồn kho lâu ngày chưa có giao dịch nhập/xuất gần đây (UC 215). */
+    public List<Map<String, Object>> getAgingStockItems(int minDaysIdle) {
+        int days = Math.max(1, minDaysIdle);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        String sql = "SELECT i.part_id, p.product_code, p.part_name, i.stock_quantity, i.reserved_quantity, "
+                + "MAX(t.created_at) AS last_tx_at, "
+                + "DATEDIFF(DAY, COALESCE(MAX(t.created_at), i.updated_at), SYSDATETIME()) AS idle_days "
+                + "FROM [inventory] i "
+                + "JOIN [parts] p ON p.part_id = i.part_id "
+                + "LEFT JOIN [inventory_transactions] t ON t.part_id = i.part_id "
+                + "WHERE i.status = 'ACTIVE' AND i.stock_quantity > 0 "
+                + "GROUP BY i.part_id, p.product_code, p.part_name, i.stock_quantity, i.reserved_quantity, i.updated_at "
+                + "HAVING DATEDIFF(DAY, COALESCE(MAX(t.created_at), i.updated_at), SYSDATETIME()) >= ? "
+                + "ORDER BY idle_days DESC";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("partId", rs.getInt("part_id"));
+                    m.put("productCode", rs.getString("product_code"));
+                    m.put("partName", rs.getString("part_name"));
+                    m.put("stockQuantity", rs.getInt("stock_quantity"));
+                    m.put("reservedQuantity", rs.getInt("reserved_quantity"));
+                    m.put("lastTxAt", rs.getTimestamp("last_tx_at"));
+                    m.put("idleDays", rs.getInt("idle_days"));
+                    rows.add(m);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rows;
+    }
+
     /** Thống kê tồn kho theo danh mục (UC 345). */
     public List<Map<String, Object>> getCategoryStockSummary() {
         List<Map<String, Object>> rows = new ArrayList<>();

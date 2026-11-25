@@ -33,14 +33,14 @@
             
             <c:if test="${not empty sessionScope.message}">
                 <div class="alert alert-success alert-dismissible fade show">
-                    <i class="fas fa-check-circle me-1"></i> ${sessionScope.message}
+                    <i class="fas fa-check-circle me-1"></i> <c:out value="${sessionScope.message}"/>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 <c:remove var="message" scope="session"/>
             </c:if>
             <c:if test="${not empty sessionScope.error}">
                 <div class="alert alert-danger alert-dismissible fade show">
-                    <i class="fas fa-exclamation-circle me-1"></i> ${sessionScope.error}
+                    <i class="fas fa-exclamation-circle me-1"></i> <c:out value="${sessionScope.error}"/>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 <c:remove var="error" scope="session"/>
@@ -61,16 +61,23 @@
                                         <img src="${sessionScope.loggedUser.avatarUrl}" alt="Avatar" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #ff4757;">
                                     </c:when>
                                     <c:otherwise>
+                                        <c:set var="initialSource" value="${not empty sessionScope.loggedUser.fullName ? sessionScope.loggedUser.fullName : sessionScope.loggedUser.email}" />
                                         <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; font-size: 60px;">
-                                            ${sessionScope.loggedUser.fullName.substring(0, 1).toUpperCase()}
+                                            <c:out value="${initialSource.substring(0, 1).toUpperCase()}"/>
                                         </div>
                                     </c:otherwise>
                                 </c:choose>
                             </label>
                             
-                            <input type="file" id="avatarInput" name="avatar" class="d-none" accept="image/*" onchange="document.getElementById('avatarForm').submit();">
+                            <input type="file" id="avatarInput" name="avatar" class="d-none" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif" onchange="document.getElementById('avatarForm').submit();">
                         </form>
-                        <small class="text-muted">Ấn vào ảnh để thay đổi</small>
+                        <small class="text-muted d-block">Ấn vào ảnh để thay đổi (JPG, PNG, WEBP, GIF · tối đa 10MB)</small>
+                        <c:if test="${not empty sessionScope.loggedUser.avatarUrl}">
+                            <form action="${pageContext.request.contextPath}/user" method="POST" class="mt-2" onsubmit="return confirm('Xóa ảnh đại diện hiện tại?');">
+                                <input type="hidden" name="action" value="removeAvatar">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Xóa ảnh đại diện</button>
+                            </form>
+                        </c:if>
                     </div>
                 </div>
 

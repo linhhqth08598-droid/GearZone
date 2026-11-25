@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Locale;
 
 /**
  * UC 8  - Cập nhật thông tin cá nhân
@@ -188,13 +189,13 @@ public class UserServlet extends HttpServlet {
             return;
         }
 
-        String name = filePart.getSubmittedFileName() == null ? "" : filePart.getSubmittedFileName().toLowerCase();
+        String name = filePart.getSubmittedFileName() == null ? "" : filePart.getSubmittedFileName().toLowerCase(Locale.ROOT);
         boolean extOk = false;
         for (String ext : Constants.IMAGE_EXTENSIONS) {
             if (name.endsWith("." + ext)) { extOk = true; break; }
         }
         if (!extOk) {
-            session.setAttribute("error", "Chỉ hỗ trợ ảnh JPG, PNG hoặc GIF!");
+            session.setAttribute("error", "Chỉ hỗ trợ ảnh JPG, PNG, WEBP hoặc GIF!");
             return;
         }
 
@@ -226,8 +227,13 @@ public class UserServlet extends HttpServlet {
         String dataUri = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
 
         if (userService.updateAvatar(user.getUserId(), dataUri) == null) {
-            user.setAvatarUrl(dataUri);
-            session.setAttribute("loggedUser", user);
+            Users refreshed = userService.getUserById(user.getUserId());
+            if (refreshed != null) {
+                session.setAttribute("loggedUser", refreshed);
+            } else {
+                user.setAvatarUrl(dataUri);
+                session.setAttribute("loggedUser", user);
+            }
             session.setAttribute("message", "Đổi ảnh đại diện thành công.");
         } else {
             session.setAttribute("error", "Không lưu được ảnh đại diện!");
