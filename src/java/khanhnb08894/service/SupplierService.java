@@ -82,7 +82,74 @@ public class SupplierService {
         if (poId <= 0 || isBlank(status)) {
             return false;
         }
-        return purchaseOrdersDAO.updateStatus(poId, status.trim().toUpperCase());
+        String normalized = status.trim().toUpperCase();
+        boolean updated = purchaseOrdersDAO.updateStatus(poId, normalized);
+        if (updated) {
+            stampOrderMilestone(poId, normalized);
+        }
+        return updated;
+    }
+
+    private void stampOrderMilestone(int poId, String status) {
+        String col = null;
+        if ("CONFIRMED".equals(status)) {
+            col = "confirmed_at";
+        } else if ("RECEIVED".equals(status) || "PARTIALLY_RECEIVED".equals(status)) {
+            col = "received_at";
+        }
+        if (col == null) {
+            return;
+        }
+        String sql = "UPDATE [purchase_orders] SET " + col + " = COALESCE(" + col + ", SYSDATETIME()) WHERE po_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, poId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<java.util.Map<String, Object>> getSupplierTransactionHistory(Integer supplierId) {
+        List<java.util.Map<String, Object>> rows = new java.util.ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT po.po_id, po.po_code, po.supplier_id, s.supplier_name, po.total_cost, "
+                + "po.status, po.expected_delivery_date, po.confirmed_at, po.received_at, po.created_at, "
+                + "(SELECT COALESCE(SUM(sr.quantity), 0) FROM [supplier_returns] sr WHERE sr.po_id = po.po_id) AS returned_qty "
+                + "FROM [purchase_orders] po "
+                + "JOIN [suppliers] s ON s.supplier_id = po.supplier_id WHERE 1=1 ");
+        List<Object> params = new java.util.ArrayList<>();
+        if (supplierId != null && supplierId > 0) {
+            sql.append("AND po.supplier_id = ? ");
+            params.add(supplierId);
+        }
+        sql.append("ORDER BY po.po_id DESC");
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("poId", rs.getInt("po_id"));
+                    m.put("poCode", rs.getString("po_code"));
+                    m.put("supplierId", rs.getInt("supplier_id"));
+                    m.put("supplierName", rs.getString("supplier_name"));
+                    m.put("totalCost", rs.getDouble("total_cost"));
+                    m.put("status", rs.getString("status"));
+                    m.put("expectedDeliveryDate", rs.getDate("expected_delivery_date"));
+                    m.put("confirmedAt", rs.getTimestamp("confirmed_at"));
+                    m.put("receivedAt", rs.getTimestamp("received_at"));
+                    m.put("createdAt", rs.getTimestamp("created_at"));
+                    m.put("returnedQty", rs.getInt("returned_qty"));
+                    rows.add(m);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rows;
     }
 
     public List<PurchaseOrderDetailDTO> getPurchaseOrderDetails(int poId) {

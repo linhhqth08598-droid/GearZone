@@ -97,6 +97,54 @@
     </div>
 </div>
 
+<c:if test="${not empty supplierHistory}">
+    <div class="card shadow-sm border-0 rounded-4 mt-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h5 class="fw-bold mb-0"><i class="fas fa-receipt me-2 text-primary"></i>Lịch sử giao dịch & mốc xử lý đơn nhập (PO)</h5>
+                <form action="${pageContext.request.contextPath}/admin/purchases" method="GET" class="d-flex gap-2 m-0">
+                    <select name="supplierId" class="form-select form-select-sm" style="width: 220px;" onchange="this.form.submit()">
+                        <option value="">Tất cả nhà cung cấp</option>
+                        <c:forEach var="sup" items="${suppliers}">
+                            <option value="${sup.supplierId}" ${selectedSupplierId == sup.supplierId ? 'selected' : ''}><c:out value="${sup.supplierName}"/></option>
+                        </c:forEach>
+                    </select>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã PO</th>
+                            <th>Nhà cung cấp</th>
+                            <th>Trạng thái</th>
+                            <th>Dự kiến giao</th>
+                            <th>Chốt đơn</th>
+                            <th>Nhận hàng</th>
+                            <th class="text-end">SL đã trả</th>
+                            <th class="text-end">Giá trị PO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:forEach var="h" items="${supplierHistory}">
+                            <tr>
+                                <td><code><c:out value="${h['poCode']}"/></code></td>
+                                <td class="fw-semibold"><c:out value="${h['supplierName']}"/></td>
+                                <td><span class="badge bg-secondary"><c:out value="${h['status']}"/></span></td>
+                                <td><fmt:formatDate value="${h['expectedDeliveryDate']}" pattern="dd/MM/yyyy"/></td>
+                                <td><small><fmt:formatDate value="${h['confirmedAt']}" pattern="dd/MM/yyyy HH:mm"/></small></td>
+                                <td><small><fmt:formatDate value="${h['receivedAt']}" pattern="dd/MM/yyyy HH:mm"/></small></td>
+                                <td class="text-end text-danger fw-semibold"><c:out value="${h['returnedQty']}"/></td>
+                                <td class="text-end fw-bold"><fmt:formatNumber value="${h['totalCost']}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</c:if>
+
 <!-- Modal Thêm PO -->
 <div class="modal fade" id="addPoModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
