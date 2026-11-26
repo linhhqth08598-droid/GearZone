@@ -35,18 +35,64 @@ public class SpecMonitorDAO {
         return list;
     }
     public boolean insert(int partId, String screenSize, String resolution, int refreshRate, String panelType) {
-    String sql = "INSERT INTO spec_monitor (part_id, screen_size, resolution, refresh_rate, panel_type) VALUES (?, ?, ?, ?, ?)";
-    try (Connection conn = new DBConnect().getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, partId);
-        ps.setString(2, screenSize);
-        ps.setString(3, resolution);
-        ps.setInt(4, refreshRate);
-        ps.setString(5, panelType);
-        return ps.executeUpdate() > 0;
-    } catch (Exception e) {
-        e.printStackTrace();
+        return insert(partId, screenSize, resolution, refreshRate, panelType, null, null, 1, 1);
     }
-    return false;
-}
+
+    public boolean insert(int partId, String screenSize, String resolution, int refreshRate, String panelType,
+                          Double responseTimeMs, String adaptiveSync, int hdmiPorts, int displayportPorts) {
+        double sizeInch = parseScreenSizeInch(screenSize);
+        String sql = "INSERT INTO [spec_monitor] (part_id, screen_size_inch, resolution, refresh_rate_hz, panel_type, "
+                   + "response_time_ms, adaptive_sync, hdmi_ports, displayport_ports, hdmi_version, displayport_version, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setDouble(2, sizeInch);
+            ps.setString(3, (resolution == null || resolution.trim().isEmpty()) ? "1920x1080" : resolution.trim());
+            ps.setInt(4, refreshRate > 0 ? refreshRate : 60);
+            ps.setString(5, (panelType == null || panelType.trim().isEmpty()) ? "IPS" : panelType.trim());
+            if (responseTimeMs == null) ps.setNull(6, Types.DECIMAL); else ps.setDouble(6, responseTimeMs);
+            if (adaptiveSync == null || adaptiveSync.trim().isEmpty()) ps.setNull(7, Types.VARCHAR); else ps.setString(7, adaptiveSync.trim());
+            ps.setInt(8, Math.max(0, hdmiPorts));
+            ps.setInt(9, Math.max(0, displayportPorts));
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean update(int partId, String screenSize, String resolution, int refreshRate, String panelType,
+                          Double responseTimeMs, String adaptiveSync, int hdmiPorts, int displayportPorts) {
+        double sizeInch = parseScreenSizeInch(screenSize);
+        String sql = "UPDATE [spec_monitor] SET screen_size_inch = ?, resolution = ?, refresh_rate_hz = ?, panel_type = ?, "
+                   + "response_time_ms = ?, adaptive_sync = ?, hdmi_ports = ?, displayport_ports = ? WHERE part_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setDouble(1, sizeInch);
+            ps.setString(2, (resolution == null || resolution.trim().isEmpty()) ? "1920x1080" : resolution.trim());
+            ps.setInt(3, refreshRate > 0 ? refreshRate : 60);
+            ps.setString(4, (panelType == null || panelType.trim().isEmpty()) ? "IPS" : panelType.trim());
+            if (responseTimeMs == null) ps.setNull(5, Types.DECIMAL); else ps.setDouble(5, responseTimeMs);
+            if (adaptiveSync == null || adaptiveSync.trim().isEmpty()) ps.setNull(6, Types.VARCHAR); else ps.setString(6, adaptiveSync.trim());
+            ps.setInt(7, Math.max(0, hdmiPorts));
+            ps.setInt(8, Math.max(0, displayportPorts));
+            ps.setInt(9, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static double parseScreenSizeInch(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return 24.0;
+        String cleaned = raw.replaceAll("[^0-9.]", "");
+        try {
+            double v = Double.parseDouble(cleaned);
+            return v > 0 ? v : 24.0;
+        } catch (NumberFormatException e) {
+            return 24.0;
+        }
+    }
 }

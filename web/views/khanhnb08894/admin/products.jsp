@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <jsp:include page="/views/components/admin_header.jsp" />
 <jsp:include page="/views/components/admin_sidebar.jsp" />
@@ -118,7 +119,7 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex gap-2 justify-content-center">
-                                    <!-- Nút Sửa -->
+                                    <!-- Nút Sửa (Modal có kèm thông số chi tiết theo danh mục) -->
                                     <button type="button" class="btn btn-sm btn-outline-primary btn-edit-part"
                                             data-bs-toggle="modal" data-bs-target="#editProductModal"
                                             data-id="${p.partId}"
@@ -299,6 +300,109 @@
                         <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif">
                         <div class="form-text">Để trống nếu không muốn thay đổi ảnh cũ.</div>
                     </div>
+
+                    <!-- Thông số chi tiết theo danh mục ngay trong form Sửa -->
+                    <div id="editCpuSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-microchip me-1"></i> Thông số chi tiết CPU</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="number" name="socketId" placeholder="Socket ID" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="cores" placeholder="Số nhân" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="threads" placeholder="Số luồng" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="baseClock" placeholder="Xung cơ bản (GHz)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="boostClock" placeholder="Xung tối đa (GHz)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="tdp" placeholder="TDP (W)" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editMainboardSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-chess-board me-1"></i> Thông số chi tiết Mainboard</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="number" name="socketId" placeholder="Socket ID" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="chipset" placeholder="Chipset (B760, Z790...)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="formFactor" placeholder="Form Factor (ATX / mATX)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-6"><input type="text" name="ramStandard" placeholder="Chuẩn RAM (DDR4 / DDR5)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-6"><input type="number" name="ramSlots" placeholder="Số khe RAM" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editRamSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-memory me-1"></i> Thông số chi tiết RAM</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="text" name="ddrType" placeholder="Chuẩn RAM (DDR4 / DDR5)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="capacityGb" placeholder="Dung lượng (GB)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="busSpeedMhz" placeholder="Bus (MHz)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-6"><input type="number" name="moduleCount" placeholder="Số thanh" class="form-control form-control-sm"/></div>
+                            <div class="col-md-6"><input type="text" name="casLatency" placeholder="Độ trễ CAS (CL16, CL32...)" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editVgaSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-tv me-1"></i> Thông số chi tiết VGA / GPU</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="text" name="gpuChipset" placeholder="GPU Chipset" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="vramCapacityGb" placeholder="VRAM (GB)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="recommendedPsuWatts" placeholder="Nguồn đề xuất (W)" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editStorageSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-hdd me-1"></i> Thông số chi tiết Ổ cứng</h6>
+                        <div class="row g-2">
+                            <div class="col-md-3"><input type="text" name="storageType" placeholder="SSD / HDD" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="formFactor" placeholder="M.2 2280 / 2.5 / 3.5" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="interface" placeholder="NVMe / SATA III" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="capacityGb" placeholder="Dung lượng (GB)" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editPsuSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-bolt me-1"></i> Thông số chi tiết PSU</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="number" name="wattage" placeholder="Công suất (W)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="efficiencyRating" placeholder="Chứng nhận (80 Plus...)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="modularType" placeholder="Kiểu cáp (Full Modular...)" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editCaseSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-desktop me-1"></i> Thông số chi tiết Case</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="text" name="caseFormFactor" placeholder="Mainboard hỗ trợ" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="maxVgaLengthMm" placeholder="VGA dài tối đa (mm)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="maxCpuCoolerHeightMm" placeholder="Tản CPU cao tối đa (mm)" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editCoolerSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-fan me-1"></i> Thông số chi tiết Tản nhiệt</h6>
+                        <div class="row g-2">
+                            <div class="col-md-3"><input type="text" name="coolerType" placeholder="AIO_LIQUID / AIR" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="heightMm" placeholder="Chiều cao (mm)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="radiatorSizeMm" placeholder="Radiator (mm)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="maxTdp" placeholder="TDP tối đa (W)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-12"><input type="text" name="supportedSockets" placeholder="Socket hỗ trợ" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editMonitorSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-desktop me-1"></i> Thông số chi tiết Màn hình</h6>
+                        <div class="row g-2">
+                            <div class="col-md-3"><input type="text" name="screenSize" placeholder="Kích thước" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="resolution" placeholder="Độ phân giải" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="refreshRate" placeholder="Tần số quét (Hz)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="panelType" placeholder="Tấm nền" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
+                    <div id="editGearSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-headset me-1"></i> Thông số chi tiết Gaming Gear</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="text" name="gearType" placeholder="KEYBOARD / MOUSE / HEADSET..." class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="connectivity" placeholder="WIRED / WIRELESS / BOTH" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="switchOrDpi" placeholder="Switch / DPI" class="form-control form-control-sm"/></div>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mô tả</label>
                         <textarea name="description" id="editDesc" class="form-control" rows="3"></textarea>
@@ -314,6 +418,112 @@
 </div>
 
 <script>
+    var EXISTING_PART_SPECS = ${not empty partSpecsJson ? partSpecsJson : '{}'};
+
+    function toggleEditSpecSection() {
+        var catSelect = document.getElementById('editCategory');
+        var selectedText = catSelect && catSelect.options[catSelect.selectedIndex]
+                ? catSelect.options[catSelect.selectedIndex].text.toLowerCase() : '';
+        document.querySelectorAll('.edit-spec-section').forEach(function (el) {
+            el.style.display = 'none';
+        });
+        if (selectedText.includes('cooler') || selectedText.includes('tản nhiệt')) {
+            document.getElementById('editCoolerSpecs').style.display = 'block';
+        } else if (selectedText.includes('mainboard') || selectedText.includes('bo mạch')) {
+            document.getElementById('editMainboardSpecs').style.display = 'block';
+        } else if (selectedText.includes('ram')) {
+            document.getElementById('editRamSpecs').style.display = 'block';
+        } else if (selectedText.includes('vga') || selectedText.includes('đồ họa')) {
+            document.getElementById('editVgaSpecs').style.display = 'block';
+        } else if (selectedText.includes('ssd') || selectedText.includes('hdd') || selectedText.includes('ổ cứng')) {
+            document.getElementById('editStorageSpecs').style.display = 'block';
+        } else if (selectedText.includes('psu') || selectedText.includes('nguồn')) {
+            document.getElementById('editPsuSpecs').style.display = 'block';
+        } else if (selectedText.includes('case') || selectedText.includes('vỏ')) {
+            document.getElementById('editCaseSpecs').style.display = 'block';
+        } else if (selectedText.includes('màn hình') || selectedText.includes('monitor')) {
+            document.getElementById('editMonitorSpecs').style.display = 'block';
+        } else if (selectedText.includes('gear') || selectedText.includes('phím') || selectedText.includes('chuột') || selectedText.includes('tai nghe')) {
+            document.getElementById('editGearSpecs').style.display = 'block';
+        } else if (selectedText.includes('cpu')) {
+            document.getElementById('editCpuSpecs').style.display = 'block';
+        }
+    }
+
+    function fillEditSpecFields(partId) {
+        var modalEl = document.getElementById('editProductModal');
+        if (!modalEl) return;
+        modalEl.querySelectorAll('.edit-spec-section input').forEach(function (inp) {
+            inp.value = '';
+        });
+        var spec = EXISTING_PART_SPECS[String(partId)] || EXISTING_PART_SPECS[partId];
+        if (!spec) return;
+
+        var setVal = function (sectionId, fieldName, val) {
+            if (val === undefined || val === null) return;
+            var sec = document.getElementById(sectionId);
+            if (!sec) return;
+            var inp = sec.querySelector('input[name="' + fieldName + '"]');
+            if (inp) inp.value = val;
+        };
+
+        setVal('editCpuSpecs', 'socketId', spec.socket_id);
+        setVal('editCpuSpecs', 'cores', spec.cores);
+        setVal('editCpuSpecs', 'threads', spec.threads);
+        setVal('editCpuSpecs', 'baseClock', spec.base_clock_ghz);
+        setVal('editCpuSpecs', 'boostClock', spec.boost_clock_ghz);
+        setVal('editCpuSpecs', 'tdp', spec.tdp_watts);
+
+        setVal('editMainboardSpecs', 'socketId', spec.socket_id);
+        setVal('editMainboardSpecs', 'chipset', spec.chipset);
+        setVal('editMainboardSpecs', 'formFactor', spec.form_factor);
+        setVal('editMainboardSpecs', 'ramStandard', spec.ram_standard);
+        setVal('editMainboardSpecs', 'ramSlots', spec.ram_slots);
+
+        setVal('editRamSpecs', 'ddrType', spec.ddr_type);
+        setVal('editRamSpecs', 'capacityGb', spec.capacity_gb);
+        setVal('editRamSpecs', 'busSpeedMhz', spec.bus_speed_mhz);
+        setVal('editRamSpecs', 'moduleCount', spec.module_count);
+        setVal('editRamSpecs', 'casLatency', spec.cas_latency);
+
+        setVal('editVgaSpecs', 'gpuChipset', spec.gpu_chipset);
+        setVal('editVgaSpecs', 'vramCapacityGb', spec.vram_capacity_gb);
+        setVal('editVgaSpecs', 'recommendedPsuWatts', spec.recommended_psu_watts);
+
+        setVal('editStorageSpecs', 'storageType', spec.storage_type);
+        setVal('editStorageSpecs', 'formFactor', spec.form_factor);
+        setVal('editStorageSpecs', 'interface', spec.interface);
+        setVal('editStorageSpecs', 'capacityGb', spec.capacity_gb);
+
+        setVal('editPsuSpecs', 'wattage', spec.wattage);
+        setVal('editPsuSpecs', 'efficiencyRating', spec.efficiency_rating);
+        setVal('editPsuSpecs', 'modularType', spec.modularity);
+
+        setVal('editCaseSpecs', 'caseFormFactor', spec.supported_motherboards);
+        setVal('editCaseSpecs', 'maxVgaLengthMm', spec.max_vga_length_mm);
+        setVal('editCaseSpecs', 'maxCpuCoolerHeightMm', spec.max_cpu_cooler_height_mm);
+
+        setVal('editCoolerSpecs', 'coolerType', spec.cooler_type);
+        setVal('editCoolerSpecs', 'heightMm', spec.height_mm);
+        setVal('editCoolerSpecs', 'radiatorSizeMm', spec.radiator_size_mm);
+        setVal('editCoolerSpecs', 'maxTdp', spec.max_tdp_cooling_watts);
+        setVal('editCoolerSpecs', 'supportedSockets', spec.supported_sockets);
+
+        setVal('editMonitorSpecs', 'screenSize', spec.screen_size_inch);
+        setVal('editMonitorSpecs', 'resolution', spec.resolution);
+        setVal('editMonitorSpecs', 'refreshRate', spec.refresh_rate_hz);
+        setVal('editMonitorSpecs', 'panelType', spec.panel_type);
+
+        setVal('editGearSpecs', 'gearType', spec.peripheral_type);
+        setVal('editGearSpecs', 'connectivity', spec.connection_type);
+        setVal('editGearSpecs', 'switchOrDpi', spec.switch_type);
+    }
+
+    var editCatEl = document.getElementById('editCategory');
+    if (editCatEl) {
+        editCatEl.addEventListener('change', toggleEditSpecSection);
+    }
+
     document.querySelectorAll('.btn-edit-part').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var d = btn.dataset;
@@ -326,6 +536,8 @@
             document.getElementById('editSale').value = d.sale;
             document.getElementById('editWarranty').value = d.warranty;
             document.getElementById('editDesc').value = d.desc || '';
+            toggleEditSpecSection();
+            fillEditSpecFields(d.id);
         });
     });
 </script>

@@ -67,12 +67,13 @@
 
             <div class="mb-3 p-3 bg-light rounded-3">
                 <p class="mb-1"><strong><i class="fas fa-shield-alt text-success me-2"></i> Bảo hành:</strong> ${part.warrantyMonths} tháng</p>
-                <p class="mb-0"><strong><i class="fas fa-info-circle text-primary me-2"></i> Trạng thái:</strong>
+                <p class="mb-1"><strong><i class="fas fa-info-circle text-primary me-2"></i> Trạng thái:</strong>
                     <c:choose>
-                        <c:when test="${part.status == 'ACTIVE'}"><span class="text-success">Còn hàng</span></c:when>
+                        <c:when test="${part.status == 'ACTIVE' and availableStock > 0}"><span class="text-success">Còn hàng</span></c:when>
                         <c:otherwise><span class="text-danger">Hết hàng</span></c:otherwise>
                     </c:choose>
                 </p>
+                <p class="mb-0"><strong><i class="fas fa-boxes-stacked text-secondary me-2"></i> Số lượng sẵn có:</strong> <span id="detailAvailableStock">${availableStock}</span> sản phẩm</p>
             </div>
 
             <div class="mb-3">
@@ -80,21 +81,33 @@
                 <p class="text-secondary mb-0"><c:out value="${empty part.description ? 'Đang cập nhật mô tả...' : part.description}"/></p>
             </div>
 
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <label class="form-label fw-semibold mb-0">Số lượng</label>
+                <div class="d-inline-flex align-items-center gap-1" id="detailQtyBox" data-max="${availableStock > 0 ? (availableStock > 99 ? 99 : availableStock) : 1}">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="detailQtyMinus" tabindex="-1">−</button>
+                    <input type="number" id="detailQtyInput" value="1" min="1" max="${availableStock > 0 ? (availableStock > 99 ? 99 : availableStock) : 1}" class="form-control form-control-sm text-center" style="width:72px">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="detailQtyPlus" tabindex="-1">+</button>
+                </div>
+                <span class="text-muted small"><c:out value="${availableStock}"/> sản phẩm có sẵn</span>
+            </div>
+
             <div class="d-flex flex-wrap gap-2">
-                <%-- MUA NGAY: thêm vào giỏ rồi chuyển thẳng sang giỏ hàng để thanh toán --%>
-                <form action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
+                <%-- MUA NGAY: thêm đúng số lượng đã chọn rồi chuyển thẳng sang /checkout --%>
+                <form id="buyNowForm" action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="buyNow" value="1">
                     <input type="hidden" name="partId" value="${part.partId}">
-                    <button type="submit" class="btn btn-danger w-100" ${part.status == 'ACTIVE' ? '' : 'disabled'}>
+                    <input type="hidden" name="quantity" id="buyNowQty" value="1">
+                    <button type="submit" class="btn btn-danger w-100" ${part.status == 'ACTIVE' and availableStock > 0 ? '' : 'disabled'}>
                         <i class="fas fa-bolt"></i> Mua ngay
                     </button>
                 </form>
 
-                <form action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
+                <form id="addToCartForm" action="${pageContext.request.contextPath}/cart" method="POST" class="flex-grow-1 m-0">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="partId" value="${part.partId}">
-                    <button type="submit" class="btn btn-outline-danger w-100" ${part.status == 'ACTIVE' ? '' : 'disabled'}>
+                    <input type="hidden" name="quantity" id="addToCartQty" value="1">
+                    <button type="submit" class="btn btn-outline-danger w-100" ${part.status == 'ACTIVE' and availableStock > 0 ? '' : 'disabled'}>
                         <i class="fas fa-cart-plus"></i> Thêm vào giỏ
                     </button>
                 </form>
@@ -165,6 +178,44 @@
 
 <!-- SCRIPT AJAX -->
 <script>
+    (function () {
+        const box = document.getElementById('detailQtyBox');
+        const input = document.getElementById('detailQtyInput');
+        const minusBtn = document.getElementById('detailQtyMinus');
+        const plusBtn = document.getElementById('detailQtyPlus');
+        const buyNowQty = document.getElementById('buyNowQty');
+        const addToCartQty = document.getElementById('addToCartQty');
+        if (box && input && buyNowQty && addToCartQty) {
+            const maxQty = Math.max(1, parseInt(box.dataset.max, 10) || 1);
+            const clampQty = (val) => {
+                const n = parseInt(val, 10);
+                if (isNaN(n) || n < 1) return 1;
+                return Math.min(maxQty, n);
+            };
+            const syncQty = () => {
+                const q = clampQty(input.value);
+                input.value = q;
+                buyNowQty.value = q;
+                addToCartQty.value = q;
+            };
+            input.addEventListener('input', syncQty);
+            input.addEventListener('change', syncQty);
+            if (minusBtn) {
+                minusBtn.addEventListener('click', () => {
+                    input.value = clampQty(input.value) - 1;
+                    syncQty();
+                });
+            }
+            if (plusBtn) {
+                plusBtn.addEventListener('click', () => {
+                    input.value = clampQty(input.value) + 1;
+                    syncQty();
+                });
+            }
+            syncQty();
+        }
+    })();
+
     function toggleWishlist(partId) {
         fetch('${pageContext.request.contextPath}/user/wishlist?action=toggle&partId=' + partId, {method: 'POST'})
                 .then(res => res.json())

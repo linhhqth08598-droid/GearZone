@@ -34,7 +34,7 @@ public class SpecCpuDAO {
         return list;
     }
     public boolean insert(int partId, int socketId, int cores, int threads, double baseClock, double boostClock, int tdp) {
-        String sql = "INSERT INTO spec_cpu (part_id, socket_id, cores, threads, base_clock_ghz, boost_clock_ghz, tdp_watts, has_integrated_gpu, supported_ram_type, status) "
+        String sql = "INSERT INTO [spec_cpu] (part_id, socket_id, cores, threads, base_clock_ghz, boost_clock_ghz, tdp_watts, has_integrated_gpu, supported_ram_type, status) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'DDR4', 'ACTIVE')";
         try (Connection con = DBConnect.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -45,6 +45,25 @@ public class SpecCpuDAO {
             ps.setDouble(5, baseClock);
             ps.setDouble(6, boostClock);
             ps.setInt(7, tdp);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean update(int partId, int socketId, int cores, int threads, double baseClock, double boostClock, int tdp) {
+        String sql = "UPDATE [spec_cpu] SET socket_id = ?, cores = ?, threads = ?, base_clock_ghz = ?, boost_clock_ghz = ?, tdp_watts = ? "
+                   + "WHERE part_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, socketId);
+            ps.setInt(2, cores);
+            ps.setInt(3, threads);
+            ps.setDouble(4, baseClock);
+            ps.setDouble(5, boostClock);
+            ps.setInt(6, tdp);
+            ps.setInt(7, partId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();

@@ -59,7 +59,7 @@
 
         // Khôi phục đúng số trang (?page=2) nếu vừa bị Servlet redirect về trang 1
         const savedPage = sessionStorage.getItem(pageKey);
-        if (savedPage && !window.location.search.includes('page=')) {
+        if (savedPage && !window.location.search.includes('page=') && !window.location.pathname.includes('/admin/products')) {
             sessionStorage.removeItem(pageKey);
             window.location.replace(window.location.pathname + savedPage);
             return;

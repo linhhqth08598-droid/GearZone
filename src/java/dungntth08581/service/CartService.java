@@ -143,8 +143,100 @@ public class CartService {
         }
     }
 
+    /**
+     * Kiểm tra hợp lệ món "Mua ngay" để thanh toán riêng lẻ mà không lẫn các món đang giữ trong giỏ hàng.
+     */
+    public String prepareBuyNow(int userId, int partId, int qty) {
+        if (userId <= 0 || partId <= 0) {
+            return "Dữ liệu sản phẩm không hợp lệ!";
+        }
+        if (qty < 1 || qty > 99) {
+            return "Số lượng phải từ 1 đến 99!";
+        }
+        try (Connection con = DBConnect.getConnection()) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT status FROM parts WHERE part_id = ?")) {
+                ps.setInt(1, partId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next() || !"ACTIVE".equals(rs.getString(1))) {
+                        return "Linh kiện không còn được bán!";
+                    }
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Không thể xử lý mua ngay, vui lòng thử lại!";
+        }
+    }
+
+    /**
+     * Lấy danh sách dòng hàng riêng cho chế độ "Mua ngay" (không đụng tới giỏ hàng đang lưu).
+     */
+    public List<CartLine> getBuyNowLines(int partId, int qty) {
+        List<CartLine> list = new ArrayList<>();
+        if (partId <= 0 || qty < 1 || qty > 99) {
+            return list;
+        }
+        String sql = "SELECT p.part_id, p.part_name, ISNULL(p.sale_price, p.base_price) AS price, "
+                + "ISNULL(i.stock_quantity - i.reserved_quantity, 0) AS available "
+                + "FROM parts p LEFT JOIN inventory i ON i.part_id = p.part_id "
+                + "WHERE p.part_id = ? AND p.status = 'ACTIVE'";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    CartLine l = new CartLine();
+                    l.cartId = 0;
+                    l.partId = rs.getInt(1);
+                    l.partName = rs.getString(2);
+                    l.unitPrice = rs.getDouble(3);
+                    l.quantity = qty;
+                    l.available = rs.getInt(4);
+                    list.add(l);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<PromotionService.Item> toPromotionItems(List<CartLine> lines) {
+        List<PromotionService.Item> list = new ArrayList<>();
+        if (lines == null || lines.isEmpty()) {
+            return list;
+        }
+        String sql = "SELECT p.part_id, p.category_id, p.brand_id, ISNULL(p.sale_price, p.base_price) AS price, ca.category_code, ca.category_name "
+                + "FROM parts p LEFT JOIN categories ca ON ca.category_id = p.category_id WHERE p.part_id = ?";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            for (CartLine l : lines) {
+                ps.setInt(1, l.getPartId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        PromotionService.Item it = new PromotionService.Item();
+                        it.partId = rs.getInt("part_id");
+                        it.qty = l.getQuantity();
+                        int catId = rs.getInt("category_id");
+                        it.categoryId = rs.wasNull() ? null : catId;
+                        int brId = rs.getInt("brand_id");
+                        it.brandId = rs.wasNull() ? null : brId;
+                        it.unitPrice = rs.getBigDecimal("price");
+                        it.slot = PromotionService.slotKey(rs.getString("category_code"), rs.getString("category_name"));
+                        list.add(it);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public boolean updateQuantity(int userId, int cartId, int qty) {
-        if (qty < 1 || qty > 99) return false;
+        if (qty < 0 || qty > 99) return false;
+        if (qty == 0) {
+            return remove(userId, cartId);
+        }
         return exec("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND user_id = ?", qty, cartId, userId);
     }
 

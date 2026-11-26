@@ -6,7 +6,7 @@
 <jsp:include page="/views/components/admin_sidebar.jsp" />
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-plus-circle me-2"></i>Thêm / Cập nhật Thông số Linh kiện PC</h1>
+    <h1 class="h2"><i class="fas fa-plus-circle me-2"></i>Thêm Chi tiết Linh kiện PC</h1>
     <a href="${pageContext.request.contextPath}/admin/products" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
     </a>
@@ -14,8 +14,8 @@
 
 <div class="card shadow-sm border-0 rounded-4 mb-4">
     <div class="card-body p-4">
-        <form action="${pageContext.request.contextPath}/admin/product-form" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="action" value="save"/>
+        <form id="productDetailForm" action="${pageContext.request.contextPath}/admin/product-form" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="action" id="detailFormAction" value="save"/>
 
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -82,7 +82,7 @@
             <div id="cpuSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-microchip me-1"></i> Thông số CPU</h5>
                 <div class="row g-2">
-                    <div class="col-md-4"><input type="number" name="socketId" placeholder="Socket ID (VD: 1700)" class="form-control"/></div>
+                    <div class="col-md-4"><input type="number" name="socketId" placeholder="Socket ID (VD: 1, 2)" class="form-control"/></div>
                     <div class="col-md-4"><input type="number" name="cores" placeholder="Số nhân (Cores)" class="form-control"/></div>
                     <div class="col-md-4"><input type="number" name="threads" placeholder="Số luồng (Threads)" class="form-control"/></div>
                     <div class="col-md-4 mt-2"><input type="text" name="baseClock" placeholder="Xung cơ bản (GHz)" class="form-control"/></div>
@@ -107,19 +107,45 @@
             <div id="ramSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-memory me-1"></i> Thông số RAM</h5>
                 <div class="row g-2">
-                    <div class="col-md-4"><input type="text" name="ddrType" placeholder="Loại (DDR4 / DDR5)" class="form-control"/></div>
-                    <div class="col-md-4"><input type="number" name="capacityGb" placeholder="Dung lượng (GB)" class="form-control"/></div>
-                    <div class="col-md-4"><input type="number" name="busSpeedMhz" placeholder="Bus Speed (MHz)" class="form-control"/></div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Chuẩn RAM (DDR)</label>
+                        <input type="text" name="ddrType" placeholder="DDR4 hoặc DDR5" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Dung lượng (GB)</label>
+                        <input type="number" name="capacityGb" placeholder="VD: 16, 32" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Tốc độ Bus (MHz)</label>
+                        <input type="number" name="busSpeedMhz" placeholder="VD: 3200, 6000" class="form-control"/>
+                    </div>
+                    <div class="col-md-6 mt-2">
+                        <label class="form-label small text-muted mb-1">Số thanh (Module)</label>
+                        <input type="number" name="moduleCount" placeholder="VD: 1, 2" class="form-control"/>
+                    </div>
+                    <div class="col-md-6 mt-2">
+                        <label class="form-label small text-muted mb-1">Độ trễ CAS</label>
+                        <input type="text" name="casLatency" placeholder="VD: CL16, CL32" class="form-control"/>
+                    </div>
                 </div>
             </div>
 
-            <!-- 4. Thông số VGA -->
+            <!-- 4. Thông số VGA / GPU -->
             <div id="vgaSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
-                <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-tv me-1"></i> Thông số VGA (Card đồ họa)</h5>
+                <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-tv me-1"></i> Thông số VGA / GPU (Card đồ họa)</h5>
                 <div class="row g-2">
-                    <div class="col-md-6"><input type="text" name="gpuChipset" placeholder="GPU Chipset (VD: RTX 4060)" class="form-control"/></div>
-                    <div class="col-md-3"><input type="number" name="vramCapacityGb" placeholder="VRAM (GB)" class="form-control"/></div>
-                    <div class="col-md-3"><input type="number" name="recommendedPsuWatts" placeholder="Nguồn đề xuất (W)" class="form-control"/></div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">GPU Chipset</label>
+                        <input type="text" name="gpuChipset" placeholder="VD: RTX 4060, RTX 4070 SUPER" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Dung lượng VRAM (GB)</label>
+                        <input type="number" name="vramCapacityGb" placeholder="VD: 8, 12, 16" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Nguồn đề xuất (W)</label>
+                        <input type="number" name="recommendedPsuWatts" placeholder="VD: 550, 650, 750" class="form-control"/>
+                    </div>
                 </div>
             </div>
 
@@ -127,8 +153,22 @@
             <div id="storageSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-hdd me-1"></i> Thông số Ổ cứng (SSD / HDD)</h5>
                 <div class="row g-2">
-                    <div class="col-md-6"><input type="text" name="storageType" placeholder="Loại (NVMe / SATA / HDD)" class="form-control"/></div>
-                    <div class="col-md-6"><input type="number" name="capacityGb" placeholder="Dung lượng (GB)" class="form-control"/></div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Loại ổ cứng</label>
+                        <input type="text" name="storageType" placeholder="SSD hoặc HDD" class="form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Form factor</label>
+                        <input type="text" name="formFactor" placeholder="M.2 2280 / 2.5 inch / 3.5 inch" class="form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Chuẩn giao tiếp</label>
+                        <input type="text" name="interface" placeholder="NVMe PCIe Gen4 / SATA III" class="form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Dung lượng (GB)</label>
+                        <input type="number" name="capacityGb" placeholder="VD: 512, 1024" class="form-control"/>
+                    </div>
                 </div>
             </div>
 
@@ -145,7 +185,18 @@
             <div id="caseSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-desktop me-1"></i> Thông số Vỏ máy tính (Case)</h5>
                 <div class="row g-2">
-                    <div class="col-md-12"><input type="text" name="caseFormFactor" placeholder="Hỗ trợ Mainboard (ATX / mATX / ITX)" class="form-control"/></div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Mainboard hỗ trợ</label>
+                        <input type="text" name="caseFormFactor" placeholder="ATX / mATX / ITX" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">VGA dài tối đa (mm)</label>
+                        <input type="number" name="maxVgaLengthMm" placeholder="VD: 340" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Tản CPU cao tối đa (mm)</label>
+                        <input type="number" name="maxCpuCoolerHeightMm" placeholder="VD: 165" class="form-control"/>
+                    </div>
                 </div>
             </div>
 
@@ -153,8 +204,26 @@
             <div id="coolerSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-fan me-1"></i> Thông số Tản nhiệt (Cooler)</h5>
                 <div class="row g-2">
-                    <div class="col-md-6"><input type="text" name="coolerType" placeholder="Loại tản (Tản khí / AIO 240 / AIO 360)" class="form-control"/></div>
-                    <div class="col-md-6"><input type="number" name="maxTdp" placeholder="Hỗ trợ TDP tối đa (W) (VD: 250)" class="form-control"/></div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Loại tản</label>
+                        <input type="text" name="coolerType" placeholder="AIO_LIQUID hoặc AIR" class="form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Chiều cao (mm)</label>
+                        <input type="number" name="heightMm" placeholder="VD: 155" class="form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Radiator (mm)</label>
+                        <input type="number" name="radiatorSizeMm" placeholder="VD: 240, 360" class="form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">TDP tối đa (W)</label>
+                        <input type="number" name="maxTdp" placeholder="VD: 250" class="form-control"/>
+                    </div>
+                    <div class="col-md-12 mt-2">
+                        <label class="form-label small text-muted mb-1">Socket hỗ trợ</label>
+                        <input type="text" name="supportedSockets" placeholder="VD: LGA1700, AM5, AM4" class="form-control"/>
+                    </div>
                 </div>
             </div>
             <!-- 9. Thông số Màn hình Gaming -->
@@ -172,9 +241,18 @@
             <div id="gearSpecs" class="spec-section card p-3 border bg-light mb-3" style="display:none;">
                 <h5 class="card-title text-secondary fs-6 mb-3"><i class="fas fa-headset me-1"></i> Thông số Gaming Gear</h5>
                 <div class="row g-2">
-                    <div class="col-md-4"><input type="text" name="gearType" placeholder="Loại (Bàn phím / Chuột / Tai nghe)" class="form-control"/></div>
-                    <div class="col-md-4"><input type="text" name="connectivity" placeholder="Kết nối (Có dây / Wireless / Bluetooth)" class="form-control"/></div>
-                    <div class="col-md-4"><input type="text" name="switchOrDpi" placeholder="Switch phím / Độ phân giải DPI chuột" class="form-control"/></div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Loại thiết bị</label>
+                        <input type="text" name="gearType" placeholder="KEYBOARD / MOUSE / HEADSET / MOUSEPAD / OTHER" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Kiểu kết nối</label>
+                        <input type="text" name="connectivity" placeholder="WIRED / WIRELESS / BOTH" class="form-control"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">Switch / DPI</label>
+                        <input type="text" name="switchOrDpi" placeholder="Switch phím hoặc DPI chuột" class="form-control"/>
+                    </div>
                 </div>
             </div>
             <!-- ================= KẾT THÚC KHU VỰC THÔNG SỐ ================= -->
@@ -185,8 +263,15 @@
                 <input type="file" name="productImage" class="form-control mb-2"/>
             </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-1"></i> Lưu linh kiện</button>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" id="btnSaveAndList" class="btn btn-primary px-4"
+                        onclick="document.getElementById('detailFormAction').value='save';">
+                    <i class="fas fa-save me-1"></i> Lưu &amp; Về danh sách
+                </button>
+                <button type="submit" id="btnSaveAndContinue" class="btn btn-success px-4"
+                        onclick="document.getElementById('detailFormAction').value='saveAndContinue';">
+                    <i class="fas fa-plus-circle me-1"></i> Lưu &amp; Thêm tiếp linh kiện khác
+                </button>
                 <a href="${pageContext.request.contextPath}/admin/products" class="btn btn-outline-secondary px-4">Hủy</a>
             </div>
         </form>

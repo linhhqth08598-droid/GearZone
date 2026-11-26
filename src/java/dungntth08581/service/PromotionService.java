@@ -142,6 +142,16 @@ public class PromotionService {
         }
     }
 
+    /** Xem trước giảm giá cho danh sách món tùy chỉnh (ví dụ luồng Mua ngay riêng lẻ). */
+    public Result previewItems(List<Item> items, String code, double shippingFee, int userId) {
+        try (Connection con = DBConnect.getConnection()) {
+            return calculate(con, items == null ? new ArrayList<>() : items, BigDecimal.valueOf(shippingFee), userId, code);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Result r = new Result(); r.error = "Không tính được giảm giá, vui lòng thử lại!"; return r;
+        }
+    }
+
     /**
      * Tính: khuyến mãi tự động (theo linh kiện/danh mục/thương hiệu, lấy mức giảm tốt nhất cho từng dòng), rồi mã giảm giá.
      * Giá luôn lấy từ DB, không tin client. Không ghi gì vào DB.

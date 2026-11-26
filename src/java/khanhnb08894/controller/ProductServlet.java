@@ -50,6 +50,7 @@ public class ProductServlet extends HttpServlet {
                     request.setAttribute("primaryImage", new PartMediaDAO().getPrimaryUrl(partId));
                     request.setAttribute("generalSpecs", productService.getGeneralSpec(partId));
                     request.setAttribute("techSpecs", productService.getTechSpecs(partId));
+                    request.setAttribute("availableStock", new khanhnb08894.service.InventoryService().getAvailable(partId));
 
                     String ogDesc = part.getDescription();
                     if (ogDesc == null || ogDesc.trim().isEmpty()) {
@@ -133,7 +134,9 @@ public class ProductServlet extends HttpServlet {
                     inStockOnly, saleOnly, minRating, socket, chipset,
                     ramDdr, ramCapacityGb, minVramGb, sortBy);
 
-            PaginationUtil pagination = new PaginationUtil(request.getParameter("page"), Constants.DEFAULT_PAGE_SIZE, filtered.size());
+            Integer pageSizeParam = parsePosInt(request.getParameter("pageSize"));
+            int pageSize = pageSizeParam != null ? Math.min(pageSizeParam, 100) : Constants.DEFAULT_PAGE_SIZE;
+            PaginationUtil pagination = new PaginationUtil(request.getParameter("page"), pageSize, filtered.size());
             List<Parts> pageParts = pagination.slice(filtered);
 
             request.setAttribute("categories", categoriesDAO.getAll());

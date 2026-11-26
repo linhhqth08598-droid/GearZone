@@ -17,7 +17,7 @@ public final class Constants {
     public static final int OTP_EXPIRE_MINUTES = 5;
 
     // ==== Phân trang ====
-    public static final int DEFAULT_PAGE_SIZE = 12;
+    public static final int DEFAULT_PAGE_SIZE = 20;
     public static final int ADMIN_PAGE_SIZE = 10;
 
     // ==== Upload file ====

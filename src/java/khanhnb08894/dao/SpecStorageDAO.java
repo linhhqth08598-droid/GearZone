@@ -31,16 +31,49 @@ public class SpecStorageDAO {
         return list;
     }
     public boolean insert(int partId, String storageType, int capacityGb) {
-    String sql = "INSERT INTO spec_storage (part_id, storage_type, capacity_gb) VALUES (?, ?, ?)";
-    try (Connection conn = new DBConnect().getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, partId);
-        ps.setString(2, storageType);
-        ps.setInt(3, capacityGb);
-        return ps.executeUpdate() > 0;
-    } catch (Exception e) {
-        e.printStackTrace();
+        String sType = (storageType != null && storageType.toUpperCase().contains("HDD")) ? "HDD" : "SSD";
+        String iface = (storageType != null && !storageType.trim().isEmpty()) ? storageType.trim() : ("HDD".equals(sType) ? "SATA III" : "NVMe PCIe");
+        String form = "HDD".equals(sType) ? "3.5 inch" : "M.2 2280";
+        return insert(partId, sType, form, iface, capacityGb, null, null);
     }
-    return false;
-}
+
+    public boolean insert(int partId, String storageType, String formFactor, String iface, int capacityGb, Integer readSpeed, Integer writeSpeed) {
+        String sType = (storageType != null && storageType.toUpperCase().contains("HDD")) ? "HDD" : "SSD";
+        String sql = "INSERT INTO [spec_storage] (part_id, storage_type, form_factor, interface, capacity_gb, read_speed_mbps, write_speed_mbps, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setString(2, sType);
+            ps.setString(3, (formFactor == null || formFactor.trim().isEmpty()) ? ("HDD".equals(sType) ? "3.5 inch" : "M.2 2280") : formFactor.trim());
+            ps.setString(4, (iface == null || iface.trim().isEmpty()) ? ("HDD".equals(sType) ? "SATA III" : "NVMe PCIe") : iface.trim());
+            ps.setInt(5, capacityGb);
+            if (readSpeed == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, readSpeed);
+            if (writeSpeed == null) ps.setNull(7, Types.INTEGER); else ps.setInt(7, writeSpeed);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean update(int partId, String storageType, String formFactor, String iface, int capacityGb, Integer readSpeed, Integer writeSpeed) {
+        String sType = (storageType != null && storageType.toUpperCase().contains("HDD")) ? "HDD" : "SSD";
+        String sql = "UPDATE [spec_storage] SET storage_type = ?, form_factor = ?, interface = ?, capacity_gb = ?, "
+                   + "read_speed_mbps = ?, write_speed_mbps = ? WHERE part_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, sType);
+            ps.setString(2, (formFactor == null || formFactor.trim().isEmpty()) ? ("HDD".equals(sType) ? "3.5 inch" : "M.2 2280") : formFactor.trim());
+            ps.setString(3, (iface == null || iface.trim().isEmpty()) ? ("HDD".equals(sType) ? "SATA III" : "NVMe PCIe") : iface.trim());
+            ps.setInt(4, capacityGb);
+            if (readSpeed == null) ps.setNull(5, Types.INTEGER); else ps.setInt(5, readSpeed);
+            if (writeSpeed == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, writeSpeed);
+            ps.setInt(7, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

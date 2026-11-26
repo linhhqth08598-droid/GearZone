@@ -26,11 +26,27 @@ public class AdminInventoryServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setContentType("text/html;charset=UTF-8");
 
+        int minIdleDays = parseIdleDays(request.getParameter("idleDays"));
+
         request.setAttribute("inventoryList", inventoryService.getAllInventory());
         request.setAttribute("partsList", partsDAO.getAllWithImages());
         request.setAttribute("categorySummary", inventoryService.getCategoryStockSummary());
+        request.setAttribute("lowStockItems", inventoryService.getLowOrOutOfStockItems());
+        request.setAttribute("agingStockItems", inventoryService.getAgingStockItems(minIdleDays));
+        request.setAttribute("paramIdleDays", minIdleDays);
 
         request.getRequestDispatcher("/views/khanhnb08894/admin/inventory.jsp").forward(request, response);
+    }
+
+    private int parseIdleDays(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return 30;
+        }
+        try {
+            return Math.max(1, Integer.parseInt(raw.trim()));
+        } catch (NumberFormatException e) {
+            return 30;
+        }
     }
 
     @Override

@@ -35,17 +35,36 @@ public class SpecVgaDAO {
         return list;
     }
     public boolean insert(int partId, String gpuChipset, int vramCapacityGb, int recommendedPsuWatts) {
-    String sql = "INSERT INTO spec_vga (part_id, gpu_chipset, vram_capacity_gb, recommended_psu_watts) VALUES (?, ?, ?, ?)";
-    try (Connection conn = new DBConnect().getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, partId);
-        ps.setString(2, gpuChipset);
-        ps.setInt(3, vramCapacityGb);
-        ps.setInt(4, recommendedPsuWatts);
-        return ps.executeUpdate() > 0;
-    } catch (Exception e) {
-        e.printStackTrace();
+        String sql = "INSERT INTO [spec_vga] (part_id, gpu_chipset, vram_capacity_gb, vram_type, recommended_psu_watts, tgp_watts, power_connectors, length_mm, pcie_interface, hdmi_ports, displayport_ports, status) "
+                   + "VALUES (?, ?, ?, 'GDDR6', ?, ?, '8-pin', 280, 'PCIe 4.0 x16', 1, 3, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setString(2, gpuChipset);
+            ps.setInt(3, vramCapacityGb);
+            ps.setInt(4, recommendedPsuWatts);
+            ps.setInt(5, Math.max(75, recommendedPsuWatts / 2));
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-    return false;
-}
+
+    public boolean update(int partId, String gpuChipset, int vramCapacityGb, int recommendedPsuWatts) {
+        String sql = "UPDATE [spec_vga] SET gpu_chipset = ?, vram_capacity_gb = ?, recommended_psu_watts = ?, tgp_watts = ? "
+                   + "WHERE part_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, gpuChipset);
+            ps.setInt(2, vramCapacityGb);
+            ps.setInt(3, recommendedPsuWatts);
+            ps.setInt(4, Math.max(75, recommendedPsuWatts / 2));
+            ps.setInt(5, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

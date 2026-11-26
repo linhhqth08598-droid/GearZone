@@ -50,18 +50,37 @@ public class CartServlet extends HttpServlet {
             try {
                 int partId = Integer.parseInt(request.getParameter("partId"));
                 String q = request.getParameter("quantity");
-                String err = service.addPart(user.getUserId(), partId, q == null || q.isEmpty() ? 1 : Integer.parseInt(q));
+                int qty = (q == null || q.isEmpty()) ? 1 : Integer.parseInt(q);
+                boolean isBuyNow = "1".equals(request.getParameter("buyNow"));
+                if (isBuyNow) {
+                    String err = service.prepareBuyNow(user.getUserId(), partId, qty);
+                    if (err == null) {
+                        session.setAttribute("buyNowPartId", partId);
+                        session.setAttribute("buyNowQty", qty);
+                        response.sendRedirect(request.getContextPath() + "/checkout?buyNow=1");
+                    } else {
+                        session.setAttribute("error", err);
+                        String back = request.getHeader("Referer");
+                        String target = request.getContextPath() + "/product";
+                        if (back != null) {
+                            int i = back.indexOf(request.getContextPath() + "/");
+                            if (i >= 0 && back.startsWith("http") && !back.contains("/cart")) target = back.substring(i);
+                        }
+                        response.sendRedirect(target);
+                    }
+                    return;
+                }
+                String err = service.addPart(user.getUserId(), partId, qty);
                 if (err == null) session.setAttribute("message", "Đã thêm vào giỏ hàng.");
                 else session.setAttribute("error", err);
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "Dữ liệu không hợp lệ!");
             }
-            // Ở lại trang đang xem (danh sách / chi tiết / trang chủ); chỉ chuyển sang /cart khi bấm "Mua ngay"
+            // Ở lại trang đang xem (danh sách / chi tiết / trang chủ) khi thêm vào giỏ
             String ctx = request.getContextPath();
             String back = request.getHeader("Referer");
             String target = ctx + "/product";
-            if ("1".equals(request.getParameter("buyNow"))) target = ctx + "/cart";
-            else if (back != null) {
+            if (back != null) {
                 int i = back.indexOf(ctx + "/");
                 if (i >= 0 && back.startsWith("http") && !back.contains("/cart")) target = back.substring(i);
             }
@@ -74,20 +93,29 @@ public class CartServlet extends HttpServlet {
                 service.remove(user.getUserId(), cartId);
                 session.setAttribute("message", "Đã xóa khỏi giỏ hàng.");
             } else if ("update".equals(request.getParameter("action"))) {
-                boolean ok = service.updateQuantity(user.getUserId(), cartId, Integer.parseInt(request.getParameter("quantity")));
+                int reqQty = Integer.parseInt(request.getParameter("quantity"));
+                boolean ok = service.updateQuantity(user.getUserId(), cartId, reqQty);
                 if ("1".equals(request.getParameter("ajax"))) {
                     // Cập nhật không tải lại trang: trả JSON để trang cập nhật thành tiền/tổng ngay
-                    double total = 0, lineTotal = 0; boolean shortage = false; int available = 0;
-                    for (CartService.CartLine l : service.getCart(user.getUserId())) {
+                    double total = 0, lineTotal = 0; boolean shortage = false; int available = 0; boolean removed = false;
+                    java.util.List<CartService.CartLine> currentLines = service.getCart(user.getUserId());
+                    for (CartService.CartLine l : currentLines) {
                         total += l.getLineTotal();
                         if (l.getCartId() == cartId) { lineTotal = l.getLineTotal(); shortage = l.isShortage(); available = l.getAvailable(); }
                     }
+                    if (ok && reqQty == 0) {
+                        removed = true;
+                    }
+                    session.setAttribute("cartCount", currentLines.size());
                     response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"success\":" + ok + ",\"lineTotal\":" + (long) lineTotal
+                    response.getWriter().write("{\"success\":" + ok + ",\"removed\":" + removed
+                            + ",\"cartCount\":" + currentLines.size() + ",\"lineTotal\":" + (long) lineTotal
                             + ",\"total\":" + (long) total + ",\"shortage\":" + shortage + ",\"available\":" + available + "}");
                     return;
                 }
-                if (!ok) session.setAttribute("error", "Số lượng phải từ 1 đến 99!");
+                if (!ok && reqQty < 0) {
+                    session.setAttribute("error", "Số lượng không được nhỏ hơn 0!");
+                }
             }
         } catch (NumberFormatException e) {
             session.setAttribute("error", "Dữ liệu không hợp lệ!");

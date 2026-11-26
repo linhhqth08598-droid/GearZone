@@ -14,7 +14,7 @@
         <c:remove var="error" scope="session"/>
     </c:if>
 
-    <form action="${pageContext.request.contextPath}/checkout" method="POST">
+    <form action="${pageContext.request.contextPath}/checkout${buyNowMode ? '?buyNow=1' : ''}" method="POST">
         <div class="row g-3">
             <div class="col-lg-7">
                 <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body p-3">
@@ -104,12 +104,13 @@
 <script>
 (function () {
     var base = '${pageContext.request.contextPath}/checkout';
+    var buyNow = ${buyNowMode ? 'true' : 'false'};
     var vnd = function (n) { return Math.round(n).toLocaleString('vi-VN') + ' ₫'; };
     var msg = document.getElementById('couponMsg');
     function refresh() {
         var m = document.querySelector('input[name=shippingMethodId]:checked');
         var code = document.getElementById('couponCode').value.trim();
-        var url = base + '?action=preview&code=' + encodeURIComponent(code) + '&shippingMethodId=' + (m ? m.value : 0);
+        var url = base + '?action=preview' + (buyNow ? '&buyNow=1' : '') + '&code=' + encodeURIComponent(code) + '&shippingMethodId=' + (m ? m.value : 0);
         fetch(url, {headers: {'Accept': 'application/json'}}).then(function (r) { return r.json(); }).then(function (d) {
             var fee = Math.max(d.fee - d.shipDiscount, 0);
             document.getElementById('sumFee').textContent = vnd(fee);

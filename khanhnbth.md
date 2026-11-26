@@ -9,13 +9,17 @@
 
 ---
 
-## 1. Hiện trạng code (cập nhật 25/11/2026)
+## 1. Hiện trạng code (cập nhật 27/11/2026)
 
 **Đã có sẵn & đã cập nhật**
 - Model cho toàn bộ bảng, util: `FileUploadUtil`, `PaginationUtil`, `FormatUtil`, `Validator`, `Constants`.
 - 26 DAO + `PurchaseOrderDetailDTO`: `PartsDAO`, `CategoriesDAO`, `BrandsDAO`, `ProductSeriesDAO`, `PartMediaDAO`, `PartSerialsDAO`, 10 bảng thông số (`SpecCpuDAO`, `SpecMainboardDAO`, `SpecRamDAO`, `SpecVgaDAO`, `SpecStorageDAO`, `SpecPsuDAO`, `SpecCaseDAO`, `SpecCoolerDAO`, `SpecMonitorDAO`, `SpecPeripheralDAO`), `CompatibilityConflictLogsDAO`, `ContactDAO`, `GamesDAO`, `GameFpsBenchmarksDAO`, `InventoryDAO`, `InventoryTransactionsDAO`, `SuppliersDAO`, `PurchaseOrdersDAO`, `PurchaseOrderDetailsDAO`, `SupplierReturnsDAO`.
 - 18 Servlet (`HomeServlet`, `ProductServlet`, `CompareServlet`, `CompatibilityApiServlet`, `UploadApiServlet`, `ContactServlet`, `MediaServlet`, `AdminProductServlet`, `AdminCatalogServlet`, `AdminCompatibilityServlet`, `AdminGameServlet`, `AdminInventoryServlet`, `AdminInventoryTransactionsServlet`, `AdminPartSerialsServlet`, `AdminPurchaseServlet`, `AdminPurchaseDetailServlet`, `AdminPurchaseReturnsServlet`, `AdminSupplierServlet`) và 7 Service (`ProductService`, `CatalogService`, `CompatibilityService`, `InventoryService`, `SupplierService`, `GameService`, `SpecService`).
 - 16 JSP trong `web/views/khanhnb08894/`: `home.jsp`, `contact.jsp`, `product/` (`list.jsp`, `detail.jsp`, `compare.jsp`), `admin/` (`products.jsp`, `product_form.jsp`, `catalog_brand.jsp`, `catalog_category.jsp`, `compatibility.jsp`, `games.jsp`, `inventory.jsp`, `purchases.jsp`, `purchase_form.jsp`, `suppliers.jsp`, `supplier_returns.jsp`).
+- Bổ sung ngày 27/11/2026 (hỗ trợ giỏ hàng / mua ngay / chi tiết sản phẩm gắn với tồn kho & hiển thị kho admin):
+  - `AdminInventoryServlet` + `web/views/khanhnb08894/admin/inventory.jsp`: truyền và hiển thị danh sách **Cảnh báo sắp hết / hết hàng** (`getLowOrOutOfStockItems`) và **Tồn kho lâu ngày** (`getAgingStockItems` với bộ lọc `idleDays`).
+  - `ProductServlet` + `web/views/khanhnb08894/product/detail.jsp`: truyền `availableStock` từ `InventoryService.getAvailable(partId)`, hiển thị số lượng sẵn có và bộ chọn số lượng cho cả **Thêm vào giỏ** và **Mua ngay**.
+  - Phối hợp sửa lỗi giỏ hàng / mua ngay (`CartService`, `CartServlet`, `CheckoutServlet`, `PromotionService`, `OrderService`, `cart.jsp`, `payment.jsp`): tách riêng chế độ **Mua ngay** (`buyNow=1`) khỏi giỏ hàng chung, giữ các món đang để trong giỏ, không kéo dòng `quantity <= 0` vào đơn hàng, sửa lỗi biên dịch `CartService` & `PromotionService.previewItems(...)`, và cố định độ rộng cột bảng giỏ hàng (`table-layout:fixed` + `<colgroup>`).
 
 ---
 
@@ -32,7 +36,7 @@
 
 ---
 
-## 3. Lộ trình thực hiện (theo tuần – cập nhật 25/11/2026)
+## 3. Lộ trình thực hiện (theo tuần – cập nhật 27/11/2026)
 
 ### Tuần 0 – Chuẩn bị (≈ 0,5 tuần)
 - [x] Import `GearZone.sql`, chạy được `DBConnect`, build NetBeans + Tomcat 10+.
@@ -49,7 +53,7 @@
 ### Tuần 2 – Module A (phần 2) + hiển thị cho khách (≈ 29h)
 - [x] `UploadApiServlet` (`/api/upload`): hỗ trợ upload ảnh (`<= 10MB`), video (`<= 50MB`) hoặc link media vào bảng `part_media` và đặt ảnh chính (`is_primary`) (UC 34–35); đã test `GET` và `POST` thành công.
 - [ ] Cập nhật thông số (UC 33), giá & giá khuyến mãi (UC 36–37), tra cứu theo mã sản phẩm (UC 40).
-- [x] `ProductServlet` + `list.jsp` + `detail.jsp`: đã có bộ lọc đa tiêu chí, sắp xếp và phân trang (`PaginationUtil`).
+- [x] `ProductServlet` + `list.jsp` + `detail.jsp`: đã có bộ lọc đa tiêu chí, sắp xếp, phân trang (`PaginationUtil`), hiển thị số lượng sẵn có và bộ chọn số lượng khi thêm vào giỏ / mua ngay.
 
 ### Tuần 3 – Module B: Kiểm tra tương thích (53,6h)
 - [x] `CompatibilityService` đã có engine kiểm tra nhiều cặp linh kiện, áp dụng quy tắc động `compatibility_rules`, gợi ý thay thế, hỗ trợ `checkBuild(List<Integer>)` và ghi log xung đột vào `compatibility_conflict_logs`.
@@ -60,8 +64,8 @@
 - [x] `GameService` + `AdminGameServlet` + `games.jsp` + `CompareServlet` + `compare.jsp` + mục sidebar **So sánh linh kiện**: so sánh theo từng loại danh mục, hiệu năng/giá và FPS benchmark VGA (UC 158–160); đã test thêm game & benchmark trên `/admin/game`.
 
 ### Tuần 5 – Module D: Quản lý kho (49,4h)
-- [x] `InventoryService` + `AdminInventoryServlet` + `inventory.jsp` + `AdminInventoryTransactionsServlet`: đã có `getAvailable`, `reserve`, `release`, `exportStock`, `importStock`, điều chỉnh kiểm kê/lỗi/thất thoát (`adjustStock`), cảnh báo sắp hết/hết hàng (`getLowOrOutOfStockItems`), tồn lâu ngày (`getAgingStockItems`), thống kê tồn kho theo danh mục (`getCategoryStockSummary` – UC 345), luồng Serial cơ bản và đã cập nhật header/sidebar/footer admin cho trang Lịch sử biến động kho.
-- [ ] Gắn hiển thị cảnh báo sắp hết/hết hàng & tồn lâu ngày lên giao diện và test các kịch bản PO/Serial chưa test.
+- [x] `InventoryService` + `AdminInventoryServlet` + `inventory.jsp` + `AdminInventoryTransactionsServlet`: đã có `getAvailable`, `reserve`, `release`, `exportStock`, `importStock`, điều chỉnh kiểm kê/lỗi/thất thoát (`adjustStock`), cảnh báo sắp hết/hết hàng (`getLowOrOutOfStockItems`), tồn lâu ngày (`getAgingStockItems`), thống kê tồn kho theo danh mục (`getCategoryStockSummary` – UC 345), luồng Serial cơ bản, layout admin cho lịch sử biến động kho và đã gắn hiển thị cảnh báo sắp hết/hết hàng + tồn lâu ngày lên `inventory.jsp`.
+- [ ] Test các kịch bản PO/Serial chưa test trên DB thật.
 
 ### Tuần 6 – Module E: Nhà cung cấp & đơn nhập (35,1h)
 - [x] `SupplierService`, `AdminSupplierServlet`, `AdminPurchaseServlet`, `AdminPurchaseDetailServlet`, `AdminPurchaseReturnsServlet`, `purchases.jsp` và `supplier_returns.jsp` đã kết nối quản lý NCC, PO, mốc thời gian chốt/nhận hàng, lịch sử giao dịch theo NCC và phiếu trả hàng NCC.
@@ -78,9 +82,9 @@
 |---|---|---|---|
 | Tuần 0 – Chuẩn bị | 0,5 tuần | ◐ Một phần | Build/DB đã chạy; còn chốt nhóm & branch |
 | A1 – Danh mục, thêm sản phẩm | Tuần 1 | 🔄 Gần xong | Đã cập nhật/test trạng thái & audit log sản phẩm; còn rà full spec khi sửa |
-| A2 – Cập nhật & hiển thị sản phẩm | Tuần 2 | ◐ Một phần | Đã làm & test `UploadApiServlet` + lọc/sắp xếp/phân trang |
+| A2 – Cập nhật & hiển thị sản phẩm | Tuần 2 | 🔄 Gần xong | Đã làm `UploadApiServlet`, lọc/sắp xếp/phân trang, tồn sẵn có & chọn SL ở chi tiết SP |
 | B – Tương thích | Tuần 3 | 🔄 Gần xong | Đã làm & test quy tắc động + `/api/compatibility` |
 | C – Lọc, sắp xếp, so sánh | Tuần 4 | 🔄 Gần xong | Đã làm & test `/admin/game`, so sánh theo loại & bộ lọc/phân trang |
-| D – Kho | Tuần 5 | 🔄 Gần xong | Đã thêm layout admin cho lịch sử biến động kho, cảnh báo & tồn lâu ngày |
+| D – Kho | Tuần 5 | 🔄 Gần xong | Đã gắn cảnh báo sắp hết/hết hàng & tồn lâu ngày lên `inventory.jsp`; chờ test PO/Serial |
 | E – NCC & đơn nhập | Tuần 6 | ◐ Một phần | Đã làm `SupplierService`, lịch sử giao dịch PO, phiếu trả hàng NCC (chờ test) |
 | Tích hợp, test, hoàn thiện | Tuần 7 | ☐ | |

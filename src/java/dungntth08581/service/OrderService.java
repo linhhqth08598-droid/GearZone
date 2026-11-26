@@ -341,7 +341,12 @@ public class OrderService {
      * toán.
      */
     public PlaceResult placeOrder(int userId, ShippingAddresses addr, int shippingMethodId, String note, String couponCode, String paymentMethod) {
+        return placeOrder(userId, addr, shippingMethodId, note, couponCode, paymentMethod, null, null);
+    }
+
+    public PlaceResult placeOrder(int userId, ShippingAddresses addr, int shippingMethodId, String note, String couponCode, String paymentMethod, Integer buyNowPartId, Integer buyNowQty) {
         PlaceResult res = new PlaceResult();
+        final boolean isBuyNow = buyNowPartId != null && buyNowPartId > 0 && buyNowQty != null && buyNowQty > 0;
         final String method = PaymentService.METHOD_PAYOS.equalsIgnoreCase(paymentMethod) ? PaymentService.METHOD_PAYOS : PaymentService.METHOD_COD;
         if (PaymentService.METHOD_PAYOS.equals(method) && !fourSome.util.PayOSUtil.isConfigured()) {
             res.error = "Thanh toán online chưa được cấu hình, vui lòng chọn thanh toán khi nhận hàng!";
@@ -358,29 +363,47 @@ public class OrderService {
         try (Connection con = DBConnect.getConnection()) {
             con.setAutoCommit(false);
             try {
-                // 1. Giỏ hàng + giá từ DB
+                // 1. Giỏ hàng hoặc món Mua ngay riêng + giá từ DB
                 List<int[]> items = new ArrayList<>();           // {partId, qty}
                 List<BigDecimal[]> prices = new ArrayList<>();   // {unit_price, cost_price}
                 List<String> names = new ArrayList<>();
                 BigDecimal total = BigDecimal.ZERO;
-                String sel = "SELECT c.part_id, c.quantity, ISNULL(p.sale_price, p.base_price), p.avg_cost_price, p.part_name "
-                        + "FROM cart_items c JOIN parts p ON p.part_id = c.part_id "
-                        + "WHERE c.user_id = ? AND c.status = 'ACTIVE' AND p.status = 'ACTIVE'";
-                try (PreparedStatement ps = con.prepareStatement(sel)) {
-                    ps.setInt(1, userId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            items.add(new int[]{rs.getInt(1), rs.getInt(2)});
-                            BigDecimal unit = rs.getBigDecimal(3);
-                            prices.add(new BigDecimal[]{unit, rs.getBigDecimal(4)});
-                            names.add(rs.getString(5));
-                            total = total.add(unit.multiply(BigDecimal.valueOf(rs.getInt(2))));
+                if (isBuyNow) {
+                    String selBuyNow = "SELECT p.part_id, ?, ISNULL(p.sale_price, p.base_price), p.avg_cost_price, p.part_name "
+                            + "FROM parts p WHERE p.part_id = ? AND p.status = 'ACTIVE'";
+                    try (PreparedStatement ps = con.prepareStatement(selBuyNow)) {
+                        ps.setInt(1, buyNowQty);
+                        ps.setInt(2, buyNowPartId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            while (rs.next()) {
+                                items.add(new int[]{rs.getInt(1), rs.getInt(2)});
+                                BigDecimal unit = rs.getBigDecimal(3);
+                                prices.add(new BigDecimal[]{unit, rs.getBigDecimal(4)});
+                                names.add(rs.getString(5));
+                                total = total.add(unit.multiply(BigDecimal.valueOf(rs.getInt(2))));
+                            }
+                        }
+                    }
+                } else {
+                    String sel = "SELECT c.part_id, c.quantity, ISNULL(p.sale_price, p.base_price), p.avg_cost_price, p.part_name "
+                            + "FROM cart_items c JOIN parts p ON p.part_id = c.part_id "
+                            + "WHERE c.user_id = ? AND c.status = 'ACTIVE' AND p.status = 'ACTIVE' AND c.quantity > 0";
+                    try (PreparedStatement ps = con.prepareStatement(sel)) {
+                        ps.setInt(1, userId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            while (rs.next()) {
+                                items.add(new int[]{rs.getInt(1), rs.getInt(2)});
+                                BigDecimal unit = rs.getBigDecimal(3);
+                                prices.add(new BigDecimal[]{unit, rs.getBigDecimal(4)});
+                                names.add(rs.getString(5));
+                                total = total.add(unit.multiply(BigDecimal.valueOf(rs.getInt(2))));
+                            }
                         }
                     }
                 }
                 if (items.isEmpty()) {
                     con.rollback();
-                    res.error = "Giỏ hàng trống hoặc sản phẩm đã ngừng bán!";
+                    res.error = isBuyNow ? "Sản phẩm không còn được bán!" : "Giỏ hàng trống hoặc sản phẩm đã ngừng bán!";
                     return res;
                 }
 
@@ -399,7 +422,10 @@ public class OrderService {
                     }
                 }
                 // 2b. Khuyến mãi tự động + mã giảm giá (UC 224, 241-247), tính trong cùng transaction
-                PromotionService.Result disc = promotions.calculate(con, promotions.loadCartItems(con, userId), fee, userId, couponCode);
+                List<PromotionService.Item> promoItems = isBuyNow
+                        ? new CartService().toPromotionItems(new CartService().getBuyNowLines(buyNowPartId, buyNowQty))
+                        : promotions.loadCartItems(con, userId);
+                PromotionService.Result disc = promotions.calculate(con, promoItems, fee, userId, couponCode);
                 if (disc.error != null) {
                     con.rollback();
                     res.error = disc.error;
@@ -484,7 +510,7 @@ public class OrderService {
                     }
                 }
 
-                // 5. Ghi thanh toán (COD hoặc PAYOS, đều PENDING) + xóa giỏ
+                // 5. Ghi thanh toán (COD hoặc PAYOS, đều PENDING) + xóa giỏ (nếu đặt từ giỏ; chế độ Mua ngay giữ nguyên giỏ hàng)
                 try (PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO payments (order_id, payment_method, amount, payment_status, created_at) VALUES (?, ?, ?, 'PENDING', SYSDATETIME())")) {
                     ps.setInt(1, orderId);
@@ -492,9 +518,11 @@ public class OrderService {
                     ps.setBigDecimal(3, finalAmount);
                     ps.executeUpdate();
                 }
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM cart_items WHERE user_id = ?")) {
-                    ps.setInt(1, userId);
-                    ps.executeUpdate();
+                if (!isBuyNow) {
+                    try (PreparedStatement ps = con.prepareStatement("DELETE FROM cart_items WHERE user_id = ?")) {
+                        ps.setInt(1, userId);
+                        ps.executeUpdate();
+                    }
                 }
                 con.commit();
 

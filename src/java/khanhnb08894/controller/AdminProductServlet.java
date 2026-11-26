@@ -58,6 +58,7 @@ public class AdminProductServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setAttribute("adminLayout", Boolean.TRUE);
         String action = request.getServletPath();
 
         request.setAttribute("categories", categoriesDAO.getAll());
@@ -83,6 +84,7 @@ public class AdminProductServlet extends HttpServlet {
             }
 
             request.setAttribute("parts", partsList);
+            request.setAttribute("partSpecsJson", buildPartSpecsJson(partsList));
             
             // Giữ lại giá trị trên form để hiển thị không bị mất sau khi ấn Lọc
             request.setAttribute("paramKeyword", keyword);
@@ -92,12 +94,19 @@ public class AdminProductServlet extends HttpServlet {
             request.getRequestDispatcher("/views/khanhnb08894/admin/products.jsp").forward(request, response);
             
         } else if ("/admin/product-form".equals(action)) {
-            // THÊM ĐOẠN NÀY ĐỂ XỬ LÝ KHI TRUY CẬP /admin/product-form
-            // Lấy thêm danh sách Series (dòng sản phẩm) để hiển thị trong form nếu cần
             ProductSeriesDAO seriesDAO = new ProductSeriesDAO();
             request.setAttribute("seriesList", seriesDAO.getAll());
-            
-            // Chuyển hướng tới file JSP chứa form thêm mới linh kiện
+            String editIdParam = request.getParameter("id");
+            if (editIdParam != null && !editIdParam.trim().isEmpty()) {
+                try {
+                    int editId = Integer.parseInt(editIdParam.trim());
+                    Parts editPart = partsDAO.findById(editId);
+                    if (editPart != null) {
+                        request.setAttribute("editPart", editPart);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
             request.getRequestDispatcher("/views/khanhnb08894/admin/product_form.jsp").forward(request, response);
         }
     }
@@ -111,7 +120,7 @@ public class AdminProductServlet extends HttpServlet {
 
         try {
             // 1. CHỨC NĂNG THÊM MỚI
-            if ("save".equals(action) || "saveProduct".equals(action)) {
+            if ("save".equals(action) || "saveAndContinue".equals(action) || "saveProduct".equals(action)) {
                 int categoryId = Integer.parseInt(request.getParameter("categoryId"));
                 int brandId = Integer.parseInt(request.getParameter("brandId"));
                 String productCode = request.getParameter("productCode");
@@ -202,7 +211,11 @@ public class AdminProductServlet extends HttpServlet {
                 }
 
                 session.setAttribute("message", "Thêm linh kiện thành công!");
-                response.sendRedirect(request.getContextPath() + "/admin/products");
+                if ("saveAndContinue".equals(action)) {
+                    response.sendRedirect(request.getContextPath() + "/admin/product-form");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/products");
+                }
 
             // 2. CHỨC NĂNG CẬP NHẬT (SỬA)
             } else if ("updateProduct".equals(action)) {
@@ -235,6 +248,7 @@ public class AdminProductServlet extends HttpServlet {
                     if (statusParam != null && statusParam.matches("ACTIVE|HIDDEN|DISCONTINUED")) {
                         partsDAO.setStatus(partId, statusParam);
                     }
+                    syncSpecByCategory(request, partId, categoryId, true);
                     saveImage(request, partId);
                     if (adminUser != null) {
                         new linhhqth08598.service.AuditLogService().logAction(
@@ -287,5 +301,280 @@ public class AdminProductServlet extends HttpServlet {
             session.setAttribute("error", "Lỗi xử lý linh kiện: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/products");
         }
+    }
+
+    private void syncSpecByCategory(HttpServletRequest request, int partId, int categoryId, boolean isUpdate) {
+        try {
+            if (categoryId == 1) {
+                String socketStr = request.getParameter("socketId");
+                String coresStr = request.getParameter("cores");
+                if (socketStr != null && !socketStr.trim().isEmpty() && coresStr != null && !coresStr.trim().isEmpty()) {
+                    int socketId = Integer.parseInt(socketStr.trim());
+                    int cores = Integer.parseInt(coresStr.trim());
+                    int threads = parseOrDefault(request.getParameter("threads"), cores * 2);
+                    double baseClock = parseDoubleOrDefault(request.getParameter("baseClock"), 2.5);
+                    double boostClock = parseDoubleOrDefault(request.getParameter("boostClock"), 4.0);
+                    int tdp = parseOrDefault(request.getParameter("tdp"), 65);
+                    if (isUpdate) {
+                        if (!cpuDAO.update(partId, socketId, cores, threads, baseClock, boostClock, tdp)) {
+                            cpuDAO.insert(partId, socketId, cores, threads, baseClock, boostClock, tdp);
+                        }
+                    } else {
+                        cpuDAO.insert(partId, socketId, cores, threads, baseClock, boostClock, tdp);
+                    }
+                }
+            } else if (categoryId == 2) {
+                String socketStr = request.getParameter("socketId");
+                String chipset = request.getParameter("chipset");
+                if (socketStr != null && !socketStr.trim().isEmpty() && chipset != null && !chipset.trim().isEmpty()) {
+                    int socketId = Integer.parseInt(socketStr.trim());
+                    String formFactor = request.getParameter("formFactor");
+                    String ramStd = request.getParameter("ramStandard");
+                    int ramSlots = parseOrDefault(request.getParameter("ramSlots"), 4);
+                    if (isUpdate) {
+                        if (!mbDAO.update(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots)) {
+                            mbDAO.insert(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots);
+                        }
+                    } else {
+                        mbDAO.insert(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots);
+                    }
+                }
+            } else if (categoryId == 3) {
+                String ddrType = request.getParameter("ddrType");
+                String capStr = request.getParameter("capacityGb");
+                if (ddrType != null && !ddrType.trim().isEmpty() && capStr != null && !capStr.trim().isEmpty()) {
+                    int cap = Integer.parseInt(capStr.trim());
+                    int bus = parseOrDefault(request.getParameter("busSpeedMhz"), 3200);
+                    int modCount = parseOrDefault(request.getParameter("moduleCount"), 1);
+                    String cas = request.getParameter("casLatency");
+                    if (isUpdate) {
+                        if (!ramDAO.update(partId, ddrType.trim(), cap, bus, modCount, cas)) {
+                            ramDAO.insert(partId, ddrType.trim(), cap, bus, modCount, cas);
+                        }
+                    } else {
+                        ramDAO.insert(partId, ddrType.trim(), cap, bus, modCount, cas);
+                    }
+                }
+            } else if (categoryId == 4) {
+                String gpuChipset = request.getParameter("gpuChipset");
+                String vramStr = request.getParameter("vramCapacityGb");
+                if (gpuChipset != null && !gpuChipset.trim().isEmpty() && vramStr != null && !vramStr.trim().isEmpty()) {
+                    int vram = Integer.parseInt(vramStr.trim());
+                    int recPsu = parseOrDefault(request.getParameter("recommendedPsuWatts"), 550);
+                    if (isUpdate) {
+                        if (!vgaDAO.update(partId, gpuChipset.trim(), vram, recPsu)) {
+                            vgaDAO.insert(partId, gpuChipset.trim(), vram, recPsu);
+                        }
+                    } else {
+                        vgaDAO.insert(partId, gpuChipset.trim(), vram, recPsu);
+                    }
+                }
+            } else if (categoryId == 5) {
+                String storageType = request.getParameter("storageType");
+                String capStr = request.getParameter("capacityGb");
+                if (storageType != null && !storageType.trim().isEmpty() && capStr != null && !capStr.trim().isEmpty()) {
+                    int cap = Integer.parseInt(capStr.trim());
+                    String formFactor = request.getParameter("formFactor");
+                    String iface = request.getParameter("interface");
+                    Integer readSp = parseNullableInt(request.getParameter("readSpeedMbps"));
+                    Integer writeSp = parseNullableInt(request.getParameter("writeSpeedMbps"));
+                    if (isUpdate) {
+                        if (!storageDAO.update(partId, storageType.trim(), formFactor, iface, cap, readSp, writeSp)) {
+                            storageDAO.insert(partId, storageType.trim(), formFactor, iface, cap, readSp, writeSp);
+                        }
+                    } else {
+                        storageDAO.insert(partId, storageType.trim(), formFactor, iface, cap, readSp, writeSp);
+                    }
+                }
+            } else if (categoryId == 6) {
+                String wattStr = request.getParameter("wattage");
+                if (wattStr != null && !wattStr.trim().isEmpty()) {
+                    int watt = Integer.parseInt(wattStr.trim());
+                    String eff = request.getParameter("efficiencyRating");
+                    String modType = request.getParameter("modularType");
+                    int pcieCnt = parseOrDefault(request.getParameter("pcieConnectorsCount"), 2);
+                    boolean has12v = "1".equals(request.getParameter("has12vhpwr")) || "true".equalsIgnoreCase(request.getParameter("has12vhpwr"));
+                    int epsCnt = parseOrDefault(request.getParameter("epsConnectorsCount"), 1);
+                    String ff = request.getParameter("formFactor");
+                    if (isUpdate) {
+                        if (!psuDAO.update(partId, watt, eff, modType, pcieCnt, has12v, epsCnt, ff)) {
+                            psuDAO.insert(partId, watt, eff, modType, pcieCnt, has12v, epsCnt, ff);
+                        }
+                    } else {
+                        psuDAO.insert(partId, watt, eff, modType, pcieCnt, has12v, epsCnt, ff);
+                    }
+                }
+            } else if (categoryId == 7) {
+                String caseFormFactor = request.getParameter("caseFormFactor");
+                if (caseFormFactor != null && !caseFormFactor.trim().isEmpty()) {
+                    int maxVga = parseOrDefault(request.getParameter("maxVgaLengthMm"), 320);
+                    int maxCooler = parseOrDefault(request.getParameter("maxCpuCoolerHeightMm"), 160);
+                    String fanInfo = request.getParameter("fanSupportInfo");
+                    if (isUpdate) {
+                        if (!caseDAO.update(partId, caseFormFactor.trim(), maxVga, maxCooler, fanInfo)) {
+                            caseDAO.insert(partId, caseFormFactor.trim(), maxVga, maxCooler, fanInfo);
+                        }
+                    } else {
+                        caseDAO.insert(partId, caseFormFactor.trim(), maxVga, maxCooler, fanInfo);
+                    }
+                }
+            } else if (categoryId == 8) {
+                String coolerType = request.getParameter("coolerType");
+                if (coolerType != null && !coolerType.trim().isEmpty()) {
+                    int maxTdp = parseOrDefault(request.getParameter("maxTdp"), 180);
+                    int heightMm = parseOrDefault(request.getParameter("heightMm"), 155);
+                    Integer radSize = parseNullableInt(request.getParameter("radiatorSizeMm"));
+                    String sockets = request.getParameter("supportedSockets");
+                    if (isUpdate) {
+                        if (!coolerDAO.update(partId, coolerType.trim(), heightMm, radSize, sockets, maxTdp)) {
+                            coolerDAO.insert(partId, coolerType.trim(), heightMm, radSize, sockets, maxTdp);
+                        }
+                    } else {
+                        coolerDAO.insert(partId, coolerType.trim(), heightMm, radSize, sockets, maxTdp);
+                    }
+                }
+            } else if (categoryId == 9) {
+                String screenSize = request.getParameter("screenSize");
+                if (screenSize != null && !screenSize.trim().isEmpty()) {
+                    String res = request.getParameter("resolution");
+                    int hz = parseOrDefault(request.getParameter("refreshRate"), 60);
+                    String panel = request.getParameter("panelType");
+                    Double respMs = parseNullableDouble(request.getParameter("responseTimeMs"));
+                    String sync = request.getParameter("adaptiveSync");
+                    int hdmi = parseOrDefault(request.getParameter("hdmiPorts"), 1);
+                    int dp = parseOrDefault(request.getParameter("displayportPorts"), 1);
+                    if (isUpdate) {
+                        if (!monitorDAO.update(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp)) {
+                            monitorDAO.insert(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp);
+                        }
+                    } else {
+                        monitorDAO.insert(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp);
+                    }
+                }
+            } else if (categoryId == 10) {
+                String gearType = request.getParameter("gearType");
+                if (gearType != null && !gearType.trim().isEmpty()) {
+                    String conn = request.getParameter("connectivity");
+                    String swOrDpi = request.getParameter("switchOrDpi");
+                    if (isUpdate) {
+                        if (!peripheralDAO.update(partId, gearType.trim(), conn, swOrDpi)) {
+                            peripheralDAO.insert(partId, gearType.trim(), conn, swOrDpi);
+                        }
+                    } else {
+                        peripheralDAO.insert(partId, gearType.trim(), conn, swOrDpi);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int parseOrDefault(String raw, int defVal) {
+        if (raw == null || raw.trim().isEmpty()) return defVal;
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException e) {
+            return defVal;
+        }
+    }
+
+    private double parseDoubleOrDefault(String raw, double defVal) {
+        if (raw == null || raw.trim().isEmpty()) return defVal;
+        try {
+            return Double.parseDouble(raw.trim());
+        } catch (NumberFormatException e) {
+            return defVal;
+        }
+    }
+
+    private Integer parseNullableInt(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return null;
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Double parseNullableDouble(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return null;
+        try {
+            return Double.parseDouble(raw.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String buildPartSpecsJson(List<Parts> partsList) {
+        StringBuilder root = new StringBuilder("{");
+        if (partsList == null || partsList.isEmpty()) {
+            return "{}";
+        }
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        for (Parts p : partsList) {
+            if (p != null && p.getPartId() > 0) ids.add(p.getPartId());
+        }
+        if (ids.isEmpty()) return "{}";
+
+        java.util.Map<Integer, java.util.Map<String, String>> specByPart = new java.util.HashMap<>();
+        String[] tables = {
+            "spec_cpu", "spec_mainboard", "spec_ram", "spec_vga", "spec_storage",
+            "spec_psu", "spec_case", "spec_cooler", "spec_monitor", "spec_peripheral"
+        };
+        try (java.sql.Connection con = fourSome.url.DBConnect.getConnection()) {
+            for (String tbl : tables) {
+                String sql = "SELECT * FROM [" + tbl + "]";
+                try (java.sql.PreparedStatement ps = con.prepareStatement(sql);
+                     java.sql.ResultSet rs = ps.executeQuery()) {
+                    java.sql.ResultSetMetaData md = rs.getMetaData();
+                    while (rs.next()) {
+                        int pid = rs.getInt("part_id");
+                        if (!ids.contains(pid)) continue;
+                        java.util.Map<String, String> map = specByPart.computeIfAbsent(pid, k -> new java.util.HashMap<>());
+                        for (int i = 1; i <= md.getColumnCount(); i++) {
+                            String col = md.getColumnLabel(i).toLowerCase();
+                            Object val = rs.getObject(i);
+                            if (val != null) {
+                                String strVal = (val instanceof java.math.BigDecimal)
+                                        ? ((java.math.BigDecimal) val).stripTrailingZeros().toPlainString()
+                                        : String.valueOf(val);
+                                map.put(col, strVal);
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        boolean firstPart = true;
+        for (Integer pid : ids) {
+            java.util.Map<String, String> fields = specByPart.get(pid);
+            if (fields == null || fields.isEmpty()) continue;
+            if (!firstPart) root.append(",");
+            firstPart = false;
+            root.append("\"").append(pid).append("\":{");
+            boolean firstField = true;
+            for (java.util.Map.Entry<String, String> entry : fields.entrySet()) {
+                if (!firstField) root.append(",");
+                firstField = false;
+                root.append("\"").append(escapeJson(entry.getKey())).append("\":\"")
+                    .append(escapeJson(entry.getValue())).append("\"");
+            }
+            root.append("}");
+        }
+        root.append("}");
+        return root.toString();
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\r", "\\r")
+                .replace("\n", "\\n");
     }
 }

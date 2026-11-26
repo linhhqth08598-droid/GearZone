@@ -130,6 +130,98 @@
     </div>
 </div>
 
+<c:if test="${not empty lowStockItems or not empty agingStockItems}">
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-danger mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo sắp hết / hết hàng (<c:out value="${lowStockItems.size()}"/>)
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Linh kiện</th>
+                                    <th class="text-end">Khả dụng</th>
+                                    <th class="text-end">Ngưỡng</th>
+                                    <th class="text-center">Mức cảnh báo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="ls" items="${lowStockItems}">
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold"><c:out value="${ls['productCode']}"/></span> -
+                                            <c:out value="${ls['partName']}"/>
+                                        </td>
+                                        <td class="text-end fw-bold"><c:out value="${ls['availableStock']}"/></td>
+                                        <td class="text-end"><c:out value="${ls['lowStockThreshold']}"/></td>
+                                        <td class="text-center">
+                                            <c:choose>
+                                                <c:when test="${ls['alertType'] == 'OUT_OF_STOCK'}">
+                                                    <span class="badge bg-danger">Hết hàng</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge bg-warning text-dark">Sắp hết</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty lowStockItems}">
+                                    <tr><td colspan="4" class="text-center text-muted py-3">Không có mặt hàng sắp hết hoặc hết hàng.</td></tr>
+                                </c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h5 class="fw-bold text-warning mb-0">
+                            <i class="fas fa-clock me-2"></i>Tồn kho lâu ngày (&ge; <c:out value="${paramIdleDays}"/> ngày)
+                        </h5>
+                        <form action="${pageContext.request.contextPath}/admin/inventory" method="GET" class="d-flex align-items-center gap-2">
+                            <input type="number" name="idleDays" min="1" value="${paramIdleDays}" class="form-control form-control-sm" style="width: 80px;">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Lọc</button>
+                        </form>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Linh kiện</th>
+                                    <th class="text-end">Tồn kho</th>
+                                    <th class="text-end">Số ngày đứng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="ag" items="${agingStockItems}">
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold"><c:out value="${ag['productCode']}"/></span> -
+                                            <c:out value="${ag['partName']}"/>
+                                        </td>
+                                        <td class="text-end fw-semibold"><c:out value="${ag['stockQuantity']}"/></td>
+                                        <td class="text-end"><span class="badge bg-secondary"><c:out value="${ag['idleDays']}"/> ngày</span></td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty agingStockItems}">
+                                    <tr><td colspan="3" class="text-center text-muted py-3">Không có mặt hàng tồn kho lâu ngày.</td></tr>
+                                </c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</c:if>
+
 <c:if test="${not empty categorySummary}">
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
