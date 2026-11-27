@@ -21,6 +21,8 @@
   - `AdminInventoryServlet` + `web/views/khanhnb08894/admin/inventory.jsp`: truyền và hiển thị danh sách **Cảnh báo sắp hết / hết hàng** (`getLowOrOutOfStockItems`) và **Tồn kho lâu ngày** (`getAgingStockItems` với bộ lọc `idleDays`).
   - `ProductServlet` + `web/views/khanhnb08894/product/detail.jsp`: truyền `availableStock` từ `InventoryService.getAvailable(partId)`, hiển thị số lượng sẵn có và bộ chọn số lượng cho cả **Thêm vào giỏ** và **Mua ngay**.
   - Phối hợp sửa lỗi giỏ hàng / mua ngay (`CartService`, `CartServlet`, `CheckoutServlet`, `PromotionService`, `OrderService`, `cart.jsp`, `payment.jsp`): tách riêng chế độ **Mua ngay** (`buyNow=1`) khỏi giỏ hàng chung, giữ các món đang để trong giỏ, không kéo dòng `quantity <= 0` vào đơn hàng, sửa lỗi biên dịch `CartService` & `PromotionService.previewItems(...)`, và cố định độ rộng cột bảng giỏ hàng (`table-layout:fixed` + `<colgroup>`).
+  - **Sửa lỗi "sửa linh kiện không lưu" (`/admin/products`, `updateProduct`):** bấm Lưu thay đổi vẫn báo thành công nhưng giá trong DB không đổi (không có câu `UPDATE parts` nào tới SQL Server, POST trả 302 thay vì 303). Nguyên nhân: modal Sửa (và form `product_form.jsp`) gửi `multipart/form-data` kèm field của cả 10 loại linh kiện (~76 phần, kể cả section đang ẩn), vượt giới hạn `maxPartCount = 50` mặc định của Tomcat 10.1 nên Tomcat bỏ parse request, `request.getParameter("action")` trả `null` và servlet rơi xuống `sendRedirect` cuối hàm mà không báo lỗi. Cách sửa: thêm `syncSpecDisabled()` trong `products.jsp` và `product_form.jsp` để **disable input của các section thông số đang ẩn** (input disabled không được gửi), còn ~20–25 phần/request. Đồng thời hết lỗi trùng tên field giữa các section (`socketId`, `formFactor`, `capacityGb`, `hdmiPorts`, `displayportPorts`...) khiến `getParameter` có thể lấy nhầm giá trị của section ẩn. Đã test bằng request thật: sửa #121 (AMD Ryzen 7 9800X3D) giá gốc 10.900.000 / khuyến mãi 10.490.000 và thông số CPU đều lưu vào DB, POST trả 303; request có > 50 phần vẫn bị bỏ qua như cũ.
+  - **Lưu ý cho cả nhóm:** form `multipart/form-data` nào có hơn 50 field đều gặp lỗi tương tự (lỗi im lặng, không có exception). Nếu cần, có thể thêm `maxPartCount="-1"` vào `<Connector port="8080">` trong `conf/server.xml` của từng máy, nhưng cách an toàn hơn là chỉ gửi các field cần thiết.
 
 ---
 
@@ -48,11 +50,12 @@
 ### Tuần 1 – Module A (phần 1): Danh mục & sản phẩm (≈ 30h)
 - [x] `CategoriesDAO`, `BrandsDAO`, `ProductSeriesDAO` + `CatalogService`: thêm danh mục, sửa tên, thêm thương hiệu và thêm dòng sản phẩm (`product_series`) (UC 19–22).
 - [x] `PartsDAO` + 10 `Spec*DAO` + `SpecService` + `ProductService` (đã triển khai các hàm tìm/lọc/đọc spec/thêm/sửa/đổi trạng thái).
-- [x] `AdminProductServlet` + `products.jsp`, `product_form.jsp`: cập nhật giá/trạng thái bán (`ACTIVE`/`HIDDEN`/`DISCONTINUED`), ghi nhật ký thao tác admin (`UPDATE_PRODUCT` vào `staff_audit_logs`), rà và lưu đầy đủ các trường `spec_*` khi cập nhật linh kiện (`insertFull`/`updateFull` và modal sửa), và đã test ẩn/hiện/cập nhật linh kiện trên web.
+- [x] `AdminProductServlet` + `products.jsp`, `product_form.jsp`: cập nhật giá/trạng thái bán (`ACTIVE`/`HIDDEN`/`DISCONTINUED`), ghi nhật ký thao tác admin (`UPDATE_PRODUCT` vào `staff_audit_logs`), rà và lưu đầy đủ các trường `spec_*` khi cập nhật linh kiện (`insertFull`/`updateFull` và modal sửa), và đã test ẩn/hiện/cập nhật linh kiện trên web; đã sửa lỗi sửa linh kiện không lưu vào DB (giới hạn 50 phần multipart của Tomcat – xem bổ sung 27/11) và test lại sửa giá/khuyến mãi + thông số CPU lưu được.
 
 ### Tuần 2 – Module A (phần 2) + hiển thị cho khách (≈ 29h)
 - [x] `UploadApiServlet` (`/api/upload`): hỗ trợ upload ảnh (`<= 10MB`), video (`<= 50MB`) hoặc link media vào bảng `part_media` và đặt ảnh chính (`is_primary`) (UC 34–35); đã test `GET` và `POST` thành công.
-- [ ] Cập nhật thông số (UC 33), giá & giá khuyến mãi (UC 36–37), tra cứu theo mã sản phẩm (UC 40).
+- [x] Cập nhật giá & giá khuyến mãi (UC 36–37) và thông số (UC 33) qua modal Sửa: đã test lưu được vào DB (thông số mới kiểm tra với CPU; các loại linh kiện khác cần test lại sau khi sửa lỗi multipart).
+- [ ] Tra cứu theo mã sản phẩm (UC 40).
 - [x] `ProductServlet` + `list.jsp` + `detail.jsp`: đã có bộ lọc đa tiêu chí, sắp xếp, phân trang (`PaginationUtil`), hiển thị số lượng sẵn có và bộ chọn số lượng khi thêm vào giỏ / mua ngay.
 
 ### Tuần 3 – Module B: Kiểm tra tương thích (53,6h)
@@ -81,8 +84,8 @@
 | Module | Kế hoạch | Trạng thái | Ghi chú |
 |---|---|---|---|
 | Tuần 0 – Chuẩn bị | 0,5 tuần | ◐ Một phần | Build/DB đã chạy; còn chốt nhóm & branch |
-| A1 – Danh mục, thêm sản phẩm | Tuần 1 | 🔄 Gần xong | Đã cập nhật/test trạng thái, full spec khi sửa & audit log sản phẩm |
-| A2 – Cập nhật & hiển thị sản phẩm | Tuần 2 | 🔄 Gần xong | Đã làm `UploadApiServlet`, lọc/sắp xếp/phân trang, tồn sẵn có & chọn SL ở chi tiết SP |
+| A1 – Danh mục, thêm sản phẩm | Tuần 1 | 🔄 Gần xong | Đã cập nhật/test trạng thái, full spec khi sửa & audit log sản phẩm; đã sửa lỗi sửa linh kiện không lưu (Tomcat giới hạn 50 phần multipart) |
+| A2 – Cập nhật & hiển thị sản phẩm | Tuần 2 | 🔄 Gần xong | Đã làm `UploadApiServlet`, lọc/sắp xếp/phân trang, tồn sẵn có & chọn SL ở chi tiết SP; sửa giá/khuyến mãi đã lưu được vào DB (còn UC 40) |
 | B – Tương thích | Tuần 3 | 🔄 Gần xong | Đã làm & test quy tắc động + `/api/compatibility` |
 | C – Lọc, sắp xếp, so sánh | Tuần 4 | 🔄 Gần xong | Đã làm & test `/admin/game`, so sánh theo loại & bộ lọc/phân trang |
 | D – Kho | Tuần 5 | 🔄 Gần xong | Đã gắn cảnh báo sắp hết/hết hàng & tồn lâu ngày lên `inventory.jsp`; chờ test PO/Serial |
