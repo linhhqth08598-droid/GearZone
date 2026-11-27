@@ -120,8 +120,15 @@ public class PartsDAO {
         }
     }
 
+    private volatile String lastError = "";
+
+    public String getLastError() {
+        return lastError;
+    }
+
     // Cập nhật thông tin linh kiện
     public boolean update(Parts part) {
+        lastError = "";
         String sql = "UPDATE parts SET category_id = ?, brand_id = ?, product_code = ?, part_name = ?, "
                 + "base_price = ?, sale_price = ?, description = ?, warranty_months = ? WHERE part_id = ?";
         try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -129,17 +136,28 @@ public class PartsDAO {
             ps.setInt(2, part.getBrandId());
             ps.setString(3, part.getProductCode());
             ps.setString(4, part.getPartName());
-            ps.setDouble(5, part.getBasePrice());
+            ps.setBigDecimal(5, part.getBasePrice() != null ? java.math.BigDecimal.valueOf(part.getBasePrice()) : java.math.BigDecimal.ZERO);
             if (part.getSalePrice() != null) {
-                ps.setDouble(6, part.getSalePrice());
+                ps.setBigDecimal(6, java.math.BigDecimal.valueOf(part.getSalePrice()));
             } else {
                 ps.setNull(6, java.sql.Types.DECIMAL);
             }
             ps.setString(7, part.getDescription());
             ps.setInt(8, part.getWarrantyMonths());
             ps.setInt(9, part.getPartId());
-            return ps.executeUpdate() > 0;
+            int rows = ps.executeUpdate();
+            System.err.println("[PartsDAO.update] part_id=" + part.getPartId()
+                    + ", basePrice=" + part.getBasePrice()
+                    + ", salePrice=" + part.getSalePrice()
+                    + ", rowsUpdated=" + rows);
+            if (rows <= 0) {
+                lastError = "Không có bản ghi nào được cập nhật cho part_id=" + part.getPartId();
+                System.err.println("[PartsDAO.update] " + lastError);
+            }
+            return rows > 0;
         } catch (Exception e) {
+            lastError = e.getMessage() != null ? e.getMessage() : e.toString();
+            System.err.println("[PartsDAO.update] Lỗi cập nhật part_id=" + part.getPartId() + ": " + lastError);
             e.printStackTrace();
             return false;
         }

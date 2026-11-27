@@ -95,4 +95,58 @@ public class SpecMonitorDAO {
             return 24.0;
         }
     }
+
+    public boolean insertFull(int partId, String screenSize, String resolution, int refreshRate, String panelType,
+                             Double responseTimeMs, String adaptiveSync, int hdmiPorts, int displayportPorts,
+                             String hdmiVersion, String displayportVersion) {
+        double sizeInch = parseScreenSizeInch(screenSize);
+        String sql = "INSERT INTO [spec_monitor] (part_id, screen_size_inch, resolution, refresh_rate_hz, panel_type, "
+                   + "response_time_ms, adaptive_sync, hdmi_ports, displayport_ports, hdmi_version, displayport_version, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setDouble(2, sizeInch);
+            ps.setString(3, (resolution == null || resolution.trim().isEmpty()) ? "1920x1080" : resolution.trim());
+            ps.setInt(4, refreshRate > 0 ? refreshRate : 60);
+            ps.setString(5, (panelType == null || panelType.trim().isEmpty()) ? "IPS" : panelType.trim());
+            if (responseTimeMs == null) ps.setNull(6, Types.DECIMAL); else ps.setDouble(6, responseTimeMs);
+            if (adaptiveSync == null || adaptiveSync.trim().isEmpty()) ps.setNull(7, Types.VARCHAR); else ps.setString(7, adaptiveSync.trim());
+            ps.setInt(8, Math.max(0, hdmiPorts));
+            ps.setInt(9, Math.max(0, displayportPorts));
+            if (hdmiVersion == null || hdmiVersion.trim().isEmpty()) ps.setNull(10, Types.VARCHAR); else ps.setString(10, hdmiVersion.trim());
+            if (displayportVersion == null || displayportVersion.trim().isEmpty()) ps.setNull(11, Types.VARCHAR); else ps.setString(11, displayportVersion.trim());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateFull(int partId, String screenSize, String resolution, int refreshRate, String panelType,
+                             Double responseTimeMs, String adaptiveSync, int hdmiPorts, int displayportPorts,
+                             String hdmiVersion, String displayportVersion) {
+        double sizeInch = parseScreenSizeInch(screenSize);
+        String sql = "UPDATE [spec_monitor] SET screen_size_inch = ?, resolution = ?, refresh_rate_hz = ?, panel_type = ?, "
+                   + "response_time_ms = ?, adaptive_sync = ?, hdmi_ports = ?, displayport_ports = ?, "
+                   + "hdmi_version = ?, displayport_version = ? WHERE part_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setDouble(1, sizeInch);
+            ps.setString(2, (resolution == null || resolution.trim().isEmpty()) ? "1920x1080" : resolution.trim());
+            ps.setInt(3, refreshRate > 0 ? refreshRate : 60);
+            ps.setString(4, (panelType == null || panelType.trim().isEmpty()) ? "IPS" : panelType.trim());
+            if (responseTimeMs == null) ps.setNull(5, Types.DECIMAL); else ps.setDouble(5, responseTimeMs);
+            if (adaptiveSync == null || adaptiveSync.trim().isEmpty()) ps.setNull(6, Types.VARCHAR); else ps.setString(6, adaptiveSync.trim());
+            ps.setInt(7, Math.max(0, hdmiPorts));
+            ps.setInt(8, Math.max(0, displayportPorts));
+            if (hdmiVersion == null || hdmiVersion.trim().isEmpty()) ps.setNull(9, Types.VARCHAR); else ps.setString(9, hdmiVersion.trim());
+            if (displayportVersion == null || displayportVersion.trim().isEmpty()) ps.setNull(10, Types.VARCHAR); else ps.setString(10, displayportVersion.trim());
+            ps.setInt(11, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

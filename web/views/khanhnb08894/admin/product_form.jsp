@@ -280,6 +280,22 @@
 
 <jsp:include page="/views/components/footer.jsp" />
 <script>
+    // Chỉ gửi field của section đang hiển thị (input disabled không nằm trong request).
+    // Tránh vượt maxPartCount (mặc định 50) của Tomcat với multipart và tránh trùng tên giữa các section.
+    function syncSpecDisabled() {
+        document.querySelectorAll('.spec-section').forEach(function (sec) {
+            var hidden = window.getComputedStyle(sec).display === 'none';
+            sec.querySelectorAll('input, select, textarea').forEach(function (f) {
+                f.disabled = hidden;
+            });
+        });
+    }
+    // Đăng ký TRƯỚC listener hiện/ẩn bên dưới nên dùng setTimeout để chạy sau khi section đã đổi trạng thái.
+    document.getElementById('categorySelect').addEventListener('change', function() {
+        setTimeout(syncSpecDisabled, 0);
+    });
+    syncSpecDisabled();
+
     document.getElementById('categorySelect').addEventListener('change', function() {
         var selectElement = this;
         var selectedText = selectElement.options[selectElement.selectedIndex].text.toLowerCase();

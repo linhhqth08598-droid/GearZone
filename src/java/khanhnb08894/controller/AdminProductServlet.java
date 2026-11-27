@@ -216,6 +216,7 @@ public class AdminProductServlet extends HttpServlet {
                 } else {
                     response.sendRedirect(request.getContextPath() + "/admin/products");
                 }
+                return;
 
             // 2. CHỨC NĂNG CẬP NHẬT (SỬA)
             } else if ("updateProduct".equals(action)) {
@@ -228,6 +229,10 @@ public class AdminProductServlet extends HttpServlet {
 
                 String saleStr = request.getParameter("salePrice");
                 Double salePrice = (saleStr != null && !saleStr.trim().isEmpty()) ? Double.parseDouble(saleStr) : null;
+                System.err.println("[AdminProductServlet] updateProduct partId=" + partId
+                        + ", basePrice=" + basePrice
+                        + ", saleStr=" + saleStr
+                        + ", salePrice=" + salePrice);
 
                 int warrantyMonths = Integer.parseInt(request.getParameter("warrantyMonths"));
                 String description = request.getParameter("description");
@@ -257,9 +262,14 @@ public class AdminProductServlet extends HttpServlet {
                     }
                     session.setAttribute("message", "Cập nhật linh kiện thành công!");
                 } else {
-                    session.setAttribute("error", "Không cập nhật được.");
+                    String detailErr = partsDAO.getLastError();
+                    System.err.println("[AdminProductServlet] updateProduct thất bại partId=" + partId + ": " + detailErr);
+                    session.setAttribute("error", "Không cập nhật được linh kiện #" + partId
+                            + (detailErr != null && !detailErr.isEmpty() ? (" (" + detailErr + ")") : "."));
                 }
-                response.sendRedirect(request.getContextPath() + "/admin/products");
+                response.setStatus(HttpServletResponse.SC_SEE_OTHER);
+                response.setHeader("Location", request.getContextPath() + "/admin/products");
+                return;
 
             // 3. CHỨC NĂNG ẨN (SOFT DELETE)
             } else if ("deleteProduct".equals(action)) {
@@ -270,6 +280,7 @@ public class AdminProductServlet extends HttpServlet {
                     session.setAttribute("error", "Không thể ẩn linh kiện này.");
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/products");
+                return;
 
             // 4. CHỨC NĂNG HIỆN LẠI (RESTORE)
             } else if ("restoreProduct".equals(action)) {
@@ -280,6 +291,7 @@ public class AdminProductServlet extends HttpServlet {
                     session.setAttribute("error", "Không thể thay đổi trạng thái.");
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/products");
+                return;
 
             // 5. CHỨC NĂNG XÓA VĨNH VIỄN (HARD DELETE)
             } else if ("hardDeleteProduct".equals(action)) {
@@ -293,6 +305,7 @@ public class AdminProductServlet extends HttpServlet {
                     }
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/products");
+                return;
             }
 
         } catch (Exception e) {
@@ -300,7 +313,9 @@ public class AdminProductServlet extends HttpServlet {
             session = request.getSession();
             session.setAttribute("error", "Lỗi xử lý linh kiện: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/products");
+            return;
         }
+        response.sendRedirect(request.getContextPath() + "/admin/products");
     }
 
     private void syncSpecByCategory(HttpServletRequest request, int partId, int categoryId, boolean isUpdate) {
@@ -331,12 +346,23 @@ public class AdminProductServlet extends HttpServlet {
                     String formFactor = request.getParameter("formFactor");
                     String ramStd = request.getParameter("ramStandard");
                     int ramSlots = parseOrDefault(request.getParameter("ramSlots"), 4);
+                    int maxRamSpeed = parseOrDefault(request.getParameter("maxRamSpeedMhz"), 3200);
+                    int maxRamCap = parseOrDefault(request.getParameter("maxRamCapacityGb"), 64);
+                    int m2Slots = parseOrDefault(request.getParameter("m2SlotsCount"), 2);
+                    boolean supportsNvme = parseBoolOrDefault(request.getParameter("supportsNvme"), true);
+                    String pcieGen = request.getParameter("pcieGeneration");
+                    int sataPorts = parseOrDefault(request.getParameter("sataPortsCount"), 4);
+                    String cpuPowerConn = request.getParameter("cpuPowerConnectors");
+                    String supCpuGens = request.getParameter("supportedCpuGenerations");
                     if (isUpdate) {
-                        if (!mbDAO.update(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots)) {
-                            mbDAO.insert(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots);
+                        if (!mbDAO.updateFull(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots,
+                                maxRamSpeed, maxRamCap, m2Slots, supportsNvme, pcieGen, sataPorts, cpuPowerConn, supCpuGens)) {
+                            mbDAO.insertFull(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots,
+                                    maxRamSpeed, maxRamCap, m2Slots, supportsNvme, pcieGen, sataPorts, cpuPowerConn, supCpuGens);
                         }
                     } else {
-                        mbDAO.insert(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots);
+                        mbDAO.insertFull(partId, socketId, chipset.trim(), formFactor, ramStd, ramSlots,
+                                maxRamSpeed, maxRamCap, m2Slots, supportsNvme, pcieGen, sataPorts, cpuPowerConn, supCpuGens);
                     }
                 }
             } else if (categoryId == 3) {
@@ -361,12 +387,19 @@ public class AdminProductServlet extends HttpServlet {
                 if (gpuChipset != null && !gpuChipset.trim().isEmpty() && vramStr != null && !vramStr.trim().isEmpty()) {
                     int vram = Integer.parseInt(vramStr.trim());
                     int recPsu = parseOrDefault(request.getParameter("recommendedPsuWatts"), 550);
+                    String vramType = request.getParameter("vramType");
+                    int tgp = parseOrDefault(request.getParameter("tgpWatts"), Math.max(75, recPsu / 2));
+                    String powerConn = request.getParameter("powerConnectors");
+                    int lengthMm = parseOrDefault(request.getParameter("lengthMm"), 280);
+                    String pcieIf = request.getParameter("pcieInterface");
+                    int hdmi = parseOrDefault(request.getParameter("hdmiPorts"), 1);
+                    int dp = parseOrDefault(request.getParameter("displayportPorts"), 3);
                     if (isUpdate) {
-                        if (!vgaDAO.update(partId, gpuChipset.trim(), vram, recPsu)) {
-                            vgaDAO.insert(partId, gpuChipset.trim(), vram, recPsu);
+                        if (!vgaDAO.updateFull(partId, gpuChipset.trim(), vram, vramType, recPsu, tgp, powerConn, lengthMm, pcieIf, hdmi, dp)) {
+                            vgaDAO.insertFull(partId, gpuChipset.trim(), vram, vramType, recPsu, tgp, powerConn, lengthMm, pcieIf, hdmi, dp);
                         }
                     } else {
-                        vgaDAO.insert(partId, gpuChipset.trim(), vram, recPsu);
+                        vgaDAO.insertFull(partId, gpuChipset.trim(), vram, vramType, recPsu, tgp, powerConn, lengthMm, pcieIf, hdmi, dp);
                     }
                 }
             } else if (categoryId == 5) {
@@ -443,12 +476,14 @@ public class AdminProductServlet extends HttpServlet {
                     String sync = request.getParameter("adaptiveSync");
                     int hdmi = parseOrDefault(request.getParameter("hdmiPorts"), 1);
                     int dp = parseOrDefault(request.getParameter("displayportPorts"), 1);
+                    String hdmiVer = request.getParameter("hdmiVersion");
+                    String dpVer = request.getParameter("displayportVersion");
                     if (isUpdate) {
-                        if (!monitorDAO.update(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp)) {
-                            monitorDAO.insert(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp);
+                        if (!monitorDAO.updateFull(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp, hdmiVer, dpVer)) {
+                            monitorDAO.insertFull(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp, hdmiVer, dpVer);
                         }
                     } else {
-                        monitorDAO.insert(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp);
+                        monitorDAO.insertFull(partId, screenSize.trim(), res, hz, panel, respMs, sync, hdmi, dp, hdmiVer, dpVer);
                     }
                 }
             } else if (categoryId == 10) {
@@ -456,12 +491,16 @@ public class AdminProductServlet extends HttpServlet {
                 if (gearType != null && !gearType.trim().isEmpty()) {
                     String conn = request.getParameter("connectivity");
                     String swOrDpi = request.getParameter("switchOrDpi");
+                    String layout = request.getParameter("layout");
+                    Integer dpiMax = parseNullableInt(request.getParameter("dpiMax"));
+                    Integer pollingHz = parseNullableInt(request.getParameter("pollingRateHz"));
+                    Integer weightG = parseNullableInt(request.getParameter("weightG"));
                     if (isUpdate) {
-                        if (!peripheralDAO.update(partId, gearType.trim(), conn, swOrDpi)) {
-                            peripheralDAO.insert(partId, gearType.trim(), conn, swOrDpi);
+                        if (!peripheralDAO.updateFull(partId, gearType.trim(), conn, swOrDpi, layout, dpiMax, pollingHz, weightG)) {
+                            peripheralDAO.insertFull(partId, gearType.trim(), conn, swOrDpi, layout, dpiMax, pollingHz, weightG);
                         }
                     } else {
-                        peripheralDAO.insert(partId, gearType.trim(), conn, swOrDpi);
+                        peripheralDAO.insertFull(partId, gearType.trim(), conn, swOrDpi, layout, dpiMax, pollingHz, weightG);
                     }
                 }
             }
@@ -504,6 +543,12 @@ public class AdminProductServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private boolean parseBoolOrDefault(String raw, boolean defVal) {
+        if (raw == null || raw.trim().isEmpty()) return defVal;
+        String t = raw.trim().toLowerCase();
+        return "1".equals(t) || "true".equals(t) || "yes".equals(t) || "on".equals(t);
     }
 
     private String buildPartSpecsJson(List<Parts> partsList) {

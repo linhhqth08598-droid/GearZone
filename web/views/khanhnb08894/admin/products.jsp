@@ -320,8 +320,21 @@
                             <div class="col-md-4"><input type="number" name="socketId" placeholder="Socket ID" class="form-control form-control-sm"/></div>
                             <div class="col-md-4"><input type="text" name="chipset" placeholder="Chipset (B760, Z790...)" class="form-control form-control-sm"/></div>
                             <div class="col-md-4"><input type="text" name="formFactor" placeholder="Form Factor (ATX / mATX)" class="form-control form-control-sm"/></div>
-                            <div class="col-md-6"><input type="text" name="ramStandard" placeholder="Chuẩn RAM (DDR4 / DDR5)" class="form-control form-control-sm"/></div>
-                            <div class="col-md-6"><input type="number" name="ramSlots" placeholder="Số khe RAM" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="ramStandard" placeholder="Chuẩn RAM (DDR4 / DDR5)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="ramSlots" placeholder="Số khe RAM" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="maxRamSpeedMhz" placeholder="Bus RAM tối đa (MHz)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="maxRamCapacityGb" placeholder="RAM tối đa (GB)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="m2SlotsCount" placeholder="Số khe M.2" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="sataPortsCount" placeholder="Số cổng SATA" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="pcieGeneration" placeholder="PCIe (PCIe 4.0 / 5.0)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="cpuPowerConnectors" placeholder="Đầu nguồn CPU (8-pin...)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="supportedCpuGenerations" placeholder="Thế hệ CPU hỗ trợ" class="form-control form-control-sm"/></div>
+                            <div class="col-md-12">
+                                <div class="form-check mt-1">
+                                    <input class="form-check-input" type="checkbox" name="supportsNvme" value="1" id="editSupportsNvme">
+                                    <label class="form-check-label small" for="editSupportsNvme">Hỗ trợ ổ cứng NVMe</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -341,7 +354,14 @@
                         <div class="row g-2">
                             <div class="col-md-4"><input type="text" name="gpuChipset" placeholder="GPU Chipset" class="form-control form-control-sm"/></div>
                             <div class="col-md-4"><input type="number" name="vramCapacityGb" placeholder="VRAM (GB)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="vramType" placeholder="Loại VRAM (GDDR6 / GDDR6X)" class="form-control form-control-sm"/></div>
                             <div class="col-md-4"><input type="number" name="recommendedPsuWatts" placeholder="Nguồn đề xuất (W)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="tgpWatts" placeholder="TGP (W)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="number" name="lengthMm" placeholder="Chiều dài (mm)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="powerConnectors" placeholder="Đầu nguồn (8-pin, 12VHPWR...)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-4"><input type="text" name="pcieInterface" placeholder="Giao tiếp PCIe" class="form-control form-control-sm"/></div>
+                            <div class="col-md-2"><input type="number" name="hdmiPorts" placeholder="HDMI" class="form-control form-control-sm"/></div>
+                            <div class="col-md-2"><input type="number" name="displayportPorts" placeholder="DP" class="form-control form-control-sm"/></div>
                         </div>
                     </div>
 
@@ -387,10 +407,16 @@
                     <div id="editMonitorSpecs" class="edit-spec-section card p-3 border bg-light mb-3" style="display:none;">
                         <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-desktop me-1"></i> Thông số chi tiết Màn hình</h6>
                         <div class="row g-2">
-                            <div class="col-md-3"><input type="text" name="screenSize" placeholder="Kích thước" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="screenSize" placeholder="Kích thước (inch)" class="form-control form-control-sm"/></div>
                             <div class="col-md-3"><input type="text" name="resolution" placeholder="Độ phân giải" class="form-control form-control-sm"/></div>
                             <div class="col-md-3"><input type="number" name="refreshRate" placeholder="Tần số quét (Hz)" class="form-control form-control-sm"/></div>
                             <div class="col-md-3"><input type="text" name="panelType" placeholder="Tấm nền" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" step="0.1" name="responseTimeMs" placeholder="Phản hồi (ms)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="adaptiveSync" placeholder="Adaptive Sync" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="hdmiPorts" placeholder="Số cổng HDMI" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="displayportPorts" placeholder="Số cổng DP" class="form-control form-control-sm"/></div>
+                            <div class="col-md-6"><input type="text" name="hdmiVersion" placeholder="Chuẩn HDMI (2.0 / 2.1)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-6"><input type="text" name="displayportVersion" placeholder="Chuẩn DP (1.4 / 2.1)" class="form-control form-control-sm"/></div>
                         </div>
                     </div>
 
@@ -400,6 +426,10 @@
                             <div class="col-md-4"><input type="text" name="gearType" placeholder="KEYBOARD / MOUSE / HEADSET..." class="form-control form-control-sm"/></div>
                             <div class="col-md-4"><input type="text" name="connectivity" placeholder="WIRED / WIRELESS / BOTH" class="form-control form-control-sm"/></div>
                             <div class="col-md-4"><input type="text" name="switchOrDpi" placeholder="Switch / DPI" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="text" name="layout" placeholder="Layout (TKL, 65%...)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="dpiMax" placeholder="DPI tối đa" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="pollingRateHz" placeholder="Polling (Hz)" class="form-control form-control-sm"/></div>
+                            <div class="col-md-3"><input type="number" name="weightG" placeholder="Trọng lượng (g)" class="form-control form-control-sm"/></div>
                         </div>
                     </div>
 
@@ -450,6 +480,18 @@
         }
     }
 
+    // Chỉ gửi field của section đang hiển thị. Input bị disabled sẽ không nằm trong request,
+    // tránh vượt giới hạn maxPartCount (mặc định 50) của Tomcat cho multipart/form-data
+    // và tránh trùng tên (socketId, formFactor, capacityGb, hdmiPorts...) giữa các section.
+    function syncSpecDisabled() {
+        document.querySelectorAll('.edit-spec-section').forEach(function (sec) {
+            var hidden = window.getComputedStyle(sec).display === 'none';
+            sec.querySelectorAll('input, select, textarea').forEach(function (f) {
+                f.disabled = hidden;
+            });
+        });
+    }
+
     function fillEditSpecFields(partId) {
         var modalEl = document.getElementById('editProductModal');
         if (!modalEl) return;
@@ -479,6 +521,17 @@
         setVal('editMainboardSpecs', 'formFactor', spec.form_factor);
         setVal('editMainboardSpecs', 'ramStandard', spec.ram_standard);
         setVal('editMainboardSpecs', 'ramSlots', spec.ram_slots);
+        setVal('editMainboardSpecs', 'maxRamSpeedMhz', spec.max_ram_speed_mhz);
+        setVal('editMainboardSpecs', 'maxRamCapacityGb', spec.max_ram_capacity_gb);
+        setVal('editMainboardSpecs', 'm2SlotsCount', spec.m2_slots_count);
+        setVal('editMainboardSpecs', 'sataPortsCount', spec.sata_ports_count);
+        setVal('editMainboardSpecs', 'pcieGeneration', spec.pcie_generation);
+        setVal('editMainboardSpecs', 'cpuPowerConnectors', spec.cpu_power_connectors);
+        setVal('editMainboardSpecs', 'supportedCpuGenerations', spec.supported_cpu_generations);
+        var nvmeChk = document.getElementById('editSupportsNvme');
+        if (nvmeChk) {
+            nvmeChk.checked = (spec.supports_nvme === '1' || spec.supports_nvme === 'true');
+        }
 
         setVal('editRamSpecs', 'ddrType', spec.ddr_type);
         setVal('editRamSpecs', 'capacityGb', spec.capacity_gb);
@@ -488,7 +541,14 @@
 
         setVal('editVgaSpecs', 'gpuChipset', spec.gpu_chipset);
         setVal('editVgaSpecs', 'vramCapacityGb', spec.vram_capacity_gb);
+        setVal('editVgaSpecs', 'vramType', spec.vram_type);
         setVal('editVgaSpecs', 'recommendedPsuWatts', spec.recommended_psu_watts);
+        setVal('editVgaSpecs', 'tgpWatts', spec.tgp_watts);
+        setVal('editVgaSpecs', 'lengthMm', spec.length_mm);
+        setVal('editVgaSpecs', 'powerConnectors', spec.power_connectors);
+        setVal('editVgaSpecs', 'pcieInterface', spec.pcie_interface);
+        setVal('editVgaSpecs', 'hdmiPorts', spec.hdmi_ports);
+        setVal('editVgaSpecs', 'displayportPorts', spec.displayport_ports);
 
         setVal('editStorageSpecs', 'storageType', spec.storage_type);
         setVal('editStorageSpecs', 'formFactor', spec.form_factor);
@@ -513,15 +573,28 @@
         setVal('editMonitorSpecs', 'resolution', spec.resolution);
         setVal('editMonitorSpecs', 'refreshRate', spec.refresh_rate_hz);
         setVal('editMonitorSpecs', 'panelType', spec.panel_type);
+        setVal('editMonitorSpecs', 'responseTimeMs', spec.response_time_ms);
+        setVal('editMonitorSpecs', 'adaptiveSync', spec.adaptive_sync);
+        setVal('editMonitorSpecs', 'hdmiPorts', spec.hdmi_ports);
+        setVal('editMonitorSpecs', 'displayportPorts', spec.displayport_ports);
+        setVal('editMonitorSpecs', 'hdmiVersion', spec.hdmi_version);
+        setVal('editMonitorSpecs', 'displayportVersion', spec.displayport_version);
 
         setVal('editGearSpecs', 'gearType', spec.peripheral_type);
         setVal('editGearSpecs', 'connectivity', spec.connection_type);
         setVal('editGearSpecs', 'switchOrDpi', spec.switch_type);
+        setVal('editGearSpecs', 'layout', spec.layout);
+        setVal('editGearSpecs', 'dpiMax', spec.dpi_max);
+        setVal('editGearSpecs', 'pollingRateHz', spec.polling_rate_hz);
+        setVal('editGearSpecs', 'weightG', spec.weight_g);
     }
 
     var editCatEl = document.getElementById('editCategory');
     if (editCatEl) {
-        editCatEl.addEventListener('change', toggleEditSpecSection);
+        editCatEl.addEventListener('change', function () {
+            toggleEditSpecSection();
+            syncSpecDisabled();
+        });
     }
 
     document.querySelectorAll('.btn-edit-part').forEach(function (btn) {
@@ -538,6 +611,7 @@
             document.getElementById('editDesc').value = d.desc || '';
             toggleEditSpecSection();
             fillEditSpecFields(d.id);
+            syncSpecDisabled();
         });
     });
 </script>

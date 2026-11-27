@@ -74,6 +74,52 @@ public class SpecPeripheralDAO {
         }
     }
 
+    public boolean insertFull(int partId, String gearType, String connectivity, String switchOrDpi,
+                             String layout, Integer dpiMax, Integer pollingRateHz, Integer weightG) {
+        String pType = mapPeripheralType(gearType);
+        String cType = mapConnectionType(connectivity);
+        String sql = "INSERT INTO [spec_peripheral] (part_id, peripheral_type, connection_type, switch_type, "
+                   + "layout, dpi_max, polling_rate_hz, weight_g, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            ps.setString(2, pType);
+            ps.setString(3, cType);
+            if (switchOrDpi == null || switchOrDpi.trim().isEmpty()) ps.setNull(4, Types.NVARCHAR); else ps.setString(4, switchOrDpi.trim());
+            if (layout == null || layout.trim().isEmpty()) ps.setNull(5, Types.VARCHAR); else ps.setString(5, layout.trim());
+            if (dpiMax == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, dpiMax);
+            if (pollingRateHz == null) ps.setNull(7, Types.INTEGER); else ps.setInt(7, pollingRateHz);
+            if (weightG == null) ps.setNull(8, Types.INTEGER); else ps.setInt(8, weightG);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateFull(int partId, String gearType, String connectivity, String switchOrDpi,
+                             String layout, Integer dpiMax, Integer pollingRateHz, Integer weightG) {
+        String pType = mapPeripheralType(gearType);
+        String cType = mapConnectionType(connectivity);
+        String sql = "UPDATE [spec_peripheral] SET peripheral_type = ?, connection_type = ?, switch_type = ?, "
+                   + "layout = ?, dpi_max = ?, polling_rate_hz = ?, weight_g = ? WHERE part_id = ?";
+        try (Connection con = DBConnect.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, pType);
+            ps.setString(2, cType);
+            if (switchOrDpi == null || switchOrDpi.trim().isEmpty()) ps.setNull(3, Types.NVARCHAR); else ps.setString(3, switchOrDpi.trim());
+            if (layout == null || layout.trim().isEmpty()) ps.setNull(4, Types.VARCHAR); else ps.setString(4, layout.trim());
+            if (dpiMax == null) ps.setNull(5, Types.INTEGER); else ps.setInt(5, dpiMax);
+            if (pollingRateHz == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, pollingRateHz);
+            if (weightG == null) ps.setNull(7, Types.INTEGER); else ps.setInt(7, weightG);
+            ps.setInt(8, partId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private static String mapPeripheralType(String raw) {
         if (raw == null) return "OTHER";
         String u = raw.trim().toUpperCase();
